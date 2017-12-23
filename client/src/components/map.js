@@ -1,7 +1,18 @@
 import React from "react"
+import pako from "pako";
 import ol from "openlayers"
 
+import {httpGetPromise} from "../utils"
 import {ObserverActions} from "../constants/ObserverConstants"
+
+
+const inflate = (stream) => {
+  try {
+    return pako.inflate(stream, { to: 'string' })
+  } catch (err) {
+    console.log("Error while decompressing product file:", err);
+  }
+}
 
 
 export const CenterState = {
@@ -15,6 +26,8 @@ export class Map extends React.Component {
     super(props);
     this.__onResize = this.__onResize.bind(this);
     this.__updateMap = this.__updateMap.bind(this);
+    this.__renderProduct = this.__renderProduct.bind(this);
+    this.__drawProduct = this.__drawProduct.bind(this);
   }
 
   __onResize() {
@@ -103,8 +116,57 @@ export class Map extends React.Component {
     window.removeEventListener('resize', this.__onResize)
   }
 
+  __drawProduct(obj) {
+    let data = obj.data
+    let metadata = obj.metadata
+
+    // TODO: actually resolve the projections and don't assume a shared one
+    //  - fix the metadata creation in download/extraction to get the correct one
+    //  - resolve map projection
+
+    let productProj = "EPSG:4326"
+    let mapProj = "EPSG:3857"
+
+        // "affineTransform": [
+        //     19.8869934197,
+        //     0.009449604183593748,
+        //     0.0,
+        //     62.5293188598,
+        //     0.0,
+        //     -0.0045287129015625024
+
+    // Starts from left upper corner
+    let xOrigin = affineTransform[0]
+    let yOrigin = affineTransform[3]
+    let xStep = affineTransform[1]
+    let yStep = affineTransform[5]
+
+    for (let rowIndex in data) {
+      let row = data[rowIndex]
+      for (let colIndex in data) {
+	let value = row[colIndex]
+
+	// next steps:
+	// - for each data value here render it on the raster that's drawn on
+	//   top of the openlayers map
+      }
+    }
+  }
+
   __renderProduct(productUrl) {
-    console.log("Rendering product from", productUrl)
+    if (productUrl == null) {
+      return
+    }
+
+    let m = this;
+
+    httpGetPromise(productUrl + ".gz", true)
+      .then(inflate)
+      .then(JSON.parse)
+      .then((obj) => {
+	console.log("Rendering product from", productUrl)
+	m.__drawProduct(obj)
+      })
   }
 
   render() {

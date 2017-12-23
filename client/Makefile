@@ -13,6 +13,8 @@ deps-install: ## Install development dependencies
 deps-clean: ## Remove development dependencies (node_modules)
 	rm -rf ./node_modules
 
+
+# TODO: refactor to share code
 .PHONY: build
 build: ## Build distribution into directory 'build'
 	mkdir -p ./build/{js,css}
@@ -27,9 +29,25 @@ build: ## Build distribution into directory 'build'
 	cp node_modules/bootstrap/dist/css/bootstrap.min.css build/css/
 	cp -R www/* build/
 
+
+.PHONY: buildincr
+buildincr: ## Build distribution incrementally into directory 'build'
+	mkdir -p ./build/{js,css}
+	node_modules/.bin/browserifyinc src/main.js --cachefile inc_build.cache \
+		-o build/js/observer.js \
+		-t [ babelify --presets [ es2015 react ] ]
+	# node_modules/.bin/lessc \
+	# 	--include-path=node_modules/bootstrap/less \
+	# 	css/observer.less \
+	# 	build/css/observer.css
+	# cp node_modules/openlayers/css/ol.css build/css/
+	# cp node_modules/bootstrap/dist/css/bootstrap.min.css build/css/
+	# cp -R www/* build/
+
+
 .PHONY: dev-build
 dev-build: ## Watch for filesystem changes and build on change
-	make build
+	make buildincr
 	date
 	find Makefile src www css -type f | entr make build
 
