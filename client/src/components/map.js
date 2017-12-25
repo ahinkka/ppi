@@ -1,6 +1,8 @@
 import React from "react"
 import pako from "pako";
 import ol from "openlayers"
+import ndarray from "ndarray"
+import {d1 as l_interp, d2 as bl_interp} from "ndarray-linear-interpolate"
 
 import {httpGetPromise} from "../utils"
 import {ObserverActions} from "../constants/ObserverConstants"
@@ -12,6 +14,27 @@ const inflate = (stream) => {
   } catch (err) {
     console.log("Error while decompressing product file:", err);
   }
+}
+
+
+const computeExtent = (affineTransform, width, height) => {
+  // "affineTransform": [
+  // 0   19.8869934197,
+  // 1   0.009449604183593748,
+  // 2   0.0,
+  // 3   62.5293188598,
+  // 4   0.0,
+  // 5   -0.0045287129015625024
+
+  // Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
+  // Ygeo = GT(3) + Xpixel*GT(4) + Yline*GT(5)
+
+  let origin = [affineTransform[0], affineTransform[3]]
+  let extreme = [origin[0] + affineTransform[1] * width,
+		 origin[1] + affineTransform[5] * height]
+  // extent = [minX, minY, maxX, maxY]
+  return [Math.min(origin[0], extreme[0]), Math.min(origin[1], extreme[1]),
+	  Math.max(origin[0], extreme[0]), Math.max(origin[1], extreme[1])]
 }
 
 
@@ -28,6 +51,7 @@ export class Map extends React.Component {
     this.__updateMap = this.__updateMap.bind(this);
     this.__renderProduct = this.__renderProduct.bind(this);
     this.__drawProduct = this.__drawProduct.bind(this);
+    this.__canvasFunction = this.__canvasFunction.bind(this);
   }
 
   __onResize() {
@@ -89,6 +113,14 @@ export class Map extends React.Component {
       target: 'map-element',
     })
 
+    let layers = this.map.getLayers();
+    this.imageCanvas = new ol.source.ImageCanvas({
+      canvasFunction: this.__canvasFunction,
+      ratio: 1
+    })
+    this.imageLayer = new ol.layer.Image({ source: this.imageCanvas })
+    layers.insertAt(1, this.imageLayer);
+
     let dispatch = this.props.dispatch;
     this.map.on('moveend', function(event) {
       let view = event.map.getView()
@@ -112,6 +144,21 @@ export class Map extends React.Component {
     this.__updateMap()
   }
 
+  __canvasFunction(extent, resolution, pixelRatio, size, projection) {
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = Math.floor(size[0])
+    this.canvas.height = Math.floor(size[1])
+    this.canvasOpts = {
+      extent: extent,
+      resolution: resolution,
+      pixelRatio: pixelRatio,
+      size: size,
+      projection: projection
+    }
+    console.log("__canvasFunction", this.canvasOpts)
+    return this.canvas
+  }
+
   componentWillUnmount() {
     window.removeEventListener('resize', this.__onResize)
   }
@@ -120,37 +167,93 @@ export class Map extends React.Component {
     let data = obj.data
     let metadata = obj.metadata
 
-    // TODO: actually resolve the projections and don't assume a shared one
-    //  - fix the metadata creation in download/extraction to get the correct one
-    //  - resolve map projection
+    // Currently we expect the products to be in EPSG:3426 and the map in
+    // EPSG:3857.  We should support arbitrary input projections. And we also
+    // expect to work with positive Web Mercator coordinates...
 
-    let productProj = "EPSG:4326"
-    let mapProj = "EPSG:3857"
+    let productLonLatExtent = computeExtent(metadata.affineTransform,
+					    metadata.width, metadata.height)
+    // console.log("productLonLatExtent", productLonLatExtent)
+    let minLonLat = [productLonLatExtent[0], productLonLatExtent[1]]
+    let maxLonLat = [productLonLatExtent[2], productLonLatExtent[3]]
+    let min = ol.proj.fromLonLat(minLonLat)
+    let max = ol.proj.fromLonLat(maxLonLat)
+    let productExtent = [min[0], min[1], max[0], max[1]]
 
-        // "affineTransform": [
-        //     19.8869934197,
-        //     0.009449604183593748,
-        //     0.0,
-        //     62.5293188598,
-        //     0.0,
-        //     -0.0045287129015625024
 
-    // Starts from left upper corner
-    let xOrigin = affineTransform[0]
-    let yOrigin = affineTransform[3]
-    let xStep = affineTransform[1]
-    let yStep = affineTransform[5]
+    // Lookup function from Web Mercator to product grid
+    let lonWidth = productExtent[2] - productExtent[0]
+    let latHeight = productExtent[3] - productExtent[1]
+    let lonLatToProductPx = (lon, lat) => {
+      if (lon < productExtent[0] || lon > productExtent[2] ||
+	  lat < productExtent[1] || lat > productExtent[3]) {
+	return [undefined, undefined]
+      }
+      let propX = (lon - productExtent[0]) / lonWidth
+      let propY = (lat - productExtent[1]) / latHeight
+      // console.log(propX, propY)
+      let pxX = Math.floor(propX * metadata.width)
+      let pxY = Math.floor(propY * metadata.height)
+      return [pxX, pxY]
+    }
+    // let a = productPxToLonLat(512, 512)
+    // console.log(lonLatToProductPx(a[0], a[1]))
 
-    for (let rowIndex in data) {
-      let row = data[rowIndex]
-      for (let colIndex in data) {
-	let value = row[colIndex]
+    
+    // Lookup function from canvas grid to Web Mercator
+    let canvasExtent = this.canvasOpts.extent;
+    let xCanvasExtents = ndarray(new Float32Array([canvasExtent[0], canvasExtent[2]], 1, 2))
+    let yCanvasExtents = ndarray(new Float32Array([canvasExtent[1], canvasExtent[3]], 1, 2))
+    let canvasPxToLonLat = (xPx, yPx) => {
+      let propX = xPx / metadata.width
+      let propY = yPx / metadata.height
+      let x = l_interp(xCanvasExtents, propX)
+      let y = l_interp(yCanvasExtents, propY)
+      return [x, y]
+    }
+    // console.log(canvasPxToLonLat(0, 0))
+    // console.log(canvasPxToLonLat(512, 512))
+    // console.log(canvasPxToLonLat(1024, 1024))
 
-	// next steps:
-	// - for each data value here render it on the raster that's drawn on
-	//   top of the openlayers map
+    let ctx = this.canvas.getContext("2d")
+    for (let x=0; x<this.canvas.width; x++) {
+      for (let y=0; y<this.canvas.height; y++) {
+	if (y % 50 != 0 || x % 50 != 0) {
+	  continue
+	}
+
+	let lonLatXY = canvasPxToLonLat(x, y)
+	let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
+	let value = undefined
+	if (dataPxXY[0] === undefined) {
+	  value = 252 // metadata.productInfo.dataScale.notScanned
+	} else {
+    	  value = data[dataPxXY[0]][dataPxXY[1]]
+	}
+
+	if (y % 200 == 0 && x % 200 == 0) {
+	  console.log("canvasPX", x, y)
+	  console.log("lonlat", lonLatXY)
+	  console.log("dataPx", dataPxXY)
+	}
+
+	if (value == 252) { // metadata.productInfo.dataScale.notScanned) {
+	  ctx.fillStyle = "rgba(211, 211, 211, 0.2)"
+	} else {
+	  ctx.fillStyle = "blue"
+	}
+
+	ctx.fillRect(x, y, 50, 50)
       }
     }
+
+    // context.save()
+    // context.fillStyle = "rgba(211, 211, 211, 0.2)";
+    // context.fillRect(0, 0, width, height)
+    // context.restore()
+
+    // 	let mapCoord = this.map.getCoordinateFromPixel([pixX, pixY])
+    // 	let lonLat = ol.proj.toLonLat(mapCoord, projection)
   }
 
   __renderProduct(productUrl) {

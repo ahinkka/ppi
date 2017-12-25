@@ -12,14 +12,16 @@
   "dependencies": {
     "bootstrap": "~3.3.7",
     "browserify-incremental": "^3.1.1",
+    "ndarray": "^1.0.18",
+    "ndarray-linear-interpolate": "^1.0.0",
     "openlayers": "~3.20.1",
+    "pako": "~1.0.6",
     "proj4": "~2.4.4",
     "react": ">=0.0.0",
     "react-bootstrap": "~0.31.5",
     "react-dom": ">=0.0.0",
     "react-redux": "~5.0.6",
-    "redux": "~3.7.2",
-    "pako": "~1.0.6"
+    "redux": "~3.7.2"
   },
   "license": "AGPL-3.0"
 }
