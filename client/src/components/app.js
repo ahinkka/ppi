@@ -1,10 +1,11 @@
 import React from "react"
 
 import {httpGetPromise, objectEquals} from "../utils"
-import {ObserverActions} from "../constants/ObserverConstants"
+import {ObserverActions} from "../constants"
 
 import {DropdownSelector} from "./dropdown_selector"
 import {Map, CenterState} from "./map.js"
+import {PlayButton} from "./play_button"
 
 
 const radarSelections = (radars) => {
@@ -113,6 +114,8 @@ export class ObserverApp extends React.Component {
       this._dispatch({type: ObserverActions.CYCLE_PRODUCT})
     } else if (key == "f" || key == "F") {
       this._dispatch({type: ObserverActions.CYCLE_FLAVOR})
+    } else if (event.keyCode == 32) {
+      this._dispatch({type: ObserverActions.TOGGLE_ANIMATION})
     }
 
     // TODO: bind left and right for navigating products
@@ -130,6 +133,9 @@ export class ObserverApp extends React.Component {
   }
 
   animationTick() {
+    if (this.props.store.getState().animation.running == false) {
+      return
+    }
     this._dispatch({type: ObserverActions.ANIMATION_TICK})
   }
 
@@ -185,7 +191,10 @@ export class ObserverApp extends React.Component {
 	                      dispatch={store.dispatch} />
           </form>
           </div>
-          <div className="col-md-2">
+          <div className="col-md-1">
+            <PlayButton animationRunning={state.animation.running} dispatch={store.dispatch} />
+          </div>
+	  <div className="col-md-2">
             <TimeDisplay currentValue={state.animation.currentProductTime} />
           </div>
         </div>

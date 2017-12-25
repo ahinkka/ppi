@@ -1,4 +1,4 @@
-import {ObserverActions} from "./constants/ObserverConstants"
+import {ObserverActions} from "./constants"
 
 
 const radarListFromIndex = (payloadRadars) => {
@@ -335,6 +335,16 @@ const productTimeReducer = (state, action) => {
 }
 
 
+const toggleAnimationReducer = (state, action) => {
+  let previousRunning = state.animation.running
+  state = Object.assign({}, state)
+  state.animation = Object.assign(
+    {}, state.animation,
+    {running: previousRunning ? false : true})
+  return state
+}
+
+
 export const reducer = (state, action) => {
   if (state === undefined) {
     return {
@@ -355,8 +365,7 @@ export const reducer = (state, action) => {
       animation: {
 	nextProductTime: null, // the product time we want to show next
 	currentProductTime: null, // the product time we are currently showing
-	fps: 1,
-	running: false
+	running: true
       }
     }
   }
@@ -384,6 +393,8 @@ export const reducer = (state, action) => {
     state = animationTickReducer(state, action);
   } else if (action.type === ObserverActions.PRODUCT_TIME_CHANGED) {
     state = productTimeReducer(state, action);
+  } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {
+    state = toggleAnimationReducer(state, action);
   }
 
   return state;

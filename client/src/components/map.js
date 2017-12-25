@@ -5,7 +5,7 @@ import ndarray from "ndarray"
 import {d1 as l_interp} from "ndarray-linear-interpolate"
 
 import {httpGetPromise} from "../utils"
-import {ObserverActions} from "../constants/ObserverConstants"
+import {ObserverActions} from "../constants"
 
 
 const inflate = (stream) => {
