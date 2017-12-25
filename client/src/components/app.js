@@ -78,7 +78,7 @@ export class ObserverApp extends React.Component {
     this.indexTimerToken = setInterval(this.fetchIndex, 50000)
 
     setTimeout(this.animationTick, 500)
-    this.animationTimerToken = setInterval(this.animationTick, 15000)
+    this.animationTimerToken = setInterval(this.animationTick, 2500)
 
     this.initializeKeyboardListener()
   }

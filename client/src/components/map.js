@@ -2,7 +2,7 @@ import React from "react"
 import pako from "pako";
 import ol from "openlayers"
 import ndarray from "ndarray"
-import {d1 as l_interp, d2 as bl_interp} from "ndarray-linear-interpolate"
+import {d1 as l_interp} from "ndarray-linear-interpolate"
 
 import {httpGetPromise} from "../utils"
 import {ObserverActions} from "../constants/ObserverConstants"
@@ -47,10 +47,13 @@ export const CenterState = {
 export class Map extends React.Component {
   constructor(props) {
     super(props);
+
+    this.currentProduct = null;
+    this.currentProductUrl = null;
+
     this.__onResize = this.__onResize.bind(this);
     this.__updateMap = this.__updateMap.bind(this);
-    this.__renderProduct = this.__renderProduct.bind(this);
-    this.__drawProduct = this.__drawProduct.bind(this);
+    this.__fetchNewProduct = this.__fetchNewProduct.bind(this);
     this.__canvasFunction = this.__canvasFunction.bind(this);
   }
 
@@ -113,13 +116,14 @@ export class Map extends React.Component {
       target: 'map-element',
     })
 
-    let layers = this.map.getLayers();
+    // Set ratio to 1 for canvas exactly the size of the viewport, i.e. every
+    // scroll is a re-render.
     this.imageCanvas = new ol.source.ImageCanvas({
-      canvasFunction: this.__canvasFunction,
-      ratio: 1
+      canvasFunction: this.__canvasFunction
+      // ratio: 1
     })
     this.imageLayer = new ol.layer.Image({ source: this.imageCanvas })
-    layers.insertAt(1, this.imageLayer);
+    this.map.getLayers().insertAt(1, this.imageLayer);
 
     let dispatch = this.props.dispatch;
     this.map.on('moveend', function(event) {
@@ -145,27 +149,20 @@ export class Map extends React.Component {
   }
 
   __canvasFunction(extent, resolution, pixelRatio, size, projection) {
+    let startRender = new Date().getTime();
+
     this.canvas = document.createElement('canvas');
     this.canvas.width = Math.floor(size[0])
     this.canvas.height = Math.floor(size[1])
-    this.canvasOpts = {
-      extent: extent,
-      resolution: resolution,
-      pixelRatio: pixelRatio,
-      size: size,
-      projection: projection
+
+    if (this.currentProduct == null) {
+      console.warn("__canvasFunction not rendering because of null currentProduct")
+      return this.canvas
     }
-    console.log("__canvasFunction", this.canvasOpts)
-    return this.canvas
-  }
 
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.__onResize)
-  }
 
-  __drawProduct(obj) {
-    let data = obj.data
-    let metadata = obj.metadata
+    let data = this.currentProduct.data
+    let metadata = this.currentProduct.metadata
 
     // Currently we expect the products to be in EPSG:3426 and the map in
     // EPSG:3857.  We should support arbitrary input projections. And we also
@@ -190,35 +187,33 @@ export class Map extends React.Component {
 	return [undefined, undefined]
       }
       let propX = (lon - productExtent[0]) / lonWidth
-      let propY = (lat - productExtent[1]) / latHeight
-      // console.log(propX, propY)
-      let pxX = Math.floor(propX * metadata.width)
-      let pxY = Math.floor(propY * metadata.height)
-      return [pxX, pxY]
-    }
-    // let a = productPxToLonLat(512, 512)
-    // console.log(lonLatToProductPx(a[0], a[1]))
-
-    
-    // Lookup function from canvas grid to Web Mercator
-    let canvasExtent = this.canvasOpts.extent;
-    let xCanvasExtents = ndarray(new Float32Array([canvasExtent[0], canvasExtent[2]], 1, 2))
-    let yCanvasExtents = ndarray(new Float32Array([canvasExtent[1], canvasExtent[3]], 1, 2))
-    let canvasPxToLonLat = (xPx, yPx) => {
-      let propX = xPx / metadata.width
-      let propY = yPx / metadata.height
-      let x = l_interp(xCanvasExtents, propX)
-      let y = l_interp(yCanvasExtents, propY)
+      let propY = 1 - (lat - productExtent[1]) / latHeight
+      let x = Math.floor(propX * metadata.width)
+      let y = Math.floor(propY * metadata.height)
       return [x, y]
     }
-    // console.log(canvasPxToLonLat(0, 0))
-    // console.log(canvasPxToLonLat(512, 512))
-    // console.log(canvasPxToLonLat(1024, 1024))
+
+    // Lookup function from canvas grid to Web Mercator
+    let canvasExtent = extent;
+    let xCanvasExtents = ndarray(new Float32Array([canvasExtent[0], canvasExtent[2]], 1, 2))
+    let yCanvasExtents = ndarray(new Float32Array([canvasExtent[1], canvasExtent[3]], 1, 2))
+    let canvasWidth = this.canvas.width
+    let canvasHeight = this.canvas.height
+    let canvasPxToLonLat = (x, y) => {
+      let propX = x / canvasWidth
+      let propY = 1 - y / canvasHeight
+      let lon = l_interp(xCanvasExtents, propX)
+      let lat = l_interp(yCanvasExtents, propY)
+      return [lon, lat]
+    }
 
     let ctx = this.canvas.getContext("2d")
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    let everyNth = 3
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
-	if (y % 50 != 0 || x % 50 != 0) {
+	if (y % everyNth != 0 || x % everyNth != 0) {
 	  continue
 	}
 
@@ -231,56 +226,56 @@ export class Map extends React.Component {
     	  value = data[dataPxXY[0]][dataPxXY[1]]
 	}
 
-	if (y % 200 == 0 && x % 200 == 0) {
-	  console.log("canvasPX", x, y)
-	  console.log("lonlat", lonLatXY)
-	  console.log("dataPx", dataPxXY)
-	}
-
 	if (value == 252) { // metadata.productInfo.dataScale.notScanned) {
-	  ctx.fillStyle = "rgba(211, 211, 211, 0.2)"
+	  ctx.fillStyle = "rgba(211, 211, 211, 0.3)"
 	} else {
-	  ctx.fillStyle = "blue"
+	  ctx.fillStyle = "rgba(0, 0, 255, " + value / 150 + ")"
 	}
 
-	ctx.fillRect(x, y, 50, 50)
+	ctx.fillRect(x, y, everyNth, everyNth)
       }
     }
 
-    // context.save()
-    // context.fillStyle = "rgba(211, 211, 211, 0.2)";
-    // context.fillRect(0, 0, width, height)
-    // context.restore()
-
-    // 	let mapCoord = this.map.getCoordinateFromPixel([pixX, pixY])
-    // 	let lonLat = ol.proj.toLonLat(mapCoord, projection)
+    let elapsedMs = new Date().getTime() - startRender;
+    console.log("Rendering took", elapsedMs, "ms")
+    return this.canvas
   }
 
-  __renderProduct(productUrl) {
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.__onResize)
+  }
+
+  __fetchNewProduct(productUrl) {
     if (productUrl == null) {
+      console.warn("__fetchNewProduct got a null productUrl")
       return
     }
 
-    let m = this;
-
+    let tmp = this;
     httpGetPromise(productUrl + ".gz", true)
       .then(inflate)
       .then(JSON.parse)
       .then((obj) => {
-	console.log("Rendering product from", productUrl)
-	m.__drawProduct(obj)
+	// TODO: figure out whether we should only inflate and parse at render
+	//       time? The whole caching regime is missing as well.
+	tmp.currentProduct = obj
+	tmp.currentProductUrl = productUrl
+	tmp.imageCanvas.changed()
       })
   }
 
   render() {
+    // TODO: minimize calls to render?
     console.log("Map.render()", this.props.productUrl)
 
-    this.__updateMap()
-
-    if (this.map != undefined) {
-      let view = this.map.getView()
-      this.__renderProduct(this.props.productUrl);
+    // TODO: we shouldn't fetch anything if the previous one hasn't been
+    //       rendered yet; the whole animation mechanism should wait for the
+    //       products to be rendered before proceeding to the next one.
+    if (this.currentProductUrl != this.props.productUrl) {
+      this.__fetchNewProduct(this.props.productUrl)
     }
+
+    this.__updateMap()
 
     return (
       <div id="map-element"></div>
