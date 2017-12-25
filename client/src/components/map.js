@@ -208,15 +208,11 @@ export class Map extends React.Component {
     }
 
     let ctx = this.canvas.getContext("2d")
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    let imageData = ctx.createImageData(canvasWidth, canvasHeight)
+    let iData = imageData.data
 
-    let everyNth = 3
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
-	if (y % everyNth != 0 || x % everyNth != 0) {
-	  continue
-	}
-
 	let lonLatXY = canvasPxToLonLat(x, y)
 	let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
 	let value = undefined
@@ -226,15 +222,36 @@ export class Map extends React.Component {
     	  value = data[dataPxXY[0]][dataPxXY[1]]
 	}
 
+	// Values for ImageData.data are RGBA in an
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray
+	//
+	// The Uint8ClampedArray contains height × width × 4 bytes of data,
+	// with index values ranging from 0 to (height×width×4)-1.
+	//
+	// For example, to read the blue component's value from the pixel at
+	// column 200, row 50 in the image, you would do the following:
+	//  blueComponent = imageData.data[((50 * (imageData.width * 4)) + (200 * 4)) + 2];
+	//
+	let color = null
 	if (value == 252) { // metadata.productInfo.dataScale.notScanned) {
-	  ctx.fillStyle = "rgba(211, 211, 211, 0.3)"
+	  // color.set([211, 211, 211, 76])
+	  color = [211, 211, 211, 76]
 	} else {
-	  ctx.fillStyle = "rgba(0, 0, 255, " + value / 150 + ")"
+	  color = [0, 0, 255, Math.floor((value / 150) * 255)]
 	}
 
-	ctx.fillRect(x, y, everyNth, everyNth)
+	let redIndex = (y * imageData.width * 4) + (x * 4);
+	iData[redIndex] = color[0]
+	iData[redIndex + 1] = color[1]
+	iData[redIndex + 2] = color[2]
+	iData[redIndex + 3] = color[3]
+
+	// This will likely get faster in the future but for now it's slow:
+	//  https://bugs.chromium.org/p/v8/issues/detail?id=3590&desc=2
+	// iData.set(color, redIndex)
       }
     }
+    ctx.putImageData(imageData, 0, 0);
 
     let elapsedMs = new Date().getTime() - startRender;
     console.log("Rendering took", elapsedMs, "ms")
