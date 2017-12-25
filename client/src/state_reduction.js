@@ -321,7 +321,16 @@ const animationTickReducer = (state, action) => {
   state = Object.assign({}, state)
   state.animation = Object.assign(
     {}, state.animation,
-    {time: selectProductTime(state.selection, products, state.animation.time)})
+    {nextProductTime: selectProductTime(state.selection, products, state.animation.nextProductTime)})
+  return state
+}
+
+
+const productTimeReducer = (state, action) => {
+  state = Object.assign({}, state)
+  state.animation = Object.assign(
+    {}, state.animation,
+    {currentProductTime: action.payload})
   return state
 }
 
@@ -344,7 +353,8 @@ export const reducer = (state, action) => {
 	onRadar: false
       },
       animation: {
-	time: null,
+	nextProductTime: null, // the product time we want to show next
+	currentProductTime: null, // the product time we are currently showing
 	fps: 1,
 	running: false
       }
@@ -372,6 +382,8 @@ export const reducer = (state, action) => {
 		 onRadar: false}
   } else if (action.type === ObserverActions.ANIMATION_TICK) {
     state = animationTickReducer(state, action);
+  } else if (action.type === ObserverActions.PRODUCT_TIME_CHANGED) {
+    state = productTimeReducer(state, action);
   }
 
   return state;

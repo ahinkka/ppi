@@ -150,7 +150,6 @@ export class ObserverApp extends React.Component {
     if (state.selection.radar == null ||
         state.selection.product == null ||
 	state.selection.flavor == null) {
-	// this.state.animation.time == null) {
       return (<div></div>)
     }
 
@@ -159,7 +158,7 @@ export class ObserverApp extends React.Component {
 						   state.selection.radar.id,
 						   state.selection.product.id,
 						   state.selection.flavor.id,
-						   state.animation.time)
+						   state.animation.nextProductTime)
 
     return (
       <div>
@@ -187,13 +186,14 @@ export class ObserverApp extends React.Component {
           </form>
           </div>
           <div className="col-md-2">
-            <TimeDisplay currentValue={state.animation.time} />
+            <TimeDisplay currentValue={state.animation.currentProductTime} />
           </div>
         </div>
         <Map headerElementId="product-selection-row"
              center={this._mapCenter}
              dispatch={this._dispatch}
-             productUrl={productUrl} />
+             productUrl={productUrl}
+             productTime={state.animation.nextProductTime} />
       </div>
     )
   }

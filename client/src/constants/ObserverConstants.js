@@ -10,6 +10,7 @@ export const ObserverActions = {
   CYCLE_FLAVOR: "cycle flavor",
 
   EXTENT_CHANGED: "extent changed",
+  PRODUCT_TIME_CHANGED: "product time changed",
 
   ANIMATION_TICK: "animation tick",
 }

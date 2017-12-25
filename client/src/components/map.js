@@ -258,6 +258,9 @@ export class Map extends React.Component {
 
     let elapsedMs = new Date().getTime() - startRender;
     console.log("Rendering took", elapsedMs, "ms")
+    this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
+			 payload: this.props.productTime})
+
     return this.canvas
   }
 
