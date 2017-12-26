@@ -6,6 +6,7 @@ import {ObserverActions} from "../constants"
 import {DropdownSelector} from "./dropdown_selector"
 import {Map, CenterState} from "./map.js"
 import {ToggleButton} from "./toggle_button"
+import {ProductSlider} from "./product_slider"
 
 
 const radarSelections = (radars) => {
@@ -169,7 +170,7 @@ export class ObserverApp extends React.Component {
     return (
       <div>
         <div id="product-selection-row" className="row">
-          <div className="col-md-6">
+          <div className="col-md-4">
           <form className="form-inline">
             <DropdownSelector currentValue={state.selection.radar.id}
                               legend="Radar"
@@ -196,6 +197,9 @@ export class ObserverApp extends React.Component {
                           onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
                           action={ObserverActions.TOGGLE_ANIMATION}
                           tooltip="Press SPACE to toggle animation" />
+          </div>
+          <div className="col-md-3">
+	    <ProductSlider />
           </div>
 	  <div className="col-md-2">
             <TimeDisplay currentValue={state.animation.currentProductTime} />
