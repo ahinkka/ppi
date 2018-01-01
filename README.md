@@ -39,16 +39,17 @@ each zoom level.
    https://twitter.com/archillect/status/938533533810937856
  - FMI summer color scale for reflectivity
    http://wms.fmi.fi/fmi-apikey/<>/geoserver/Radar/ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=500&height=100&layer=anjalankoski_dbzh&style=Radar+dbz+Summer
-   ```
-    FMI reflectivity (summer)
-    0 => 255, 255, 255   (nodata)
-    21 => 108, 235, 243  (kohtalainen)
-    62 => 65, 154, 90    (kohtalainen)
-    84 => 241, 243, 90   (sakea)
-    168 => 206, 2, 2     (sakea)
-    189 => 131, 10, 70   (hyvin sakea)
-    251 => 244, 244, 244 ()
-	```
+   - From QGIS coloring, should look at the above legend graphic instead
+     ```
+     FMI reflectivity (summer)
+     0 => 255, 255, 255   (nodata)
+     21 => 108, 235, 243  (kohtalainen)
+     62 => 65, 154, 90    (kohtalainen)
+     84 => 241, 243, 90   (sakea)
+     168 => 206, 2, 2     (sakea)
+     189 => 131, 10, 70   (hyvin sakea)
+     251 => 244, 244, 244 ()
+     ```
  - NOAA dBZ scale
    ```
    ND  96  101 97
@@ -75,3 +76,5 @@ each zoom level.
    70  154 86  195
    75  248 246 247
    ```
+ - Smoothing where every value around is some data value and the value in the
+   point is not scanned or no echo.
