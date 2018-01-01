@@ -15,6 +15,7 @@ gdal.UseExceptions()
 
 Raster = collections.namedtuple('Raster', ['width', 'height', 'projection_ref', 'affine_transform',
                                            'bands'])
+Band = collections.namedtuple('Band', ['no_data_value', 'unit_type', 'scale', 'offset', 'data'])
 
 
 def extract_metadata(gdal_object):
@@ -77,7 +78,14 @@ def gdal_to_raster(gdal_raster):
                 row.append(value)
             # grid = band.ReadRaster(0, 0, width, height)
             # print grid
-        bands.append(rows)
+
+        bands.append(
+            Band(
+                no_data_value=band.GetNoDataValue(),
+                unit_type=band.GetUnitType(),
+                offset=band.GetOffset(),
+                scale=band.GetScale(),
+                data=rows))
 
 
         # print dir(gdal_raster)
@@ -85,7 +93,6 @@ def gdal_to_raster(gdal_raster):
 
     return Raster(width=width, height=height, projection_ref=projection_ref,
                   affine_transform=transform, bands=bands)
-
 
 
 def read_tiff(path):

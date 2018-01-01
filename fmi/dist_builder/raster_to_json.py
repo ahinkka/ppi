@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from __future__ import print_function
 
 import json
@@ -16,7 +17,8 @@ if __name__ == "__main__":
     band = raster.bands[0]
 
     result = {}
-    result['data'] = band
+    result['data'] = band.data
+    # the TIFFs returned (or read) don't seem to include no data values etc.
 
     metadata = {}
     metadata['width'] = raster.width
@@ -28,6 +30,4 @@ if __name__ == "__main__":
         metadata[k] = v
 
     result['metadata'] = metadata
-
     json.dump(result, sys.stdout)
-    # print(raster)

@@ -8,15 +8,6 @@ import {httpGetPromise} from "../utils"
 import {ObserverActions} from "../constants"
 
 
-const inflate = (stream) => {
-  try {
-    return pako.inflate(stream, { to: 'string' })
-  } catch (err) {
-    console.log("Error while decompressing product file:", err);
-  }
-}
-
-
 const computeExtent = (affineTransform, width, height) => {
   // "affineTransform": [
   // 0   19.8869934197,
@@ -48,12 +39,10 @@ export class Map extends React.Component {
   constructor(props) {
     super(props);
 
-    this.currentProduct = null;
-    this.currentProductUrl = null;
+    this.__previousProduct = null;
 
     this.__onResize = this.__onResize.bind(this);
     this.__updateMap = this.__updateMap.bind(this);
-    this.__fetchNewProduct = this.__fetchNewProduct.bind(this);
     this.__canvasFunction = this.__canvasFunction.bind(this);
   }
 
@@ -159,14 +148,14 @@ export class Map extends React.Component {
     this.canvas.width = Math.floor(size[0])
     this.canvas.height = Math.floor(size[1])
 
-    if (this.currentProduct == null) {
+    if (this.props.product == null || this.props.product == undefined) {
       console.warn("__canvasFunction not rendering because of null currentProduct")
       return this.canvas
     }
 
 
-    let data = this.currentProduct.data
-    let metadata = this.currentProduct.metadata
+    let data = this.props.product.data
+    let metadata = this.props.product.metadata
 
     // Currently we expect the products to be in EPSG:3426 and the map in
     // EPSG:3857.  We should support arbitrary input projections. And we also
@@ -268,34 +257,12 @@ export class Map extends React.Component {
     window.removeEventListener('resize', this.__onResize)
   }
 
-  __fetchNewProduct(productUrl) {
-    if (productUrl == null) {
-      console.warn("__fetchNewProduct got a null productUrl")
-      return
-    }
-
-    let tmp = this;
-    httpGetPromise(productUrl + ".gz", true)
-      .then(inflate)
-      .then(JSON.parse)
-      .then((obj) => {
-	// TODO: figure out whether we should only inflate and parse at render
-	//       time? The whole caching regime is missing as well.
-	tmp.currentProduct = obj
-	tmp.currentProductUrl = productUrl
-	tmp.imageCanvas.changed()
-      })
-  }
-
   render() {
-    // TODO: minimize calls to render?
-    console.log("Map.render()", this.props.productUrl)
-
-    // TODO: we shouldn't fetch anything if the previous one hasn't been
-    //       rendered yet; the whole animation mechanism should wait for the
-    //       products to be rendered before proceeding to the next one.
-    if (this.currentProductUrl != this.props.productUrl) {
-      this.__fetchNewProduct(this.props.productUrl)
+    if (this.__previousProduct == null || this.previousProduct != this.props.product) {
+      this.__previousProduct == this.props.product
+      if (this.imageCanvas !== undefined) {
+	this.imageCanvas.changed()
+      }
     }
 
     this.__updateMap()

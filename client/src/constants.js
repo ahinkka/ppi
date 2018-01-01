@@ -1,5 +1,5 @@
 export const ObserverActions = {
-  INDEX_UPDATED: "index updated",
+  CATALOG_UPDATED: "catalog updated",
 
   RADAR_SELECTED: "radar selected",
   PRODUCT_SELECTED: "product selected",
@@ -14,4 +14,6 @@ export const ObserverActions = {
 
   ANIMATION_TICK: "animation tick",
   TOGGLE_ANIMATION: "toggle animation",
+
+  PRODUCT_LOAD_UPDATE: "product load update",
 }

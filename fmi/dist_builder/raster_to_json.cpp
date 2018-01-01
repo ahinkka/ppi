@@ -81,9 +81,9 @@ std::string dump_data(GDALDataset* raster) {
     for (int x = 0; x < width; x++) {
         for (int y = 0; y < height; y++) {
             auto index = x * width + y;
-            if (index % (size / 10) == 0) {
-                cerr << "# Reading data: " << ((float)index / (float)size) * 100.0 << "%" << endl;
-            }
+            // if (index % (size / 10) == 0) {
+            //     cerr << "# Reading data: " << ((float)index / (float)size) * 100.0 << "%" << endl;
+            // }
 
             char buf[1];
             band->RasterIO(GF_Read, x, y, 1, 1, &buf, 1, 1, GDALDataType::GDT_Byte, 0, 0);
@@ -104,9 +104,9 @@ std::string dump_data(GDALDataset* raster) {
 
         for (int y = 0; y < height; y++) {
             auto index = x * width + y;
-            if (index % (size / 10) == 0) {
-                cerr << "# Building data JSON: " << ((float)index / (float)size) * 100.0 << "%" << endl;
-            }
+            // if (index % (size / 10) == 0) {
+            //     cerr << "# Building data JSON: " << ((float)index / (float)size) * 100.0 << "%" << endl;
+            // }
             result += to_string(data_values[index]);
             if (y < height - 1) {
                 result += ",";

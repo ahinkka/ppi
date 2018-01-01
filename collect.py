@@ -11,9 +11,11 @@ import codecs
 import copy
 import datetime
 import json
+import operator
 import os
 import subprocess
 import sys
+import traceback
 
 
 utf8_stdout = codecs.getwriter('utf-8')(sys.stdout)
@@ -47,29 +49,26 @@ def camelcapsify_dict(d):
     return result
 
 
-def collect_radar_rasters(all_products):
+def collect_radar_rasters(input_products):
     """Collects radar rasters from the list of all products.
 
     Args:
         List of product dicts. Each dict contains the field 'type'. This
-        function works with dicts with type 'radar_raster'. Discards
+        function works with dicts with type 'RADAR RASTER'. Discards
         everything else.
 
     Returns:
-        A pair containing a radars dict and a product mapping dict.
+        A dict where keys are radar ids and values radar objects.
 
         Radars object is as follows:
-          {radar => { "id": ..., "lon": ..., "lat": ..., "display": ... }, ...} where
-        coordinates are in WGS84 system and display is a human-readable name
-        for the radar.
+          { "id": ..., "lon": ..., "lat": ..., "display": ..., "products": {...} }
+        where coordinates are in WGS84 system and display is a human-readable
+        name for the radar.
 
-        Product mapping is as follows:
-          (radar, productName) => {params} where params is like:
-
+        Product dict has product ids as keys, dicts as values as follows:
           {
-            "radar": ...,      # same as in key
-            "name": ...,       # same as in key; productName essentially
-            "flavors": [       # flavors enable sub-selections for a product)
+            "name": ...,       # human-readable name of the product
+            "flavors": [       # flavors enable sub-selections for a product
               "0.5": [         # if only one flavor, use 'default' for no selector)
                 {              # each item under flavor is one timestep, a distinct product
                   "time": ..., # timestamp as UTC ISO8601, JS compatible format
@@ -78,64 +77,83 @@ def collect_radar_rasters(all_products):
               }
             ]
           }
+
     """
     radar_rasters = [product
-                     for product in all_products
-                     if product['type'] == 'radar_raster']
+                     for product in input_products
+                     if product['type'] == 'RADAR RASTER']
 
-    products = {}
-    radars = {}
-    for p in radar_rasters:
-        if p["data_file"].endswith(".tiff.gz"):
-            dest_path = os.path.basename(p["data_file"]).replace(".tiff.gz", ".json")
-        elif p["data_file"].endswith(".tiff"):
-            dest_path = os.path.basename(p["data_file"]).replace(".tiff", ".json")
+    result = {}
+    sources_dests_infos = []
+    for product in radar_rasters:
+        if product["data_file"].endswith(".tiff.gz"):
+            dest_path = os.path.basename(product["data_file"]).replace(".tiff.gz", ".json")
+        elif product["data_file"].endswith(".tiff"):
+            dest_path = os.path.basename(product["data_file"]).replace(".tiff", ".json")
         else:
-            raise Exception("Data file with unknown extension")
+            raise Exception("Data file with unknown extension: {}"
+                            .format(product["data_file"]))
+        final_dest_path = dest_path + ".gz"
 
-        radar = {
-            "lon": p["radar_location"]["lon"],
-            "lat": p["radar_location"]["lat"],
-            "display": p["radar_name"],
-            "id": p["radar_id"]
-        }
-        radars[p["radar_id"]] = radar
+        if product["radar_id"] not in result:
+            result[product["radar_id"]] = {
+                "lon": product["radar_location"]["lon"],
+                "lat": product["radar_location"]["lat"],
+                "id": product["radar_id"],
+                "display": product["radar_name"],
+                "products": {}
+            }
+        radar_dict = result[product["radar_id"]]
 
-        key = (radar["id"], p["product_name"])
-        if key in products:
-            params = products[key]
+        products_dict = radar_dict["products"]
+        product_id = product["product_id"]
+
+        if product_id not in products_dict:
+            products_dict[product_id] = {
+                "display": product["product_name"],
+                "flavors": {}
+            }
+        product_dict = products_dict[product_id]
+
+        flavors_dict = product_dict["flavors"]
+
+        if product["elevation"] is not None:
+            flavor_key = str(product["elevation"])
         else:
-            params = {
-                "name": p["product_name"],
-                "radar": radar["id"],
-                "flavors": {},
+            flavor_key = "default"
+
+        if flavor_key not in flavors_dict:
+            flavors_dict[flavor_key] = {
+                "display": flavor_key,
+                "type": "RADAR RASTER",
+                "times": []
             }
 
-        if p.get("elevation", None) is not None:
-            elevation = str(p["elevation"])
-            if elevation in params["flavors"]:
-                flavor = params["flavors"][elevation]
-            else:
-                flavor = params["flavors"][elevation] = []
-        else:
-            if "default" in params["flavors"]:
-                flavor = params["flavors"]["default"]
-            else:
-                flavor = params["flavors"]["default"] = []
-
-        flavor.append({
-            "time": p["time"],
-            "url": dest_path,
-            "type": "RADAR_RASTER",
-            "productInfo": camelcapsify_dict(p["radar_product_info"]),
-            "sourceFile": p["data_file"],
-            "destinationFile": dest_path,
+        # "sourceFile": product["data_file"],
+        # "destinationFile": dest_path,
+        flavors_dict[flavor_key]["times"].append({
+            "productInfo": camelcapsify_dict(product["radar_product_info"]),
+            "time": product["time"],
+            "url": final_dest_path
         })
-        products[key] = params
+        
+        flavors_dict[flavor_key]["times"].sort(key=operator.itemgetter("time"))
+        sources_dests_infos.append((product["data_file"], dest_path, product["radar_product_info"]))
 
-    err(u"Got {} radars".format(len(radars)))
-    err(u"Got {} products".format(len(products)))
-    return radars, products
+    for radar, radar_dict in result.iteritems():
+        err(u"Radar {} ({})".format(radar_dict["display"], radar))
+        for product_id, product in radar_dict["products"].iteritems():
+            err(u"  Product {} ({})".format(product["display"], product_id))
+            for flavor_id, flavor in product["flavors"].iteritems():
+                if len(flavor["times"]) > 5:
+                    times = [t["time"] for t in [flavor["times"][0], flavor["times"][-1]]]
+                    times.insert(1, "...")
+                else:
+                    times = [t["time"] for t in flavor["times"]]
+                err(u"    Flavor {} ({})".format(flavor["display"], flavor_id))
+                err(u"      {}".format(u", ".join(times)))
+
+    return result, sources_dests_infos
 
 
 def iload_json(buff, decoder=None, _w=json.decoder.WHITESPACE.match):
@@ -161,12 +179,12 @@ def iload_json(buff, decoder=None, _w=json.decoder.WHITESPACE.match):
         raise ValueError('%s (%r at position %d).' % (exc, buff[idx:], idx))
 
 
-def collect(directory):
+def collect(infile, exporter, directory):
     if not os.path.isdir(directory):
         parser.error(u"Output directory '{}' must exist".format(directory))
 
     lines = []
-    for line in sys.stdin:
+    for line in infile:
         lines.append(line)
     input_data = "".join(lines)
 
@@ -176,53 +194,50 @@ def collect(directory):
             input_products.append(i)
 
 
-    radars, products = collect_radar_rasters(input_products)
-    with open(os.path.join(directory, "index.json"), "w") as f:
-        p = {}
-        for k, v in products.iteritems():
-            v = copy.deepcopy(v)
-            p["|".join(k)] = v
+    radars, sources_dests_infos = collect_radar_rasters(input_products)
 
-            for flavor_key, product_list in v["flavors"].iteritems():
-                new_products = []
-                for product in product_list:
-                    del product["destinationFile"]
-                    del product["sourceFile"]
-                    new_products.append(product)
+    with open(os.path.join(directory, "catalog.json"), "w") as f:
+        catalog = copy.deepcopy(radars)
+        json.dump(catalog, f)
 
-        json.dump({"radars": radars, "products": p}, f)
+    # TODO: parallelize, this should be embarrassingly easy
+    for src, dst, product_info in sources_dests_infos:
+        try:
+            dest_path = os.path.join(directory, dst)
+            # err(dest_path)
+            # err(camelcapsify_dict(product_info))
+            additional_metadata = {"productInfo": product_info}
+            # TODO: document how an exporter should work
+            started = datetime.datetime.now()
+            err(u"Running command {}".format(u' '.join([exporter, src])))
 
-    for product in products.itervalues():
-        for flavor_name, flavor_items in product["flavors"].iteritems():
-            for flavor_item in flavor_items: # these are really products
-                source =  flavor_item["sourceFile"]
-                to_file = flavor_item["destinationFile"]
-                del flavor_item["sourceFile"]
-                del flavor_item["destinationFile"]
-
-                try:
-                    dest_path = os.path.join(directory, to_file)
-                    additional_metadata = {"productInfo": flavor_item["productInfo"]}
-                    # TODO: make this parameterizable so it can be passed in
-                    process = subprocess.Popen(["python", "fmi/dist_builder/raster_to_json.py", source],
-                                               stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-                    contents, _ = process.communicate(json.dumps(additional_metadata))
-                    with open(dest_path, "w") as f:
-                        err(u"# Writing product as JSON to '{}'...".format(dest_path))
-                        f.write(contents)
-                        err(u"# Written.")
-                    subprocess.check_call(["gzip", "-v", dest_path])
-                    err(u"# Compressed.")
-                except Exception, e:
-                    err(u"Cannot dump {}".format(source))
-                    err(e)
-                # err(source)
+            with open(dest_path, "w") as f:
+                err(u"Writing product as JSON to '{}'...".format(dest_path))
+                process = subprocess.Popen([exporter, src],
+                                           stdout=f, stdin=subprocess.PIPE)
+                process.stdin.write(json.dumps(additional_metadata))
+                process.stdin.close()
+                process.wait()
+            err(u"Written. Compressing...")
+            subprocess.check_call(["gzip", "-v", dest_path])
+            err(u"Exported in {} s".format((datetime.datetime.now() - started).total_seconds()))
+        except KeyboardInterrupt, kbi:
+            raise kbi
+        except Exception, e:
+            err(u"Couldn't export {}: {}".format(src, e))
+            err(traceback.format_exc())
 
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('infile', nargs='?', type=argparse.FileType('r'),
+                        default=sys.stdin,
+                        help="JSON input such as produced by collect_radar_products.py")
+    parser.add_argument('exporter',
+                        help='exporter command to run the product files through, see raster_to_json.py for an example')
     parser.add_argument("directory",
                         help="output directory to produce distribution in")
     args = parser.parse_args()
-    collect(args.directory)
+    collect(args.infile, args.exporter, args.directory)

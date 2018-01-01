@@ -31,85 +31,96 @@ def pr(*args, **kwargs):
     return print(*args, **kwargs)
 
 
+def read_product(path):
+    err(u"Reading in product information from '{}'...".format(path))
+    with codecs.open(path, 'r') as f:
+        contents = f.read()
+        product = json.loads(contents)
+
+    result = {}
+    result["radar_id"] = product["site"]
+    result["type"] = "RADAR RASTER"
+    result["metadata_file"] = path
+    result["radar_name"] = radars[result["radar_id"]]["name"]
+    result["radar_location"] = {"lon": radars[result["radar_id"]]["lon"],
+                                "lat": radars[result["radar_id"]]["lat"]}
+
+    for key in ["elevation", "time", "min_lat", "min_lon", "max_lat", "max_lon"]:
+        result[key] = product[key]
+
+    without_ext = os.path.splitext(path)[0]
+    tiff_gz = without_ext + ".tiff.gz"
+    tiff = without_ext + ".tiff"
+    if os.path.isfile(tiff_gz):
+        result["data_file"] = tiff_gz
+    elif os.path.isfile(tiff):
+        result["data_file"] = tiff
+    else:
+        raise Exception(u'File {}(.gz) not found'.format(tiff))
+
+    product_name = product["product"]
+    result["product_name"] = product_name
+    result["product_id"] = product_name
+    if product_name == "dbzh":
+        result["radar_product_info"] = {
+            "product_type": "PPI",
+            "data_type": "REFLECTIVITY",
+            "data_unit": "dBZ",
+            "polarization": "HORIZONTAL",
+            "data_scale": {
+                # (dBZ = step * pixval - offset)
+                "offset": -32,
+                "step": 0.5,
+                "not_scanned": 255,
+                "no_echo": 0
+            }
+        }
+    elif product_name.startswith("etop"):
+        result["radar_product_info"] = {
+            "product_type": "TOPS",
+            "data_type": "HEIGHT",
+            "data_unit": "m"
+        }
+    elif product_name == "hclass":
+        result["radar_product_info"] = {
+            "product_type": "PPI",
+            "data_type": "HYDROMETEOR_CLASSIFICATION",
+            "data_unit": "HCLASS_UNIT"
+        }
+    elif product_name == "vrad":
+        result["radar_product_info"] = {
+            "product_type": "PPI",
+            "data_type": "RADIAL_VELOCITY",
+            "data_unit": "m/s"
+        }
+    else:
+        err("Unhandled product name: {}".format(product_name))
+        sys.exit(result["data_file"])
+
+    assert os.path.isfile(result["metadata_file"])
+    return result
+
+
+
 def collect(directory):
     if not os.path.isdir(directory):
         parser.error(u"Product directory '{}' must exist".format(directory))
 
-    now = datetime.datetime.utcnow()
-    dir_parts = [directory, str(now.year), str(now.month), str(now.day)]
-    dir_path = os.path.abspath("/".join(dir_parts))
+    # now = datetime.datetime.utcnow()
+    # dir_parts = [directory, str(now.year), str(now.month), str(now.day)]
+    # dir_path = os.path.abspath("/".join(dir_parts))
 
     products = []
-    err(u"Scanning '{}' for product information files...".format(dir_path))
-    for item in os.listdir(dir_path):
-        if item.endswith(".json"):
-            file_path = "/".join([dir_path, item])
-            err(u"Reading in product information from '{}'...".format(file_path))
-            with codecs.open(file_path, 'r') as f:
-                contents = f.read()
-                d = json.loads(contents)
-                d["radar_id"] = d["site"]
-                del d["site"]
+    err(u"Scanning '{}' for product information files...".format(directory))
 
-                d["type"] = "radar_raster"
-                d["metadata_file"] = file_path
-                d["radar_name"] = radars[d["radar_id"]]["name"]
-                d["radar_location"] = {"lon": radars[d["radar_id"]]["lon"],
-                                       "lat": radars[d["radar_id"]]["lat"]}
+    for root, dirs, files in os.walk(directory):
+        path = root.split(os.sep)
+        # print((len(path) - 1) * '---', os.path.basename(root))
 
+        for file in files:
+            if file.endswith(".json"):
+                products.append(read_product(os.path.join(root, file)))
 
-                without_ext = os.path.splitext(file_path)[0]
-                tiff_gz = without_ext + ".tiff.gz"
-                tiff = without_ext + ".tiff"
-                if os.path.isfile(tiff_gz):
-                    d["data_file"] = tiff_gz
-                elif os.path.isfile(tiff):
-                    d["data_file"] = tiff
-                else:
-                    raise Exception(u'File {}(.gz) not found'.format(tiff))
-
-                if "dbzh" in d["data_file"]:
-                    d["product_name"] = "dbzh"
-                    d["radar_product_info"] = {
-                        "product_type": "PPI",
-                        "data_type": "REFLECTIVITY",
-                        "data_unit": "dBZ",
-                        "polarization": "HORIZONTAL",
-                        "data_scale": {
-                            # (dBZ = step * pixval - offset)
-                            "offset": -32,
-                            "step": 0.5,
-                            "not_scanned": 255,
-                            "no_echo": 0
-                        }
-                    }
-                elif "etop" in d["data_file"]:
-                    d["product_name"] = "etop"
-                    d["radar_product_info"] = {
-                        "product_type": "TOPS",
-                        "data_type": "HEIGHT",
-                        "data_unit": "m"
-                    }
-                elif "hclass" in d["data_file"]:
-                    d["product_name"] = "hclass"
-                    d["radar_product_info"] = {
-                        "product_type": "PPI",
-                        "data_type": "HYDROMETEOR_CLASSIFICATION",
-                        "data_unit": "HCLASS_UNIT"
-                    }
-                elif "vrad" in d["data_file"]:
-                    d["product_name"] = "vrad"
-                    d["radar_product_info"] = {
-                        "product_type": "PPI",
-                        "data_type": "RADIAL_VELOCITY",
-                        "data_unit": "m/s"
-                    }
-                else:
-                    err(d["data_file"])
-                    foo
-
-                assert os.path.isfile(d["metadata_file"])
-                products.append(d)
     return products
 
 

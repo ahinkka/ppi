@@ -19,3 +19,7 @@ And then navigate to directory build with your browser.
 
     cd build
     python -mSimpleHTTPServer
+
+## Ideas
+ - Should adopt prop-types https://www.npmjs.com/package/prop-types for the
+   React components.
