@@ -229,13 +229,43 @@ export class ObserverApp extends React.Component {
     let state = store.getState();
 
     this.loadProducts()
-    let times = [] // TODO: implement computation of valid times
-
     if (state.selection.site[0] == null ||
         state.selection.product[0] == null ||
         state.selection.flavor[0] == null) {
       return (<div></div>)
     }
+
+    let tickItems = []
+    const flavorTimes = state.selection.flavor[1].times
+    const minTime = Date.parse(flavorTimes[0].time)
+    const maxTime = Date.parse(flavorTimes[flavorTimes.length-1].time)
+    const spanMillis = maxTime - minTime
+    for (let i=0; i<flavorTimes.length; i++) {
+      const t = flavorTimes[i]
+      const time = Date.parse(t.time)
+      const fromStartMillis = time - minTime
+      const proportion = fromStartMillis / spanMillis
+
+      let color = "#ffffff"
+
+      if (time === state.animation.currentProductTime) {
+	color = "#000000"
+      } else {
+	const url = this.props.productUrlResolver(state.selection.flavor[1], time)
+	if (url in state.loadedProducts) {
+	  color = "#c0c0c0"
+	}
+      }
+
+      tickItems.push({
+	position: proportion,
+	color: color,
+	tooltip: t.time,
+	action: ObserverActions.TICK_CLICKED,
+	payload: time
+      })
+    }
+
 
     let productUrl = this.props.productUrlResolver(state.selection.flavor[1],
                                                    state.animation.nextProductTime)
@@ -281,7 +311,8 @@ export class ObserverApp extends React.Component {
                           tooltip="Press SPACE to toggle animation" />
           </div>
           <div className="col-md-3">
-            <ProductSlider />
+            <ProductSlider ticks={tickItems}
+                           dispatch={store.dispatch} />
           </div>
           <div className="col-md-2">
             <TimeDisplay currentValue={state.animation.currentProductTime} />
