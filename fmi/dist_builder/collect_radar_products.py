@@ -38,12 +38,12 @@ def read_product(path):
         product = json.loads(contents)
 
     result = {}
-    result["radar_id"] = product["site"]
+    result["site_id"] = product["site"]
     result["type"] = "RADAR RASTER"
     result["metadata_file"] = path
-    result["radar_name"] = radars[result["radar_id"]]["name"]
-    result["radar_location"] = {"lon": radars[result["radar_id"]]["lon"],
-                                "lat": radars[result["radar_id"]]["lat"]}
+    result["site_name"] = radars[result["site_id"]]["name"]
+    result["site_location"] = {"lon": radars[result["site_id"]]["lon"],
+                               "lat": radars[result["site_id"]]["lat"]}
 
     for key in ["elevation", "time", "min_lat", "min_lon", "max_lat", "max_lon"]:
         result[key] = product[key]
@@ -71,7 +71,7 @@ def read_product(path):
                 # (dBZ = step * pixval - offset)
                 "offset": -32,
                 "step": 0.5,
-                "not_scanned": 255,
+                "not_scanned": 252,
                 "no_echo": 0
             }
         }

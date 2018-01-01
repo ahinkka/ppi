@@ -209,10 +209,12 @@ export class Map extends React.Component {
 	let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
 	let value = undefined
 	if (dataPxXY[0] === undefined) {
-	  value = 252 // metadata.productInfo.dataScale.notScanned
+	  value = metadata.productInfo.dataScale.notScanned
 	} else {
     	  value = data[dataPxXY[0]][dataPxXY[1]]
 	}
+
+	// {"dataScale":{"noEcho":0,"notScanned":252,"offset":-32,"step":0.5},"dataType":"REFLECTIVITY","dataUnit":"dBZ","polarization":"HORIZONTAL","productType":"PPI"}
 
 	// Values for ImageData.data are RGBA in an
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray
@@ -225,7 +227,7 @@ export class Map extends React.Component {
 	//  blueComponent = imageData.data[((50 * (imageData.width * 4)) + (200 * 4)) + 2];
 	//
 	let color = null
-	if (value == 252) { // metadata.productInfo.dataScale.notScanned) {
+	if (value == metadata.productInfo.dataScale.notScanned) {
 	  // color.set([211, 211, 211, 76])
 	  color = [211, 211, 211, 76]
 	} else {

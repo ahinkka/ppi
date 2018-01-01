@@ -19,19 +19,19 @@ const inflate = (stream) => {
 }
 
 
-const radarSelections = (catalog) => {
+const siteSelections = (catalog) => {
   let result = []
-  for (const radarId in catalog) {
-    result.push({id: radarId, display: catalog[radarId].display})
+  for (const siteId in catalog) {
+    result.push({id: siteId, display: catalog[siteId].display})
   }
   result.sort((a, b) => a.id.localeCompare(b.id))
   return result
 }
 
-const productSelections = (radar) => {
+const productSelections = (site) => {
   let result = []
-  for (const productId in radar.products) {
-    result.push({id: productId, display: radar.products[productId].display})
+  for (const productId in site.products) {
+    result.push({id: productId, display: site.products[productId].display})
   }
   result.sort((a, b) => a.id.localeCompare(b.id))
   return result
@@ -121,7 +121,7 @@ export class ObserverApp extends React.Component {
   _onKeyPress(event) {
     let key = String.fromCharCode(event.charCode);
     if (key == "r" || key == "R") {
-      this._dispatch({type: ObserverActions.CYCLE_RADAR})
+      this._dispatch({type: ObserverActions.CYCLE_SITE})
     } else if (key == "p" || key == "P") {
       this._dispatch({type: ObserverActions.CYCLE_PRODUCT})
     } else if (key == "f" || key == "F") {
@@ -231,7 +231,7 @@ export class ObserverApp extends React.Component {
     this.loadProducts()
     let times = [] // TODO: implement computation of valid times
 
-    if (state.selection.radar[0] == null ||
+    if (state.selection.site[0] == null ||
         state.selection.product[0] == null ||
         state.selection.flavor[0] == null) {
       return (<div></div>)
@@ -254,15 +254,15 @@ export class ObserverApp extends React.Component {
         <div id="product-selection-row" className="row">
           <div className="col-md-4">
           <form className="form-inline">
-            <DropdownSelector currentValue={state.selection.radar[0]}
-                              legend="Radar"
-                              items={radarSelections(state.catalog)}
-                              tooltip="Press R to cycle radars"
-                              action={ObserverActions.RADAR_SELECTED}
+            <DropdownSelector currentValue={state.selection.site[0]}
+                              legend="Site"
+                              items={siteSelections(state.catalog)}
+                              tooltip="Press R to cycle sites"
+                              action={ObserverActions.SITE_SELECTED}
                               dispatch={store.dispatch} />
             <DropdownSelector currentValue={state.selection.product[0]}
                               legend="Product"
-                              items={productSelections(state.selection.radar[1])}
+                              items={productSelections(state.selection.site[1])}
                               tooltip="Press P to cycle products"
                               action={ObserverActions.PRODUCT_SELECTED}
                               dispatch={store.dispatch} />

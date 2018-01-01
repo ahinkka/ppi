@@ -37,3 +37,14 @@ each zoom level.
 ## Thoughts and Ideas
  - Line density display:
    https://twitter.com/archillect/status/938533533810937856
+ - FMI summer color scale for reflectivity
+   http://wms.fmi.fi/fmi-apikey/<>/geoserver/Radar/ows?service=WMS&request=GetLegendGraphic&format=image%2Fpng&width=500&height=100&layer=anjalankoski_dbzh&style=Radar+dbz+Summer
+   ```
+    FMI reflectivity (summer)
+    0 => 255, 255, 255   (nodata)
+    21 => 108, 235, 243  (kohtalainen)
+    62 => 65, 154, 90    (kohtalainen)
+    84 => 241, 243, 90   (sakea)
+    168 => 206, 2, 2     (sakea)
+    189 => 131, 10, 70   (hyvin sakea)
+    251 => 244, 244, 244 ()```

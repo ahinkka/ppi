@@ -1,11 +1,11 @@
 export const ObserverActions = {
   CATALOG_UPDATED: "catalog updated",
 
-  RADAR_SELECTED: "radar selected",
+  SITE_SELECTED: "site selected",
   PRODUCT_SELECTED: "product selected",
   FLAVOR_SELECTED: "flavor selected",
 
-  CYCLE_RADAR: "cycle radar",
+  CYCLE_SITE: "cycle site",
   CYCLE_PRODUCT: "cycle product",
   CYCLE_FLAVOR: "cycle flavor",
 

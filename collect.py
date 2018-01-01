@@ -58,12 +58,12 @@ def collect_radar_rasters(input_products):
         everything else.
 
     Returns:
-        A dict where keys are radar ids and values radar objects.
+        A dict where keys are site ids and values site objects.
 
-        Radars object is as follows:
-          { "id": ..., "lon": ..., "lat": ..., "display": ..., "products": {...} }
+        Site object is as follows:
+          { "lon": ..., "lat": ..., "display": ..., "products": {...} }
         where coordinates are in WGS84 system and display is a human-readable
-        name for the radar.
+        name for the site.
 
         Product dict has product ids as keys, dicts as values as follows:
           {
@@ -95,17 +95,16 @@ def collect_radar_rasters(input_products):
                             .format(product["data_file"]))
         final_dest_path = dest_path + ".gz"
 
-        if product["radar_id"] not in result:
-            result[product["radar_id"]] = {
-                "lon": product["radar_location"]["lon"],
-                "lat": product["radar_location"]["lat"],
-                "id": product["radar_id"],
-                "display": product["radar_name"],
+        if product["site_id"] not in result:
+            result[product["site_id"]] = {
+                "lon": product["site_location"]["lon"],
+                "lat": product["site_location"]["lat"],
+                "display": product["site_name"],
                 "products": {}
             }
-        radar_dict = result[product["radar_id"]]
+        site_dict = result[product["site_id"]]
 
-        products_dict = radar_dict["products"]
+        products_dict = site_dict["products"]
         product_id = product["product_id"]
 
         if product_id not in products_dict:
@@ -140,9 +139,9 @@ def collect_radar_rasters(input_products):
         flavors_dict[flavor_key]["times"].sort(key=operator.itemgetter("time"))
         sources_dests_infos.append((product["data_file"], dest_path, product["radar_product_info"]))
 
-    for radar, radar_dict in result.iteritems():
-        err(u"Radar {} ({})".format(radar_dict["display"], radar))
-        for product_id, product in radar_dict["products"].iteritems():
+    for site, site_dict in result.iteritems():
+        err(u"Site {} ({})".format(site_dict["display"], site))
+        for product_id, product in site_dict["products"].iteritems():
             err(u"  Product {} ({})".format(product["display"], product_id))
             for flavor_id, flavor in product["flavors"].iteritems():
                 if len(flavor["times"]) > 5:
@@ -194,10 +193,10 @@ def collect(infile, exporter, directory):
             input_products.append(i)
 
 
-    radars, sources_dests_infos = collect_radar_rasters(input_products)
+    sites, sources_dests_infos = collect_radar_rasters(input_products)
 
     with open(os.path.join(directory, "catalog.json"), "w") as f:
-        catalog = copy.deepcopy(radars)
+        catalog = copy.deepcopy(sites)
         json.dump(catalog, f)
 
     # TODO: parallelize, this should be embarrassingly easy
@@ -206,7 +205,7 @@ def collect(infile, exporter, directory):
             dest_path = os.path.join(directory, dst)
             # err(dest_path)
             # err(camelcapsify_dict(product_info))
-            additional_metadata = {"productInfo": product_info}
+            additional_metadata = {"productInfo": camelcapsify_dict(product_info)}
             # TODO: document how an exporter should work
             started = datetime.datetime.now()
             err(u"Running command {}".format(u' '.join([exporter, src])))
