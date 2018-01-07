@@ -4,11 +4,15 @@ export const NOT_SCANNED_COLOR = [211, 211, 211, 76]
 export const NO_ECHO_COLOR = [0, 0, 0, 0]
 
 
+export const ScaleRangeType = {
+  STEP: "step",
+}
+
+
 // TODO: the actual colors might not be completely correct. This is the scale
 //       as described in Wikipedia.  This is a discrete scale for reflectivity
 //       ranges.
-export const reflectivityValueToNOAAColor = (reflectivityValue) => {
-  const lowRedGreenBlue = [
+const NOAALowRedGreenBlue = [
       // ND  96  101 97
       [-30, 208, 255, 255],
       [-25, 198, 152, 189],
@@ -33,17 +37,46 @@ export const reflectivityValueToNOAAColor = (reflectivityValue) => {
       [70,  154, 86,  195],
       [75,  248, 246, 247]]
 
-  for (let index=0; index<lowRedGreenBlue.length; index++) {
-    const [low, red, green, blue] = lowRedGreenBlue[index]
-    if (index == lowRedGreenBlue.length - 1) {
+export const reflectivityValueToNOAAColor = (reflectivityValue) => {
+  for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
+    const [low, red, green, blue] = NOAALowRedGreenBlue[index]
+    if (index == NOAALowRedGreenBlue.length - 1) {
       return [red, green, blue]
     }
 
-    const nextLow = lowRedGreenBlue[index + 1][0]
+    const nextLow = NOAALowRedGreenBlue[index + 1][0]
     if (reflectivityValue > low && reflectivityValue < nextLow) {
       return [red, green, blue]
     }
   }
 
   return [null, null, null]
+}
+
+// TODO: rendering on screen
+export const NOAAScaleToScaleDescription = () => {
+  let result = {}
+  for (let rowIndex=0; rowIndex<NOAALowRedGreenBlue.length; rowIndex++) {
+    let nextRowIndex = rowIndex + 1
+    const [low, red, green, blue] = NOAALowRedGreenBlue[index]
+
+    if (nextRowIndex < NOAALowRedGreenBlue.length) {
+      const [nextLow, nextRed, nextGreen, nextBlue] = NOAALowRedGreenBlue[index]
+      result.append({
+	type: ScaleRangeType.STEP,
+	start: { value: low, open: false },
+	end: { value: nextLow, open: false },
+	color: [red, green, blue]
+      })
+    } else {
+      result.append({
+	type: ScaleRangeType.STEP,
+	start: { value: low, open: false },
+	end: { value: low + 1, open: true },
+	color: [red, green, blue]
+      })
+    }
+  }
+
+  return result
 }
