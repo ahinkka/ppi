@@ -7,6 +7,9 @@ import {d1 as l_interp} from "ndarray-linear-interpolate"
 import {httpGetPromise} from "../utils"
 import {ObserverActions} from "../constants"
 
+import {DataValueType, integerToDataValue} from "./datavalue"
+import {NOT_SCANNED_COLOR, NO_ECHO_COLOR, reflectivityValueToNOAAColor} from "./coloring"
+
 
 const computeExtent = (affineTransform, width, height) => {
   // "affineTransform": [
@@ -32,73 +35,6 @@ const computeExtent = (affineTransform, width, height) => {
 export const CenterState = {
   NO_CHANGE: "no change",
   CHANGE: "change"
-}
-
-
-// {"dataScale":{"noEcho":0,"notScanned":252,"offset":-32,"step":0.5},"dataType":"REFLECTIVITY","dataUnit":"dBZ","polarization":"HORIZONTAL","productType":"PPI"}
-const DataValueType = {
-  NO_ECHO: "no echo",
-  NOT_SCANNED: "not scanned",
-  VALUE: "value"
-}
-const integerToDataValue = (dataScale, intValue) => {
-  if (intValue == dataScale.noEcho) {
-    return [DataValueType.NO_ECHO, null]
-  } else if (intValue == dataScale.notScanned) {
-    return [DataValueType.NOT_SCANNED, null]
-  } else {
-    const dataValue = dataScale.offset + intValue * dataScale.step
-    return [DataValueType.VALUE, dataValue]
-  }
-}
-
-// Global not scanned color
-const notScannedColor = [211, 211, 211, 76]
-// Global no echo color (transparent black)
-const noEchoColor = [0, 0, 0, 0]
-
-// TODO: the actual colors might not be completely correct. This is the scale
-//       as described in Wikipedia.  This is a discrete scale for reflectivity
-//       ranges.
-const reflectivityValueToNOAAColor = (reflectivityValue) => {
-  const lowRedGreenBlue = [
-      // ND  96  101 97
-      [-30, 208, 255, 255],
-      [-25, 198, 152, 189],
-      [-20, 154, 104, 155],
-      [-15, 95,  47,  99],
-      [-10, 205, 205, 155],
-      [-5,  155, 154, 106],
-      [0,   100, 101, 96],
-      [5,   12,  230, 231],
-      [10,  1,   161, 249],
-      [15,  0,   0,   238],
-      [20,  4,   252, 5],
-      [25,  0,   200, 6],
-      [30,  0,   141, 1],
-      [35,  250, 242, 0],
-      [40,  229, 188, 0],
-      [45,  255, 157, 7],
-      [50,  253, 0,   2],
-      [55,  215, 0,   0],
-      [60,  189, 1,   0],
-      [65,  253, 0,   246],
-      [70,  154, 86,  195],
-      [75,  248, 246, 247]]
-
-  for (let index=0; index<lowRedGreenBlue.length; index++) {
-    const [low, red, green, blue] = lowRedGreenBlue[index]
-    if (index == lowRedGreenBlue.length - 1) {
-      return [red, green, blue]
-    }
-
-    const nextLow = lowRedGreenBlue[index + 1][0]
-    if (reflectivityValue > low && reflectivityValue < nextLow) {
-      return [red, green, blue]
-    }
-  }
-
-  return [null, null, null]
 }
 
 
@@ -289,9 +225,9 @@ export class Map extends React.Component {
 	if (metadata.productInfo.dataType == "REFLECTIVITY") {
 	  const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
 	  if (valueType == DataValueType.NOT_SCANNED) {
-	    color = notScannedColor;
+	    color = NOT_SCANNED_COLOR;
 	  } else if (valueType == DataValueType.NO_ECHO) {
-	    color = noEchoColor;
+	    color = NO_ECHO_COLOR;
 	  } else if (valueType == DataValueType.VALUE) {
 	    const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
 	    color = [r, g, b, 255]
