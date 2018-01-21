@@ -7,10 +7,12 @@
     "babel-preset-react": ">=0.0.0",
     "browserify": ">=0.0.0",
     "babelify": ">=0.0.0",
-    "less": ">=2.7.3"
+    "node-sass": ">=4.7.2"
   },
   "dependencies": {
-    "bootstrap": "~3.3.7",
+    "bootstrap": "~4.0.0",
+    "popper.js": "^1.12.9",
+    "jquery": "1.9.1",
     "browserify-incremental": "^3.1.1",
     "ndarray": "^1.0.18",
     "ndarray-linear-interpolate": "^1.0.0",
@@ -18,8 +20,8 @@
     "pako": "~1.0.6",
     "proj4": "~2.4.4",
     "react": ">=0.0.0",
-    "react-bootstrap": "~0.31.5",
     "react-dom": ">=0.0.0",
+    "react-bootstrap": "~0.31.5",
     "react-redux": "~5.0.6",
     "redux": "~3.7.2"
   },

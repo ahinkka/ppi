@@ -305,16 +305,18 @@ export class ObserverApp extends React.Component {
           </form>
           </div>
           <div className="col-md-1">
-            <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
-                          onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
-                          action={ObserverActions.TOGGLE_ANIMATION}
-                          tooltip="Press SPACE to toggle animation" />
+            <div className="float-right">
+              <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
+                            onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
+                            action={ObserverActions.TOGGLE_ANIMATION}
+                            tooltip="Press SPACE to toggle animation" />
+	    </div>
           </div>
-          <div className="col-md-3">
+          <div className="col-md-3 py-2">
             <ProductSlider ticks={tickItems}
                            dispatch={store.dispatch} />
           </div>
-          <div className="col-md-2">
+          <div className="col-md-2 py-2">
             <TimeDisplay currentValue={state.animation.currentProductTime} />
           </div>
         </div>
@@ -327,3 +329,5 @@ export class ObserverApp extends React.Component {
     )
   }
 }
+          // </div>
+          // <div className="col-md-3">

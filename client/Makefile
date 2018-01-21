@@ -21,10 +21,9 @@ build: ## Build distribution into directory 'build'
 	node_modules/.bin/browserify src/main.js \
 		-o build/js/observer.js \
 		-t [ babelify --presets [ es2015 react ] ]
-	node_modules/.bin/lessc \
-		--include-path=node_modules/bootstrap/less \
-		css/observer.less \
-		build/css/observer.css
+	node_modules/.bin/node-sass \
+		--include-path=node_modules/bootstrap/scss \
+		css/observer.sass > build/css/observer.css
 	cp node_modules/openlayers/css/ol.css build/css/
 	cp node_modules/bootstrap/dist/css/bootstrap.min.css build/css/
 	cp -R www/* build/

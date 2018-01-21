@@ -37,6 +37,7 @@ const NOAALowRedGreenBlue = [
       [70,  154, 86,  195],
       [75,  248, 246, 247]]
 
+
 export const reflectivityValueToNOAAColor = (reflectivityValue) => {
   for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
     const [low, red, green, blue] = NOAALowRedGreenBlue[index]
@@ -52,6 +53,7 @@ export const reflectivityValueToNOAAColor = (reflectivityValue) => {
 
   return [null, null, null]
 }
+
 
 // TODO: rendering on screen
 export const NOAAScaleToScaleDescription = () => {
