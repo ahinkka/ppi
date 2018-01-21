@@ -8,7 +8,7 @@ import {DropdownSelector} from "./dropdown_selector"
 import {Map, CenterState} from "./map.js"
 import {ToggleButton} from "./toggle_button"
 import {ProductSlider} from "./product_slider"
-
+import {ColorScale} from "./color-scale"
 
 const inflate = (stream) => {
   try {
@@ -329,5 +329,4 @@ export class ObserverApp extends React.Component {
     )
   }
 }
-          // </div>
-          // <div className="col-md-3">
+	// <ColorScale />
