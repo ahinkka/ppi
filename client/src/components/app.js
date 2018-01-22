@@ -329,4 +329,4 @@ export class ObserverApp extends React.Component {
     )
   }
 }
-	// <ColorScale />
+	// <ColorScale name={"NOAA Reflectivity Scale"} />
