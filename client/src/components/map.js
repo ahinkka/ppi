@@ -32,6 +32,19 @@ const computeExtent = (affineTransform, width, height) => {
 }
 
 
+let lonLatToProductPx = (productExtent, productLonWidth, productLatHeight, productPixWidth, productPixHeight, lon, lat) => {
+  if (lon < productExtent[0] || lon > productExtent[2] ||
+      lat < productExtent[1] || lat > productExtent[3]) {
+    return [undefined, undefined]
+  }
+  let propX = (lon - productExtent[0]) / productLonWidth
+  let propY = 1 - (lat - productExtent[1]) / productLatHeight
+  let x = Math.floor(propX * productPixWidth)
+  let y = Math.floor(propY * productPixHeight)
+  return [x, y]
+}
+
+
 export const CenterState = {
   NO_CHANGE: "no change",
   CHANGE: "change"
@@ -176,21 +189,8 @@ export class Map extends React.Component {
     let max = ol.proj.fromLonLat(maxLonLat)
     let productExtent = [min[0], min[1], max[0], max[1]]
 
-
-    // Lookup function from Web Mercator to product grid
     let lonWidth = productExtent[2] - productExtent[0]
     let latHeight = productExtent[3] - productExtent[1]
-    let lonLatToProductPx = (lon, lat) => {
-      if (lon < productExtent[0] || lon > productExtent[2] ||
-	  lat < productExtent[1] || lat > productExtent[3]) {
-	return [undefined, undefined]
-      }
-      let propX = (lon - productExtent[0]) / lonWidth
-      let propY = 1 - (lat - productExtent[1]) / latHeight
-      let x = Math.floor(propX * metadata.width)
-      let y = Math.floor(propY * metadata.height)
-      return [x, y]
-    }
 
     // Lookup function from canvas grid to Web Mercator
     let canvasExtent = extent;
@@ -213,7 +213,8 @@ export class Map extends React.Component {
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
 	let lonLatXY = canvasPxToLonLat(x, y)
-	let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
+	let dataPxXY = lonLatToProductPx(productExtent, lonWidth, latHeight, metadata.width, metadata.height, lonLatXY[0], lonLatXY[1])
+
 	let value = undefined
 	if (dataPxXY[0] === undefined) {
 	  value = metadata.productInfo.dataScale.notScanned
