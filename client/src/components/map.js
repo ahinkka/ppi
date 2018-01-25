@@ -58,7 +58,6 @@ let makeLonLatToProductPxFunction = (productAffineTransform, productWidth, produ
   let lonWidth = productExtent[2] - productExtent[0]
   let latHeight = productExtent[3] - productExtent[1]
 
-  // TODO: here somehow a caching version when all params match
   return (lon, lat) => _lonLatToProductPx(productExtent, lonWidth, latHeight, productWidth, productHeight, lon, lat)
 }
 
@@ -75,7 +74,6 @@ let _canvasPxToLonLat = (canvasWidth, canvasHeight, xCanvasExtents, yCanvasExten
 let makeCanvasPxToLonLatFunction = (canvasExtent, canvasWidth, canvasHeight) => {
   let xCanvasExtents = ndarray(new Float32Array([canvasExtent[0], canvasExtent[2]], 1, 2))
   let yCanvasExtents = ndarray(new Float32Array([canvasExtent[1], canvasExtent[3]], 1, 2))
-
   return (x, y) => _canvasPxToLonLat(canvasWidth, canvasHeight, xCanvasExtents, yCanvasExtents, x, y)
 }
 
@@ -217,14 +215,22 @@ export class Map extends React.Component {
     let lonLatToProductPx = makeLonLatToProductPxFunction(metadata.affineTransform, metadata.width, metadata.height)
     let canvasPxToLonLat = makeCanvasPxToLonLatFunction(extent, this.canvas.width, this.canvas.height)
 
+    // let __cache = []
+    // cache = ndarray(new Uint32Array(this.canvas.width * this.canvas.height), this.canvas.width, this.canvas.height)
+    // let __cacheKey = [metadata.affineTransform, metadata.width, metadata.height, extent, this.canvas.width, this.canvas.height]
+    let canvasPxToProductPx = (x, y) => {
+      let lonLatXY = canvasPxToLonLat(x, y)
+      let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
+      return dataPxXY
+    }
+
     let ctx = this.canvas.getContext("2d")
     let imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
     let iData = imageData.data
 
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
-	let lonLatXY = canvasPxToLonLat(x, y)
-	let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
+	let dataPxXY = canvasPxToProductPx(x, y)
 
 	let value = undefined
 	if (dataPxXY[0] === undefined) {
