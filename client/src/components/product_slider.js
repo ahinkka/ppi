@@ -42,6 +42,6 @@ export class ProductSlider extends React.Component {
         <div className="progress">
 	  {ticks}
         </div>
-      )
+    )
   }
 }

@@ -9,6 +9,11 @@ import {Map, CenterState} from "./map.js"
 import {ToggleButton} from "./toggle_button"
 import {ProductSlider} from "./product_slider"
 import {ColorScale} from "./color-scale"
+import {NOAAScaleToScaleDescription} from "./coloring"
+
+
+let _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
+
 
 const inflate = (stream) => {
   try {
@@ -325,8 +330,9 @@ export class ObserverApp extends React.Component {
              dispatch={store.dispatch}
              product={product}
              productTime={state.animation.nextProductTime} />
+	<ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
+                    ranges={_NOAAReflectivityColorScale} />
       </div>
     )
   }
 }
-	// <ColorScale name={"NOAA Reflectivity Scale"} />

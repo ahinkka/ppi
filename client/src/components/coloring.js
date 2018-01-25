@@ -57,21 +57,21 @@ export const reflectivityValueToNOAAColor = (reflectivityValue) => {
 
 // TODO: rendering on screen
 export const NOAAScaleToScaleDescription = () => {
-  let result = {}
+  let result = []
   for (let rowIndex=0; rowIndex<NOAALowRedGreenBlue.length; rowIndex++) {
     let nextRowIndex = rowIndex + 1
-    const [low, red, green, blue] = NOAALowRedGreenBlue[index]
+    const [low, red, green, blue] = NOAALowRedGreenBlue[rowIndex]
 
     if (nextRowIndex < NOAALowRedGreenBlue.length) {
-      const [nextLow, nextRed, nextGreen, nextBlue] = NOAALowRedGreenBlue[index]
-      result.append({
+      const [nextLow, nextRed, nextGreen, nextBlue] = NOAALowRedGreenBlue[nextRowIndex]
+      result.push({
 	type: ScaleRangeType.STEP,
 	start: { value: low, open: false },
 	end: { value: nextLow, open: false },
 	color: [red, green, blue]
       })
     } else {
-      result.append({
+      result.push({
 	type: ScaleRangeType.STEP,
 	start: { value: low, open: false },
 	end: { value: low + 1, open: true },
