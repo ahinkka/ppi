@@ -172,61 +172,34 @@ const flavorSelectedReducer = (state, action) => {
 
 
 const cycleSiteReducer = (state, action) => {
-  // TODO: fix
-  // let radars = radarListFromCatalog(state.catalog.radars);
-  // let currentIndex = -1;
-  // for (let index in radars) {
-  //   let radar = radars[index]
-  //   if (radar.id == state.selection.radar.id) {
-  //     currentIndex = Number.parseInt(index);
-  //     break;
-  //   }
-  // }
-  // let nextIndex = currentIndex + 1;
-  // if (nextIndex == radars.length) {
-  //   nextIndex = 0
-  // }
-  // let selectedRadar = radars[nextIndex];
-  // let products = productListFromCatalog(selectedRadar, state.catalog.products);
-  // let selectedProduct = selectProduct(state.selection.product, products);
-  // let flavors = flavorListFromProduct(selectedProduct);
-  // let selectedFlavor = selectFlavor(state.selection.flavor, flavors);
-  // state = Object.assign({}, state)
-  // state.selection = {radar: selectedRadar,
-  //                    product: selectedProduct,
-  //                    flavor: selectedFlavor}
-  // state.map = {centerLon: selectedRadar.lon,
-  //              centerLat: selectedRadar.lat,
-  //              onRadar: true}
-  // return state;
-  return state
+  let options = Object.keys(state.catalog)
+  options.sort()
+
+  // returns -1 if not found, which is handy as we just select the first then
+  const current = options.indexOf(state.selection.site[0])
+  let newIndex = current + 1 == options.length ? 0 : current + 1
+
+  let newSite = [options[newIndex], state.catalog[options[newIndex]]]
+  state = Object.assign({}, state)
+  state.selection = Object.assign({}, state.selection, {site: newSite})
+
+  return reduceValidAnimationTime(reduceValidSelection(state))
 }
 
 
 const cycleProductReducer = (state, action) => {
-  // TODO: fix
-  // let products = productListFromCatalog(state.selection.radar, state.catalog.products);
-  // let currentIndex = -1;
-  // for (let index in products) {
-  //   let product = products[index]
-  //   if (product.id == state.selection.product.id) {
-  //     currentIndex = Number.parseInt(index);
-  //     break;
-  //   }
-  // }
-  // let nextIndex = currentIndex + 1;
-  // if (nextIndex == products.length) {
-  //   nextIndex = 0
-  // }
-  // let selectedProduct = products[nextIndex];
-  // let flavors = flavorListFromProduct(selectedProduct);
-  // let selectedFlavor = selectFlavor(state.selection.flavor, flavors);
-  // state = Object.assign({}, state)
-  // state.selection = {radar: state.selection.radar,
-  //                    product: selectedProduct,
-  //                    flavor: selectedFlavor}
-  // return state
-  return state
+  let options = Object.keys(state.selection.site[1].products)
+  options.sort()
+
+  // returns -1 if not found, which is handy as we just select the first then
+  const current = options.indexOf(state.selection.product[0])
+  let newIndex = current + 1 == options.length ? 0 : current + 1
+
+  let newProduct = [options[newIndex], state.selection.site[1].products[options[newIndex]]]
+  state = Object.assign({}, state)
+  state.selection = Object.assign({}, state.selection, {product: newProduct})
+
+  return reduceValidAnimationTime(reduceValidSelection(state))
 }
 
 
@@ -241,7 +214,8 @@ const cycleFlavorReducer = (state, action) => {
   let newFlavor = [options[newIndex], state.selection.product[1].flavors[options[newIndex]]]
   state = Object.assign({}, state)
   state.selection = Object.assign({}, state.selection, {flavor: newFlavor})
-  return state
+
+  return reduceValidAnimationTime(state)
 }
 
 

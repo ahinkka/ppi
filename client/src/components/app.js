@@ -125,7 +125,7 @@ export class ObserverApp extends React.Component {
 
   _onKeyPress(event) {
     let key = String.fromCharCode(event.charCode);
-    if (key == "r" || key == "R") {
+    if (key == "s" || key == "S") {
       this._dispatch({type: ObserverActions.CYCLE_SITE})
     } else if (key == "p" || key == "P") {
       this._dispatch({type: ObserverActions.CYCLE_PRODUCT})
