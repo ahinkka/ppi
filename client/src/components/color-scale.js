@@ -31,7 +31,9 @@ export class ColorScale extends React.Component {
     //  -open: t/f
     //  -value: value
 
-    const ranges = this.props.ranges.map(function(item) {
+    const tmp = this.props.ranges.slice(0)
+    tmp.reverse()
+    const ranges = tmp.map(function(item) {
       if (item.type !== ScaleRangeType.STEP) {
 	throw new Exception("Unhandled step type: " + item.type);
       }
