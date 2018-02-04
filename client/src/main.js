@@ -3,6 +3,8 @@ import ReactDOM from "react-dom"
 import {createStore} from 'redux'
 
 import {ObserverApp} from "./components/app"
+import {ObserverActions} from "./constants"
+import {parseHash} from "./state_hash"
 import {reducer} from "./state_reduction"
 
 let store = createStore(reducer,
@@ -26,6 +28,14 @@ const productUrlResolver = (flavor, time) => {
   console.warn("No URL found for flavor:", flavor, ", time:", time)
   return null
 }
+
+
+// TODO: implement hash state loading after catalog loading is not in app; we need catalog to set site etc
+// if (window.location.hash != "") {
+//   let parsed = parseHash(window.location.hash)
+  
+//   let animationRunning = parsed.animationRunning == "true" ? true : false
+// }
 
 
 console.log("About to render...");

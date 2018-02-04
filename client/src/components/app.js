@@ -4,6 +4,7 @@ import pako from "pako";
 import {httpGetPromise, objectEquals} from "../utils"
 import {ObserverActions} from "../constants"
 
+import {makeHashFromState} from "../state_hash"
 import {DropdownSelector} from "./dropdown_selector"
 import {Map, CenterState} from "./map.js"
 import {ToggleButton} from "./toggle_button"
@@ -240,6 +241,15 @@ export class ObserverApp extends React.Component {
         state.selection.product[0] == null ||
         state.selection.flavor[0] == null) {
       return (<div></div>)
+    }
+
+    let hash = makeHashFromState(state)
+    if (hash != window.location.hash) {
+      let hashLess = window.location.href
+      if (window.location.href.includes("#")) {
+	hashLess = window.location.href.split("#")[0]
+      }
+      window.history.pushState(null, null, hashLess + hash)
     }
 
     let tickItems = []
