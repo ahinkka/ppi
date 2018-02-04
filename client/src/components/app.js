@@ -76,8 +76,7 @@ export class ObserverApp extends React.Component {
     this.__loadingProducts = {}
     this.__loadedProducts = {}
 
-    // TODO: convert keyboard listener to go by https://reactjs.org/docs/handling-events.html
-    this._onKeyPress = this._onKeyPress.bind(this);
+    this.onKeyPress = this.onKeyPress.bind(this);
     this.initializeKeyboardListener = this.initializeKeyboardListener.bind(this);
     this.removeKeyboardListener = this.removeKeyboardListener.bind(this);
 
@@ -126,7 +125,7 @@ export class ObserverApp extends React.Component {
     this.forceUpdate();
   }
 
-  _onKeyPress(event) {
+  onKeyPress(event) {
     let key = String.fromCharCode(event.charCode);
     if (key == "s" || key == "S") {
       this._dispatch({type: ObserverActions.CYCLE_SITE})
@@ -225,11 +224,11 @@ export class ObserverApp extends React.Component {
   }
 
   initializeKeyboardListener() {
-    document.addEventListener("keypress", this._onKeyPress)
+    document.addEventListener("keypress", this.onKeyPress)
   }
 
   removeKeyboardListener() {
-    document.removeEventListener("keypress", this._onKeyPress)
+    document.removeEventListener("keypress", this.onKeyPress)
   }
 
   render() {
