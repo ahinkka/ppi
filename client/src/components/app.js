@@ -80,7 +80,6 @@ export class ObserverApp extends React.Component {
     this.initializeKeyboardListener = this.initializeKeyboardListener.bind(this);
     this.removeKeyboardListener = this.removeKeyboardListener.bind(this);
 
-    this.fetchCatalog = this.fetchCatalog.bind(this);
     this.loadProducts = this.loadProducts.bind(this);
     this.animationTick = this.animationTick.bind(this);
     this.storeChanged = this.storeChanged.bind(this);
@@ -94,9 +93,6 @@ export class ObserverApp extends React.Component {
     this._dispatch = this.props.store.dispatch.bind(this);
     this._unsubscribe = this.props.store.subscribe(this.storeChanged).bind(this);
 
-    setTimeout(this.fetchCatalog, 1000)
-    // this.catalogTimerToken = setInterval(this.fetchCatalog, 50000)
-
     setTimeout(this.animationTick, 500)
     this.animationTimerToken = setInterval(this.animationTick, 1500)
 
@@ -107,7 +103,6 @@ export class ObserverApp extends React.Component {
     console.log("ObserverApp.componentDidUnmount()")
     this._unsubscribe();
     this.removeKeyboardListener()
-    clearInterval(this.catalogTimerToken)
   }
 
   storeChanged() {
@@ -140,15 +135,6 @@ export class ObserverApp extends React.Component {
     // TODO: bind left and right for navigating products
     // TODO: bind shift + arrows for navigating the map
     // TODO: bind + and - for zooming the map
-  }
-
-
-  fetchCatalog() {
-    httpGetPromise(this.props.url)
-      .then(JSON.parse)
-      .then((obj) => {
-        this._dispatch({type: ObserverActions.CATALOG_UPDATED, payload: obj})
-      })
   }
 
   loadProducts() {
