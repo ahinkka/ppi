@@ -1,3 +1,4 @@
+// -*- indent-tabs-mode: nil; -*-
 import React from "react"
 import pako from "pako";
 import ol from "openlayers"
@@ -25,10 +26,10 @@ const computeExtent = (affineTransform, width, height) => {
 
   let origin = [affineTransform[0], affineTransform[3]]
   let extreme = [origin[0] + affineTransform[1] * width,
-		 origin[1] + affineTransform[5] * height]
+                 origin[1] + affineTransform[5] * height]
   // extent = [minX, minY, maxX, maxY]
   return [Math.min(origin[0], extreme[0]), Math.min(origin[1], extreme[1]),
-	  Math.max(origin[0], extreme[0]), Math.max(origin[1], extreme[1])]
+          Math.max(origin[0], extreme[0]), Math.max(origin[1], extreme[1])]
 }
 
 
@@ -172,14 +173,14 @@ export class Map extends React.Component {
       let lonLatCenter = ol.proj.toLonLat(extent, projection)
 
       if (this.props !== undefined &&
-	  lonLatCenter[0] == this.props.center.coordinates[0] &&
-	  lonLatCenter[1] == this.props.center.coordinates[1]) {
-	return;
+          lonLatCenter[0] == this.props.center.coordinates[0] &&
+          lonLatCenter[1] == this.props.center.coordinates[1]) {
+        return;
       }
 
       // let projCode = projection.getCode()
       dispatch({type: ObserverActions.EXTENT_CHANGED,
-		payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
+                payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
     })
 
     setTimeout(this.__onResize, 200)
@@ -230,46 +231,46 @@ export class Map extends React.Component {
 
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
-	let dataPxXY = canvasPxToProductPx(x, y)
+        let dataPxXY = canvasPxToProductPx(x, y)
 
-	let value = undefined
-	if (dataPxXY[0] === undefined) {
-	  value = metadata.productInfo.dataScale.notScanned
-	} else {
-    	  value = data[dataPxXY[0]][dataPxXY[1]]
-	}
+        let value = undefined
+        if (dataPxXY[0] === undefined) {
+          value = metadata.productInfo.dataScale.notScanned
+        } else {
+          value = data[dataPxXY[0]][dataPxXY[1]]
+        }
 
-	let color = null
-	if (metadata.productInfo.dataType == "REFLECTIVITY") {
-	  const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
-	  if (valueType == DataValueType.NOT_SCANNED) {
-	    color = NOT_SCANNED_COLOR;
-	  } else if (valueType == DataValueType.NO_ECHO) {
-	    color = NO_ECHO_COLOR;
-	  } else if (valueType == DataValueType.VALUE) {
-	    const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
-	    color = [r, g, b, 255]
-	  } else {
-	    throw Exception("Unknown DataValueType: " + valueType)
-	  }
-	} else {
-	  if (value == metadata.productInfo.dataScale.notScanned) {
-	    // color.set([211, 211, 211, 76])
-	    color = notScannedColor;
-	  } else {
-	    color = [0, 0, 255, Math.floor((value / 150) * 255)]
-	  }
-	}
+        let color = null
+        if (metadata.productInfo.dataType == "REFLECTIVITY") {
+          const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
+          if (valueType == DataValueType.NOT_SCANNED) {
+            color = NOT_SCANNED_COLOR;
+          } else if (valueType == DataValueType.NO_ECHO) {
+            color = NO_ECHO_COLOR;
+          } else if (valueType == DataValueType.VALUE) {
+            const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
+            color = [r, g, b, 255]
+          } else {
+            throw Exception("Unknown DataValueType: " + valueType)
+          }
+        } else {
+          if (value == metadata.productInfo.dataScale.notScanned) {
+            // color.set([211, 211, 211, 76])
+            color = notScannedColor;
+          } else {
+            color = [0, 0, 255, Math.floor((value / 150) * 255)]
+          }
+        }
 
-	let redIndex = (y * imageData.width * 4) + (x * 4);
-	iData[redIndex] = color[0]
-	iData[redIndex + 1] = color[1]
-	iData[redIndex + 2] = color[2]
-	iData[redIndex + 3] = color[3]
+        let redIndex = (y * imageData.width * 4) + (x * 4);
+        iData[redIndex] = color[0]
+        iData[redIndex + 1] = color[1]
+        iData[redIndex + 2] = color[2]
+        iData[redIndex + 3] = color[3]
 
-	// This will likely get faster in the future but for now it's slow:
-	//  https://bugs.chromium.org/p/v8/issues/detail?id=3590&desc=2
-	// iData.set(color, redIndex)
+        // This will likely get faster in the future but for now it's slow:
+        //  https://bugs.chromium.org/p/v8/issues/detail?id=3590&desc=2
+        // iData.set(color, redIndex)
       }
     }
     ctx.putImageData(imageData, 0, 0);
@@ -278,7 +279,7 @@ export class Map extends React.Component {
     let pixelCount = this.canvas.width * this.canvas.height
     console.log("Rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
     this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
-			 payload: this.props.productTime})
+                         payload: this.props.productTime})
 
     return this.canvas
   }
@@ -291,7 +292,7 @@ export class Map extends React.Component {
     if (this.__previousProduct == null || this.previousProduct != this.props.product) {
       this.__previousProduct == this.props.product
       if (this.imageCanvas !== undefined) {
-	this.imageCanvas.changed()
+        this.imageCanvas.changed()
       }
     }
 

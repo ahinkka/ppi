@@ -254,20 +254,20 @@ export class ObserverApp extends React.Component {
       let color = "#ffffff"
 
       if (time === state.animation.currentProductTime) {
-	color = "#000000"
+        color = "#000000"
       } else {
-	const url = this.props.productUrlResolver(state.selection.flavor[1], time)
-	if (url in state.loadedProducts) {
-	  color = "#c0c0c0"
-	}
+        const url = this.props.productUrlResolver(state.selection.flavor[1], time)
+        if (url in state.loadedProducts) {
+          color = "#c0c0c0"
+        }
       }
 
       tickItems.push({
-	position: proportion,
-	color: color,
-	tooltip: t.time,
-	action: ObserverActions.TICK_CLICKED,
-	payload: time
+        position: proportion,
+        color: color,
+        tooltip: t.time,
+        action: ObserverActions.TICK_CLICKED,
+        payload: time
       })
     }
 
@@ -315,7 +315,7 @@ export class ObserverApp extends React.Component {
                             onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
                             action={ObserverActions.TOGGLE_ANIMATION}
                             tooltip="Press SPACE to toggle animation" />
-	    </div>
+            </div>
           </div>
           <div className="col-md-3 py-2">
             <ProductSlider ticks={tickItems}
@@ -330,7 +330,7 @@ export class ObserverApp extends React.Component {
              dispatch={store.dispatch}
              product={product}
              productTime={state.animation.nextProductTime} />
-	<ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
+        <ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
                     ranges={_NOAAReflectivityColorScale} />
       </div>
     )
