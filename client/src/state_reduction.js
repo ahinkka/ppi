@@ -227,6 +227,14 @@ const animationTickReducer = (state, action) => {
 }
 
 
+const tickClickedReducer = (state, action) => {
+  state = Object.assign({}, state)
+  state.animation = Object.assign({}, state.animation)
+  state.animation.nextProductTime = action.payload
+  return state
+}
+
+
 const productTimeReducer = (state, action) => {
   state = Object.assign({}, state)
   state.animation = Object.assign(
@@ -307,6 +315,8 @@ export const reducer = (state, action) => {
                  onRadar: false}
   } else if (action.type === ObserverActions.ANIMATION_TICK) {
     state = animationTickReducer(state, action);
+  } else if (action.type === ObserverActions.TICK_CLICKED) {
+    state = tickClickedReducer(state, action);
   } else if (action.type === ObserverActions.PRODUCT_TIME_CHANGED) {
     state = productTimeReducer(state, action);
   } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {

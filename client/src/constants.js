@@ -14,6 +14,7 @@ export const ObserverActions = {
 
   ANIMATION_TICK: "animation tick",
   TOGGLE_ANIMATION: "toggle animation",
+  TICK_CLICKED: "tick clicked",
 
   PRODUCT_LOAD_UPDATE: "product load update",
 }
