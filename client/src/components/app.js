@@ -292,8 +292,6 @@ export class ObserverApp extends React.Component {
       product = this.__loadedProducts[productUrl]
     }
 
-    // TODO: compute which products are loaded and then parameterize product slider
-
     // <div className="container-fluid">
     return (
       <div>
