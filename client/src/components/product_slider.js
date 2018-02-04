@@ -1,5 +1,6 @@
 import React from "react"
 import {OverlayTrigger, Tooltip} from "react-bootstrap";
+import {ObserverActions} from "../constants"
 
 
 class Tick extends React.Component {
@@ -29,6 +30,22 @@ class Tick extends React.Component {
 
 
 export class ProductSlider extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.onWheel = this.onWheel.bind(this);
+    // this.initializeKeyboardListener = this.initializeKeyboardListener.bind(this);
+    // this.removeKeyboardListener = this.removeKeyboardListener.bind(this);
+  }
+
+  onWheel(event) {
+    if (event.deltaY < 0) {
+      this.props.dispatch({type: ObserverActions.TICK_BACKWARD})
+    } else if (event.deltaY > 0) {
+      this.props.dispatch({type: ObserverActions.TICK_FORWARD})
+    }
+  }
+
   render() {
     const tmp = this
     const ticks = this.props.ticks.map(function(item) {
@@ -40,7 +57,7 @@ export class ProductSlider extends React.Component {
     })
 
     return (
-        <div className="progress">
+        <div className="progress" onWheel={this.onWheel}>
           {ticks}
         </div>
     )

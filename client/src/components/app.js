@@ -75,9 +75,11 @@ export class ObserverApp extends React.Component {
     this.__loadingProducts = {}
     this.__loadedProducts = {}
 
+    // TODO: convert keyboard listener to go by https://reactjs.org/docs/handling-events.html
     this._onKeyPress = this._onKeyPress.bind(this);
     this.initializeKeyboardListener = this.initializeKeyboardListener.bind(this);
     this.removeKeyboardListener = this.removeKeyboardListener.bind(this);
+
     this.fetchCatalog = this.fetchCatalog.bind(this);
     this.loadProducts = this.loadProducts.bind(this);
     this.animationTick = this.animationTick.bind(this);

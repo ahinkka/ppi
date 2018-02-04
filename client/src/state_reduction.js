@@ -235,6 +235,53 @@ const tickClickedReducer = (state, action) => {
 }
 
 
+const forwardBackwardReducer = (state, forward) => {
+  let times = state.selection.flavor[1].times
+  let previousIndex = null;
+
+  if (forward) {
+    for (let i=times.length-1; i>-1; i--) {
+      let time = Date.parse(times[i].time)
+      if (time === state.animation.currentProductTime) {
+	previousIndex = i
+	break
+      }
+    }
+  } else {
+    for (let i=0; i<times.length; i++) {
+      let time = Date.parse(times[i].time)
+      if (time === state.animation.currentProductTime) {
+	previousIndex = i
+	break
+      }
+    }
+  }
+
+  let newTime = null
+  let nextIndex = forward ? previousIndex + 1 : previousIndex - 1
+  if (nextIndex == times.length) {
+    nextIndex = 0
+  } else if (nextIndex < 0) {
+    nextIndex = times.length - 1
+  }
+  newTime = Date.parse(times[nextIndex].time)
+
+  state = Object.assign({}, state)
+  state.animation = Object.assign({}, state.animation, {nextProductTime: newTime})
+  return state
+}
+
+
+const tickForwardReducer = (state, action) => {
+  return forwardBackwardReducer(state, true)
+}
+
+
+const tickBackwardReducer = (state, action) => {
+  return forwardBackwardReducer(state, false)
+}
+
+
 const productTimeReducer = (state, action) => {
   state = Object.assign({}, state)
   state.animation = Object.assign(
@@ -317,6 +364,10 @@ export const reducer = (state, action) => {
     state = animationTickReducer(state, action);
   } else if (action.type === ObserverActions.TICK_CLICKED) {
     state = tickClickedReducer(state, action);
+  } else if (action.type === ObserverActions.TICK_FORWARD) {
+    state = tickForwardReducer(state, action);
+  } else if (action.type === ObserverActions.TICK_BACKWARD) {
+    state = tickBackwardReducer(state, action);
   } else if (action.type === ObserverActions.PRODUCT_TIME_CHANGED) {
     state = productTimeReducer(state, action);
   } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {
