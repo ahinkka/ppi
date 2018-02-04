@@ -188,14 +188,6 @@ export class Map extends React.Component {
     this.__updateMap()
   }
 
-  // TODO: implement a viewport-px => product-px lookup table and its caching
-  //       to speed up rendering of identical products with identical
-  //       viewports. This is the common use case during animation and hence
-  //       the most common in general.
-  //
-  //  previousProductLonLatExtent
-  //  previousCanvasExtent
-  //  previousViewportToProductLookup => [vp-X, vp-Y] => [x, y]
   __canvasFunction(extent, resolution, pixelRatio, size, projection) {
     let startRender = new Date().getTime();
 
