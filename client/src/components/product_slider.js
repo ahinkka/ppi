@@ -19,7 +19,8 @@ class Tick extends React.Component {
 
     return (
         <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <div style={{position: "absolute", left: (0.04 + 0.9 * this.props.position) * 100 + "%", color: this.props.color}}
+          <div style={{position: "absolute", left: (0.04 + 0.9 * this.props.position) * 100 + "%",
+                       color: this.props.color, cursor: "pointer"}}
                onClick={this.onClick}>▎</div>
         </OverlayTrigger>
     )
