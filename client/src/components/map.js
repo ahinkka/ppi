@@ -275,7 +275,8 @@ export class Map extends React.Component {
     ctx.putImageData(imageData, 0, 0);
 
     let elapsedMs = new Date().getTime() - startRender;
-    console.log("Rendering took", elapsedMs, "ms")
+    let pixelCount = this.canvas.width * this.canvas.height
+    console.log("Rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
     this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
 			 payload: this.props.productTime})
 
