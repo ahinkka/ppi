@@ -6,10 +6,10 @@ import {ObserverActions} from "../constants"
 
 import {makeHashFromState} from "../state_hash"
 import {DropdownSelector} from "./dropdown_selector"
-import {Map, CenterState} from "./map.js"
+import {Map} from "./map.js"
 import {ToggleButton} from "./toggle_button"
 import {ProductSlider} from "./product_slider"
-import {ColorScale} from "./color-scale"
+import {ColorScale} from "./color_scale"
 import {NOAAScaleToScaleDescription} from "./coloring"
 
 
@@ -70,8 +70,6 @@ export class ObserverApp extends React.Component {
     console.log("ObserverApp.constructor()")
 
     let state = this.props.store.getState()
-    this._mapCenter = {change: CenterState.NO_CHANGE,
-                       coordinates: [state.map.centerLon, state.map.centerLat]}
 
     this.__loadingProducts = {}
     this.__loadedProducts = {}
@@ -107,16 +105,6 @@ export class ObserverApp extends React.Component {
 
   storeChanged() {
     this.setState(this.props.store.getState());
-
-    let state = this.props.store.getState()
-    if (state.map.onRadar == true) {
-      this._mapCenter = {change: CenterState.CHANGE,
-                         coordinates: [state.map.centerLon, state.map.centerLat]}
-    } else {
-      this._mapCenter = {change: CenterState.NO_CHANGE,
-                         coordinates: [state.map.centerLon, state.map.centerLat]}
-    }
-
     this.forceUpdate();
   }
 
@@ -273,61 +261,59 @@ export class ObserverApp extends React.Component {
                                                    state.animation.nextProductTime)
 
     let product = null
-    // console.log(productUrl, state.loadedProducts, productUrl in state.loadedProducts)
     if (productUrl in state.loadedProducts) {
       product = this.__loadedProducts[productUrl]
     }
 
-    // <div className="container-fluid">
     return (
-      <div>
-        <div id="product-selection-row" className="row">
-          <div className="col-md-4">
-          <form className="form-inline">
-            <DropdownSelector currentValue={state.selection.site[0]}
-                              legend="Site"
-                              items={siteSelections(state.catalog)}
-                              tooltip="Press R to cycle sites"
-                              action={ObserverActions.SITE_SELECTED}
-                              dispatch={store.dispatch} />
-            <DropdownSelector currentValue={state.selection.product[0]}
-                              legend="Product"
-                              items={productSelections(state.selection.site[1])}
-                              tooltip="Press P to cycle products"
-                              action={ObserverActions.PRODUCT_SELECTED}
-                              dispatch={store.dispatch} />
-            <DropdownSelector currentValue={state.selection.flavor[0]}
-                              legend="Flavor"
-                              items={flavorSelections(state.selection.product[1])}
-                              tooltip="Press F to cycle flavors"
-                              action={ObserverActions.FLAVOR_SELECTED}
-                              dispatch={store.dispatch} />
-          </form>
-          </div>
-          <div className="col-md-1">
-            <div className="float-right">
-              <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
-                            onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
-                            action={ObserverActions.TOGGLE_ANIMATION}
-                            tooltip="Press SPACE to toggle animation" />
+	<div>
+          <div id="product-selection-row" className="row">
+            <div className="col-md-4">
+              <form className="form-inline">
+                <DropdownSelector currentValue={state.selection.site[0]}
+                                  legend="Site"
+                                  items={siteSelections(state.catalog)}
+                                  tooltip="Press R to cycle sites"
+                                  action={ObserverActions.SITE_SELECTED}
+                                  dispatch={store.dispatch} />
+                <DropdownSelector currentValue={state.selection.product[0]}
+                                  legend="Product"
+                                  items={productSelections(state.selection.site[1])}
+                                  tooltip="Press P to cycle products"
+                                  action={ObserverActions.PRODUCT_SELECTED}
+                                  dispatch={store.dispatch} />
+                <DropdownSelector currentValue={state.selection.flavor[0]}
+                                  legend="Flavor"
+                                  items={flavorSelections(state.selection.product[1])}
+                                  tooltip="Press F to cycle flavors"
+                                  action={ObserverActions.FLAVOR_SELECTED}
+                                  dispatch={store.dispatch} />
+              </form>
+            </div>
+            <div className="col-md-1">
+              <div className="float-right">
+                <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
+                              onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
+                              action={ObserverActions.TOGGLE_ANIMATION}
+                              tooltip="Press SPACE to toggle animation" />
+              </div>
+            </div>
+            <div className="col-md-3 py-2">
+              <ProductSlider ticks={tickItems}
+                             dispatch={store.dispatch} />
+            </div>
+            <div className="col-md-2 py-2">
+              <TimeDisplay currentValue={state.animation.currentProductTime} />
             </div>
           </div>
-          <div className="col-md-3 py-2">
-            <ProductSlider ticks={tickItems}
-                           dispatch={store.dispatch} />
-          </div>
-          <div className="col-md-2 py-2">
-            <TimeDisplay currentValue={state.animation.currentProductTime} />
-          </div>
+          <Map headerElementId="product-selection-row"
+               intendedCenter={[state.map.intended.centerLon, state.map.intended.centerLat]}
+               dispatch={store.dispatch}
+               product={product}
+               productTime={state.animation.nextProductTime} />
+          <ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
+                      ranges={_NOAAReflectivityColorScale} />
         </div>
-        <Map headerElementId="product-selection-row"
-             center={this._mapCenter}
-             dispatch={store.dispatch}
-             product={product}
-             productTime={state.animation.nextProductTime} />
-        <ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
-                    ranges={_NOAAReflectivityColorScale} />
-      </div>
     )
   }
 }

@@ -1,9 +1,31 @@
+const serializeHash = (contents) => {
+  let keys = Object.keys(contents)
+  keys.sort()
+  let result = "#"
+  let first = true;
+  for (const key of keys) {
+    let value = contents[key]
+    if (first) {
+      result += `${key}=${value}`
+      first = false
+    } else {
+      result += `&${key}=${value}`
+    }
+  }
+  return result
+}
+
+
 export const makeHashFromState = (state) => {
-  let site = state.selection.site[0]
-  let product = state.selection.product[0]
-  let flavor = state.selection.flavor[0]
-  let animationRunning = state.animation.running
-  return `#site=${site}&product=${product}&flavor=${flavor}&animationRunning=${animationRunning}`
+  return serializeHash(
+    {
+      site: state.selection.site[0],
+      product: state.selection.product[0],
+      flavor: state.selection.flavor[0],
+      animationRunning: state.animation.running,
+      lon: state.map.current.centerLon,
+      lat: state.map.current.centerLat,
+    })
 }
 
 

@@ -1,4 +1,5 @@
 export const ObserverActions = {
+  PRIME: "prime",
   CATALOG_UPDATED: "catalog updated",
 
   SITE_SELECTED: "site selected",
@@ -9,7 +10,10 @@ export const ObserverActions = {
   CYCLE_PRODUCT: "cycle product",
   CYCLE_FLAVOR: "cycle flavor",
 
-  EXTENT_CHANGED: "extent changed",
+  MAP_CENTER_CHANGED: "map center changed",
+  MAP_MOVED: "map moved",
+  MAKE_CURRENT_SITE_INTENDED: "make current site intended",
+
   PRODUCT_TIME_CHANGED: "product time changed",
 
   ANIMATION_TICK: "animation tick",

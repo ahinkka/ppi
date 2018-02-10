@@ -79,13 +79,6 @@ let makeCanvasPxToLonLatFunction = (canvasExtent, canvasWidth, canvasHeight) => 
 }
 
 
-
-export const CenterState = {
-  NO_CHANGE: "no change",
-  CHANGE: "change"
-}
-
-
 export class Map extends React.Component {
   constructor(props) {
     super(props);
@@ -95,6 +88,8 @@ export class Map extends React.Component {
     this.__onResize = this.__onResize.bind(this);
     this.__updateMap = this.__updateMap.bind(this);
     this.__canvasFunction = this.__canvasFunction.bind(this);
+
+    this.__previousIntendedCenter = [0, 0]
   }
 
   __onResize() {
@@ -109,12 +104,12 @@ export class Map extends React.Component {
     if (this.map == undefined) {
       return
     }
-    let center = this.props.center
-    if (center.change == CenterState.CHANGE) {
+    if (this.__previousIntendedCenter[0] != this.props.intendedCenter[0] ||
+        this.__previousIntendedCenter[1] != this.props.intendedCenter[1]) {
       let mapProjection = this.map.getView().getProjection()
-      this.map.getView().setCenter(ol.proj.fromLonLat(center.coordinates, mapProjection))
+      this.map.getView().setCenter(ol.proj.fromLonLat(this.props.intendedCenter, mapProjection))
     }
-    // console.log("Map update", center.coordinates)
+    this.__previousIntendedCenter = this.props.intendedCenter
   }
 
   componentDidMount() {
@@ -168,18 +163,13 @@ export class Map extends React.Component {
     let dispatch = this.props.dispatch;
     this.map.on('moveend', function(event) {
       let view = event.map.getView()
-      let extent = view.calculateExtent(event.map.getSize())
+      // let extent = view.calculateExtent(event.map.getSize())
+      let center = view.getCenter()
       let projection = view.getProjection()
-      let lonLatCenter = ol.proj.toLonLat(extent, projection)
-
-      if (this.props !== undefined &&
-          lonLatCenter[0] == this.props.center.coordinates[0] &&
-          lonLatCenter[1] == this.props.center.coordinates[1]) {
-        return;
-      }
+      let lonLatCenter = ol.proj.toLonLat(center, projection)
 
       // let projCode = projection.getCode()
-      dispatch({type: ObserverActions.EXTENT_CHANGED,
+      dispatch({type: ObserverActions.MAP_MOVED,
                 payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
     })
 
@@ -294,15 +284,4 @@ export class Map extends React.Component {
       <div id="map-element"></div>
     )
   }
-}
-
-
-const makeMapCenter = (oldLon, oldLat, newLon, newLat) => {
-  let shouldCenterOnRadar = CenterState.CHANGE
-  if (oldLon == newLon && oldLat == newLat) {
-    shouldCenterOnRadar = CenterState.NO_CHANGE
-  } else {
-    shouldCenterOnRadar = CenterState.CHANGE
-  }
-  return {change: shouldCenterOnRadar, coordinates: [newLon, newLat]}
 }

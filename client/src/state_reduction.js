@@ -106,14 +106,6 @@ const catalogUpdatedReducer = (state, action) => {
   state.catalog = action.payload;
   state = reduceValidSelection(state)
 
-
-  if (state.map.centerLon === undefined ||
-      (Math.abs(state.map.centerLon) < 0.000000001)) {
-    state.map = {centerLon: state.selection.site[1].lon,
-                 centerLat: state.selection.site[1].lat,
-                 onRadar: true}
-  }
-
   state = reduceValidAnimationTime(state)
   return state
 }
@@ -126,18 +118,14 @@ const siteSelectedReducer = (state, action) => {
   if (selectedSite[1] == undefined) {
     selectedSite = selectSite(state.selection.site[0], state.catalog);
   }
-  state.selection.site = selectedSite
-  state = reduceValidSelection(state)
+  let siteChanged = state.selection.site[0] != selectedSite[0]
+  state.selection = Object.assign({}, state.selection, {site: selectedSite})
 
-  state = reduceValidAnimationTime(state)
-
-  if (state.selection.site[0] != selectedSite[0]) {
-    state.map = {centerLon: state.selection.site[1].lon,
-                 centerLat: state.selection.site[1].lat,
-                 onRadar: true}
+  if (siteChanged) {
+    state = makeCurrentSiteIntendedReducer(state)
   }
 
-  return state
+  return reduceValidAnimationTime(reduceValidSelection(state))
 }
 
 
@@ -171,6 +159,42 @@ const flavorSelectedReducer = (state, action) => {
 }
 
 
+const mapCenterChangedReducer = (state, action) => {
+  state = Object.assign({}, state)
+  state.map = Object.assign({}, state.map)
+  state.map.intended = Object.assign({}, state.map.intended,
+                                     {
+                                       centerLon: action.payload.lon,
+                                       centerLat: action.payload.lat,
+                                     })
+  return state
+}
+
+
+const mapMovedReducer = (state, action) => {
+  state = Object.assign({}, state)
+  state.map = Object.assign({}, state.map)
+  state.map.current = Object.assign({}, state.map.current,
+                                    {
+                                      centerLon: action.payload.lon,
+                                      centerLat: action.payload.lat,
+                                    })
+  return state
+}
+
+
+const makeCurrentSiteIntendedReducer = (state) => {
+  state = Object.assign({}, state)
+  state.map = Object.assign({}, state.map)
+  state.map.intended = Object.assign({}, state.map.current,
+                                     {
+                                       centerLon: state.selection.site[1].lon,
+                                       centerLat: state.selection.site[1].lat,
+                                     })
+  return state
+}
+
+
 const cycleSiteReducer = (state, action) => {
   let options = Object.keys(state.catalog)
   options.sort()
@@ -180,8 +204,14 @@ const cycleSiteReducer = (state, action) => {
   let newIndex = current + 1 == options.length ? 0 : current + 1
 
   let newSite = [options[newIndex], state.catalog[options[newIndex]]]
+  let siteChanged = state.selection.site[0] != newSite[0]
+
   state = Object.assign({}, state)
   state.selection = Object.assign({}, state.selection, {site: newSite})
+
+  if (siteChanged) {
+    state = makeCurrentSiteIntendedReducer(state)
+  }
 
   return reduceValidAnimationTime(reduceValidSelection(state))
 }
@@ -319,8 +349,8 @@ const productLoadUpdateReducer = (state, action) => {
 
 
 export const reducer = (state, action) => {
-  if (state === undefined) {
-    return {
+  if (state === undefined || action.type === ObserverActions.PRIME) {
+    state = {
       selection: {
         site: [null, null],
         product: [null, null],
@@ -329,9 +359,14 @@ export const reducer = (state, action) => {
       catalog: {},
       loadedProducts: {}, // urls as keys, null values
       map: {
-        centerLon: 0,
-        centerLat: 0,
-        onRadar: false
+	current: { // the map element controls this
+          centerLon: 0,
+          centerLat: 0,
+	},
+	intended: { // the app controls this; whenever this changes, map centers on it
+          centerLon: 0,
+          centerLat: 0,
+	},
       },
       animation: {
         nextProductTime: null, // the product time we want to show next
@@ -339,9 +374,7 @@ export const reducer = (state, action) => {
         running: true
       }
     }
-  }
-
-  if (action.type === ObserverActions.CATALOG_UPDATED) {
+  } else if (action.type === ObserverActions.CATALOG_UPDATED) {
     state = catalogUpdatedReducer(state, action);
   } else if (action.type === ObserverActions.SITE_SELECTED) {
     state = siteSelectedReducer(state, action);
@@ -355,11 +388,12 @@ export const reducer = (state, action) => {
     state = productSelectedReducer(state, action);
   } else if (action.type === ObserverActions.FLAVOR_SELECTED) {
     state = flavorSelectedReducer(state, action);
-  } else if (action.type === ObserverActions.EXTENT_CHANGED) {
-    state = Object.assign({}, state)
-    state.map = {centerLon: action.payload.lon,
-                 centerLat: action.payload.lat,
-                 onRadar: false}
+  } else if (action.type === ObserverActions.MAP_CENTER_CHANGED) {
+    state = mapCenterChangedReducer(state, action)
+  } else if (action.type === ObserverActions.MAP_MOVED) {
+    state = mapMovedReducer(state, action)
+  } else if (action.type === ObserverActions.MAKE_CURRENT_SITE_INTENDED) {
+    state = makeCurrentSiteIntendedReducer(state)
   } else if (action.type === ObserverActions.ANIMATION_TICK) {
     state = animationTickReducer(state, action);
   } else if (action.type === ObserverActions.TICK_CLICKED) {

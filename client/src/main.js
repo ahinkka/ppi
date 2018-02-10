@@ -10,6 +10,7 @@ import {reducer} from "./state_reduction"
 
 let store = createStore(reducer,
 			window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__())
+store.dispatch({type: ObserverActions.PRIME})
 
 
 const productUrlResolver = (flavor, time) => {
@@ -31,10 +32,11 @@ const productUrlResolver = (flavor, time) => {
 }
 
 
+// Returns true if state was loaded, false if not
 const loadHashState = () => {
   if (window.location.hash != "") {
     let parsed = parseHash(window.location.hash)
-    const dispatch = state.store.dispatch
+    const dispatch = store.dispatch
 
     dispatch({type: ObserverActions.SITE_SELECTED, payload: parsed.site})
     dispatch({type: ObserverActions.PRODUCT_SELECTED, payload: parsed.product})
@@ -42,10 +44,23 @@ const loadHashState = () => {
     dispatch({type: ObserverActions.FLAVOR_SELECTED, payload: parsed.flavor})
 
     let animationRunning = parsed.animationRunning == "true" ? true : false
-    if (state.store.animation.running != animationRunning) {
+    if (store.getState().animation.running != animationRunning) {
       dispatch({type: ObserverActions.TOGGLE_ANIMATION})
     }
+
+    if (parsed.lon !== undefined && parsed.lat !== undefined &&
+        parsed.lon !== "NaN" && parsed.lat !== "NaN") {
+      let lon = parseFloat(parsed.lon)
+      let lat = parseFloat(parsed.lat)
+      dispatch({type: ObserverActions.MAP_CENTER_CHANGED, payload: {lon: lon, lat: lat}})
+    } else {
+      dispatch({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
+    }
+
+    return true
   }
+
+  return false
 }
 
 
@@ -68,11 +83,15 @@ const fetchCatalog = () => {
       store.dispatch({type: ObserverActions.CATALOG_UPDATED, payload: obj})
 
       if (!rendered) {
-	loadHashState()
-	renderApp()
-	rendered = true
+        if (!loadHashState()) {
+          store.dispatch({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
+        }
+
+        renderApp()
+        rendered = true
       }
     })
 }
 
-setTimeout(fetchCatalog, 10000)
+fetchCatalog()
+setTimeout(fetchCatalog, 30000)
