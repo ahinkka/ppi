@@ -75,6 +75,7 @@ export class ObserverApp extends React.Component {
     this.__loadedProducts = {}
 
     this.onKeyPress = this.onKeyPress.bind(this);
+    this.onKeyDown = this.onKeyDown.bind(this);
     this.initializeKeyboardListener = this.initializeKeyboardListener.bind(this);
     this.removeKeyboardListener = this.removeKeyboardListener.bind(this);
 
@@ -108,6 +109,15 @@ export class ObserverApp extends React.Component {
     this.forceUpdate();
   }
 
+  onKeyDown(event) {
+    let key = event.key
+    if (key == "ArrowRight") {
+      this._dispatch({type: ObserverActions.TICK_FORWARD})
+    } else if (key == "ArrowLeft") {
+      this._dispatch({type: ObserverActions.TICK_BACKWARD})
+    }
+  }
+
   onKeyPress(event) {
     let key = String.fromCharCode(event.charCode);
     if (key == "s" || key == "S") {
@@ -120,7 +130,6 @@ export class ObserverApp extends React.Component {
       this._dispatch({type: ObserverActions.TOGGLE_ANIMATION})
     }
 
-    // TODO: bind left and right for navigating products
     // TODO: bind shift + arrows for navigating the map
     // TODO: bind + and - for zooming the map
   }
@@ -199,10 +208,12 @@ export class ObserverApp extends React.Component {
 
   initializeKeyboardListener() {
     document.addEventListener("keypress", this.onKeyPress)
+    document.addEventListener("keydown", this.onKeyDown)
   }
 
   removeKeyboardListener() {
     document.removeEventListener("keypress", this.onKeyPress)
+    document.removeEventListener("keydown", this.onKeyDown)
   }
 
   render() {
