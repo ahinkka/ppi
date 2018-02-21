@@ -1,9 +1,11 @@
 // -*- indent-tabs-mode: nil; -*-
 import React from "react"
 import pako from "pako";
+import LRU from "lru-cache"
 import ol from "openlayers"
 import ndarray from "ndarray"
 import {d1 as l_interp} from "ndarray-linear-interpolate"
+import stringify from "json-stable-stringify"
 
 import {httpGetPromise} from "../utils"
 import {ObserverActions} from "../constants"
@@ -90,6 +92,13 @@ export class Map extends React.Component {
     this.__canvasFunction = this.__canvasFunction.bind(this);
 
     this.__previousIntendedCenter = [0, 0]
+
+    let cacheOpts = {
+      max: 50, // maximum number of items
+      maxAge: 1000 * 60 * 15, // items considered over 15 minutes are stale
+      stale: false,
+    }
+    this.__renderedProducts = LRU(cacheOpts)
   }
 
   __onResize() {
@@ -198,9 +207,6 @@ export class Map extends React.Component {
     let lonLatToProductPx = makeLonLatToProductPxFunction(metadata.affineTransform, metadata.width, metadata.height)
     let canvasPxToLonLat = makeCanvasPxToLonLatFunction(extent, this.canvas.width, this.canvas.height)
 
-    // let __cache = []
-    // cache = ndarray(new Uint32Array(this.canvas.width * this.canvas.height), this.canvas.width, this.canvas.height)
-    // let __cacheKey = [metadata.affineTransform, metadata.width, metadata.height, extent, this.canvas.width, this.canvas.height]
     let canvasPxToProductPx = (x, y) => {
       let lonLatXY = canvasPxToLonLat(x, y)
       let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
@@ -208,9 +214,30 @@ export class Map extends React.Component {
     }
 
     let ctx = this.canvas.getContext("2d")
+
+    // Cached rendering
+    const cacheKey = stringify([this.props.productSelection, this.props.productTime,
+                                extent, this.canvas.width, this.canvas.height])
+    const cached = this.__renderedProducts.get(cacheKey)
+    if (cached !== undefined) {
+      // console.log('Cache key', cacheKey, 'match')
+      let img = new Image()
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0)
+      }
+      img.src = cached
+
+      let elapsedMs = new Date().getTime() - startRender;
+      let pixelCount = this.canvas.width * this.canvas.height
+      console.log("Cached rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
+      this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
+                           payload: this.props.productTime})
+      return this.canvas
+    }
+
+    // Normal rendering
     let imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
     let iData = imageData.data
-
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
         let dataPxXY = canvasPxToProductPx(x, y)
@@ -256,6 +283,10 @@ export class Map extends React.Component {
       }
     }
     ctx.putImageData(imageData, 0, 0);
+
+    let dataUrl = this.canvas.toDataURL("image/png")
+    // console.log('Setting cache key', cacheKey)
+    this.__renderedProducts.set(cacheKey, dataUrl)
 
     let elapsedMs = new Date().getTime() - startRender;
     let pixelCount = this.canvas.width * this.canvas.height

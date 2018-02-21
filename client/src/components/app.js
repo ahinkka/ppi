@@ -321,7 +321,8 @@ export class ObserverApp extends React.Component {
                intendedCenter={[state.map.intended.centerLon, state.map.intended.centerLat]}
                dispatch={store.dispatch}
                product={product}
-               productTime={state.animation.nextProductTime} />
+               productTime={state.animation.nextProductTime}
+               productSelection={[state.selection.site[0], state.selection.product[0], state.selection.flavor[0]]} />
           <ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
                       ranges={_NOAAReflectivityColorScale} />
         </div>
