@@ -220,16 +220,10 @@ export class Map extends React.Component {
                                 extent, this.canvas.width, this.canvas.height])
     const cached = this.__renderedProducts.get(cacheKey)
     if (cached !== undefined) {
-      // console.log('Cache key', cacheKey, 'match')
-      let img = new Image()
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0)
-      }
-      img.src = cached
-
-      let elapsedMs = new Date().getTime() - startRender;
-      let pixelCount = this.canvas.width * this.canvas.height
-      console.log("Cached rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
+      this.canvas = cached
+      // let elapsedMs = new Date().getTime() - startRender;
+      // let pixelCount = this.canvas.width * this.canvas.height
+      // console.log("Cached rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
       this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
                            payload: this.props.productTime})
       return this.canvas
@@ -284,9 +278,7 @@ export class Map extends React.Component {
     }
     ctx.putImageData(imageData, 0, 0);
 
-    let dataUrl = this.canvas.toDataURL("image/png")
-    // console.log('Setting cache key', cacheKey)
-    this.__renderedProducts.set(cacheKey, dataUrl)
+    this.__renderedProducts.set(cacheKey, this.canvas)
 
     let elapsedMs = new Date().getTime() - startRender;
     let pixelCount = this.canvas.width * this.canvas.height
