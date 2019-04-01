@@ -8,8 +8,8 @@
     make clean && make
     cd ..
     mkdir -p client/build/radar
-    python fmi/collect_radar_products.py \
-        /mnt/radar_observer/products | python collect.py client/build/radar
+    python fmi/collect_radar_products.py /mnt/radar_observer/products | \
+        python collect.py fmi/dist_builder/raster_to_json.py client/build/radar
     cd client
     make
 
