@@ -6,11 +6,21 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#ifdef __linux__
 #include <gdal/cpl_conv.h>
 #include <gdal/gdal_priv.h>
 
 #include <jsoncpp/json/reader.h>
 #include <jsoncpp/json/writer.h>
+#endif
+
+#ifdef __APPLE__
+#include <cpl_conv.h>
+#include <gdal_priv.h>
+
+#include <json/reader.h>
+#include <json/writer.h>
+#endif
 
 
 using namespace std;
