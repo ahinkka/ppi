@@ -2,7 +2,7 @@
 import React from "react"
 import pako from "pako";
 import LRU from "lru-cache"
-import ol from "openlayers"
+import {fromLonLat, toLonLat} from 'ol/proj'
 import ndarray from "ndarray"
 import {d1 as l_interp} from "ndarray-linear-interpolate"
 import stringify from "json-stable-stringify"

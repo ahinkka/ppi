@@ -20,11 +20,12 @@ build: ## Build distribution into directory 'build'
 	mkdir -p ./build/{js,css}
 	node_modules/.bin/browserify src/main.js \
 		-o build/js/observer.js \
-		-t [ babelify --presets [ es2015 react ] ]
+		-g [ tfilter --include '**/node_modules/ol/**/*.js' babelify --presets [ @babel/preset-env ] ] \
+		-t [ babelify --presets [ @babel/preset-env @babel/preset-react ] ]
 	node_modules/.bin/node-sass \
 		--include-path=node_modules/bootstrap/scss \
 		css/observer.sass > build/css/observer.css
-	cp node_modules/openlayers/css/ol.css build/css/
+	cp node_modules/ol/ol.css build/css/
 	cp node_modules/bootstrap/dist/css/bootstrap.min.css build/css/
 	cp -R www/* build/
 
@@ -34,14 +35,8 @@ buildincr: ## Build distribution incrementally into directory 'build'
 	mkdir -p ./build/{js,css}
 	node_modules/.bin/browserifyinc src/main.js --cachefile inc_build.cache \
 		-o build/js/observer.js \
-		-t [ babelify --presets [ es2015 react ] ]
-	# node_modules/.bin/lessc \
-	# 	--include-path=node_modules/bootstrap/less \
-	# 	css/observer.less \
-	# 	build/css/observer.css
-	# cp node_modules/openlayers/css/ol.css build/css/
-	# cp node_modules/bootstrap/dist/css/bootstrap.min.css build/css/
-	# cp -R www/* build/
+		-g [ tfilter --include '**/node_modules/ol/**/*.js' babelify --presets [ @babel/preset-env ] ] \
+		-t [ babelify --presets [ @babel/preset-env @babel/preset-react ] ]
 
 
 .PHONY: dev-build
