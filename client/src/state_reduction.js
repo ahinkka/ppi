@@ -17,6 +17,7 @@ const selectedFlavorL = L.compose(selectionL, 'flavor')
 const animationL = L.prop('animation')
 const currentProductTimeL = L.compose(animationL, 'currentProductTime')
 const nextProductTimeL = L.compose(animationL, 'nextProductTime')
+const animationRunningL = L.compose(animationL, 'running')
 
 
 const selectSite = (previousSiteId, catalog) => {
@@ -283,39 +284,16 @@ const forwardBackwardReducer = (state, forward) => {
   }
   newTime = Date.parse(times[nextIndex].time)
 
-  state = Object.assign({}, state)
-  state.animation = Object.assign({}, state.animation, {nextProductTime: newTime})
-  return state
+  return L.set(nextProductTimeL, newTime, state)
 }
+const tickForwardReducer = (state, action) => forwardBackwardReducer(state, true)
+const tickBackwardReducer = (state, action) => forwardBackwardReducer(state, false)
 
 
-const tickForwardReducer = (state, action) => {
-  return forwardBackwardReducer(state, true)
-}
+const productTimeReducer = (state, action) => L.set(currentProductTimeL, action.payload, state)
 
 
-const tickBackwardReducer = (state, action) => {
-  return forwardBackwardReducer(state, false)
-}
-
-
-const productTimeReducer = (state, action) => {
-  state = Object.assign({}, state)
-  state.animation = Object.assign(
-    {}, state.animation,
-    {currentProductTime: action.payload})
-  return state
-}
-
-
-const toggleAnimationReducer = (state, action) => {
-  let previousRunning = state.animation.running
-  state = Object.assign({}, state)
-  state.animation = Object.assign(
-    {}, state.animation,
-    {running: previousRunning ? false : true})
-  return state
-}
+const toggleAnimationReducer = (state, action) => L.set(animationRunningL, !L.get(animationRunningL, state), state)
 
 
 const productLoadUpdateReducer = (state, action) => {
