@@ -19,9 +19,9 @@ const serializeHash = (contents) => {
 export const makeHashFromState = (state) => {
   return serializeHash(
     {
-      site: state.selection.site[0],
-      product: state.selection.product[0],
-      flavor: state.selection.flavor[0],
+      site: state.selection.siteId,
+      product: state.selection.productId,
+      flavor: state.selection.flavorId,
       animationRunning: state.animation.running,
       lon: state.map.current.centerLon,
       lat: state.map.current.centerLat,

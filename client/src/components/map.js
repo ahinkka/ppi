@@ -2,10 +2,18 @@
 import React from "react"
 import pako from "pako";
 import LRU from "lru-cache"
-import {fromLonLat, toLonLat} from 'ol/proj'
+
 import ndarray from "ndarray"
 import {d1 as l_interp} from "ndarray-linear-interpolate"
 import stringify from "json-stable-stringify"
+
+import {Attribution} from 'ol/control'
+import {ImageCanvas} from 'ol/source'
+import {Image} from 'ol/layer'
+import {Map as OlMap, View} from 'ol'
+import {OSM} from 'ol/source'
+import {Tile} from 'ol/layer'
+import {fromLonLat, toLonLat} from 'ol/proj'
 
 import {httpGetPromise} from "../utils"
 import {ObserverActions} from "../constants"
@@ -55,8 +63,8 @@ let makeLonLatToProductPxFunction = (productAffineTransform, productWidth, produ
   let productLonLatExtent = computeExtent(productAffineTransform, productWidth, productHeight)
   let minLonLat = [productLonLatExtent[0], productLonLatExtent[1]]
   let maxLonLat = [productLonLatExtent[2], productLonLatExtent[3]]
-  let min = ol.proj.fromLonLat(minLonLat)
-  let max = ol.proj.fromLonLat(maxLonLat)
+  let min = fromLonLat(minLonLat)
+  let max = fromLonLat(maxLonLat)
   let productExtent = [min[0], min[1], max[0], max[1]]
   let lonWidth = productExtent[2] - productExtent[0]
   let latHeight = productExtent[3] - productExtent[1]
@@ -98,7 +106,7 @@ export class Map extends React.Component {
       maxAge: 1000 * 60 * 15, // items considered over 15 minutes are stale
       stale: false,
     }
-    this.__renderedProducts = LRU(cacheOpts)
+    this.__renderedProducts = new LRU(cacheOpts)
   }
 
   __onResize() {
@@ -116,24 +124,24 @@ export class Map extends React.Component {
     if (this.__previousIntendedCenter[0] != this.props.intendedCenter[0] ||
         this.__previousIntendedCenter[1] != this.props.intendedCenter[1]) {
       let mapProjection = this.map.getView().getProjection()
-      this.map.getView().setCenter(ol.proj.fromLonLat(this.props.intendedCenter, mapProjection))
+      this.map.getView().setCenter(fromLonLat(this.props.intendedCenter, mapProjection))
     }
     this.__previousIntendedCenter = this.props.intendedCenter
   }
 
   componentDidMount() {
     console.log("Map.componentDidMount()")
-    this.map = new ol.Map({
-      view: new ol.View({
+    this.map = new OlMap({
+      view: new View({
         center: [0, 0],
         zoom: 7
       }),
       layers: [
-        new ol.layer.Tile({
+        new Tile({
           // https://cartodb.com/basemaps
-          source: new ol.source.OSM({
+          source: new OSM({
             attributions: [
-              new ol.Attribution({
+              new Attribution({
               html:
                 '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
                 ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
@@ -143,11 +151,11 @@ export class Map extends React.Component {
           })
         }),
 
-        new ol.layer.Tile({
+        new Tile({
           // https://cartodb.com/basemaps
-          source: new ol.source.OSM({
+          source: new OSM({
             attributions: [
-              new ol.Attribution({
+              new Attribution({
               html:
                 '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
                 ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
@@ -162,11 +170,11 @@ export class Map extends React.Component {
 
     // Set ratio to 1 for canvas exactly the size of the viewport, i.e. every
     // scroll is a re-render.
-    this.imageCanvas = new ol.source.ImageCanvas({
+    this.imageCanvas = new ImageCanvas({
       canvasFunction: this.__canvasFunction
       // ratio: 1
     })
-    this.imageLayer = new ol.layer.Image({ source: this.imageCanvas })
+    this.imageLayer = new Image({ source: this.imageCanvas })
     this.map.getLayers().insertAt(1, this.imageLayer);
 
     let dispatch = this.props.dispatch;
@@ -175,7 +183,7 @@ export class Map extends React.Component {
       // let extent = view.calculateExtent(event.map.getSize())
       let center = view.getCenter()
       let projection = view.getProjection()
-      let lonLatCenter = ol.proj.toLonLat(center, projection)
+      let lonLatCenter = toLonLat(center, projection)
 
       // let projCode = projection.getCode()
       dispatch({type: ObserverActions.MAP_MOVED,

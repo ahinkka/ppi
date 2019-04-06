@@ -1,10 +1,28 @@
+import * as L from 'partial.lenses'
+import * as R from 'ramda'
 import {ObserverActions} from "./constants"
 
+// Lenses into state
+const catalogL = L.prop('catalog')
+const selectionL = L.prop('selection')
 
-const selectSite = (previousSiteSelection, catalog) => {
-  if (previousSiteSelection != null) {
+const selectedSiteIdL = L.compose(selectionL, 'siteId')
+const selectedProductIdL = L.compose(selectionL, 'productId')
+const selectedFlavorIdL = L.compose(selectionL, 'flavorId')
+
+const selectedSiteL = L.compose(selectionL, 'site')
+const selectedProductL = L.compose(selectionL, 'product')
+const selectedFlavorL = L.compose(selectionL, 'flavor')
+
+const animationL = L.prop('animation')
+const currentProductTimeL = L.compose(animationL, 'currentProductTime')
+const nextProductTimeL = L.compose(animationL, 'nextProductTime')
+
+
+const selectSite = (previousSiteId, catalog) => {
+  if (previousSiteId != null) {
     for (const siteId in catalog) {
-      if (siteId == previousSiteSelection) {
+      if (siteId == previousSiteId) {
         return [siteId, catalog[siteId]]
       }
     }
@@ -32,7 +50,7 @@ const selectProduct = (previousProductSelection, site) => {
 
 
 const selectFlavor = (previousFlavor, product) => {
-  if (previousFlavor != null) {
+  if (previousFlavor != null) {   
     for (const flavorId in product.flavors) {
       if (flavorId == previousFlavor) {
         return [flavorId, product.flavors[flavorId]];
@@ -77,85 +95,66 @@ const selectFlavorTime = (flavor, previousTime) => {
 
 
 const reduceValidSelection = (state) => {
-  const selectedSite = selectSite(state.selection.site[0], state.catalog);
-  const selectedProduct = selectProduct(state.selection.product[0], selectedSite[1]);
-  const selectedFlavor = selectFlavor(state.selection.flavor[0], selectedProduct[1]);
+  const [siteId, site] = selectSite(L.get(selectedSiteIdL, state), L.get(catalogL, state))
+  const withValidSite = R.compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
 
-  return Object.assign({}, state,
-                       {'selection':  {site: selectedSite,
-                                       product: selectedProduct,
-                                       flavor: selectedFlavor}})
+  const [productId, product] = selectProduct(L.get(selectedProductIdL, withValidSite), L.get(selectedSiteL, withValidSite))
+  const withValidProduct = R.compose(L.set(selectedProductIdL, productId), L.set(selectedProductL, product))(withValidSite)
+
+  const [flavorId, flavor] = selectFlavor(L.get(selectedFlavorIdL, withValidProduct), L.get(selectedProductL, withValidProduct))
+  return R.compose(L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor))(withValidProduct)
 }
 
 
 const reduceValidAnimationTime = (state) => {
-  const currentTime = selectFlavorTime(state.selection.flavor[1], null)
-  const nextTime = selectFlavorTime(state.selection.flavor[1], currentTime)
+  const currentTime = selectFlavorTime(state.selection.flavor, null)
+  const nextTime = selectFlavorTime(state.selection.flavor, currentTime)
 
-  state = Object.assign({}, state)
-  let animation = Object.assign({}, state.animation)
-  animation.currentProductTime = currentTime
-  animation.nextProductTime = nextTime
-  state.animation = animation
-  return state
+  return R.compose(L.set(currentProductTimeL, currentTime),
+		   L.set(nextProductTimeL, nextTime))(state)
 }
 
 
-const catalogUpdatedReducer = (state, action) => {
-  state = Object.assign({}, state)
-  state.catalog = action.payload;
-  state = reduceValidSelection(state)
-
-  state = reduceValidAnimationTime(state)
-  return state
-}
+const catalogUpdatedReducer = (state, action) =>
+      R.compose(reduceValidAnimationTime, reduceValidSelection, L.set(catalogL, action.payload))(state)
 
 
 const siteSelectedReducer = (state, action) => {
-  state = Object.assign({}, state)
-
-  let selectedSite = [action.payload, state.catalog[action.payload]]
-  if (selectedSite[1] == undefined) {
-    selectedSite = selectSite(state.selection.site[0], state.catalog);
+  let [siteId, site] = [action.payload, state.catalog[action.payload]]
+  if (site == undefined) {
+    let [siteId, site] = selectSite(state.selection.siteId, state.catalog)
   }
-  let siteChanged = state.selection.site[0] != selectedSite[0]
-  state.selection = Object.assign({}, state.selection, {site: selectedSite})
+  let siteChanged = state.selection.siteId != siteId
+
+  const withSiteSet = R.compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
 
   if (siteChanged) {
-    state = makeCurrentSiteIntendedReducer(state)
+    return R.compose(reduceValidAnimationTime, makeCurrentSiteIntendedReducer, reduceValidSelection)(withSiteSet)
+  } else {
+    return R.compose(reduceValidAnimationTime, reduceValidSelection)(withSiteSet)
   }
-
-  return reduceValidAnimationTime(reduceValidSelection(state))
 }
 
 
 const productSelectedReducer = (state, action) => {
-  state = Object.assign({}, state)
-
-  let selectedProduct = [action.payload, state.selection.site[1].products[action.payload]]
-  if (selectedProduct[1] == undefined) {
-    selectedProduct = selectProduct(state.selection.product[0], selectedSite);
+  let [productId, product] = [action.payload, state.selection.site.products[action.payload]]
+  if (product == undefined) {
+    let [productId, product] = selectProduct(state.selection.productId, selectedSite);
   }
-  state.selection.product = selectedProduct
 
-  state = reduceValidSelection(state)
-  state = reduceValidAnimationTime(state)
-  return state
+  return R.compose(reduceValidAnimationTime, reduceValidSelection,
+		   L.set(selectedProductIdL, productId), L.set(selectedProductL, product))(state)
 }
 
 
 const flavorSelectedReducer = (state, action) => {
-  state = Object.assign({}, state)
-
-  let selectedFlavor = [action.payload, state.selection.product[1].flavors[action.payload]]
-  if (selectedFlavor[1] == undefined) {
-    selectedFlavor = selectFlavor(state.selection.flavor[0], state.selection.product);
+  let [flavorId, flavor] = [action.payload, state.selection.product.flavors[action.payload]]
+  if (flavor == undefined) {
+    let [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product);
   }
-  state.selection.flavor = selectedFlavor
 
-  state = reduceValidSelection(state)
-  state = reduceValidAnimationTime(state)
-  return state
+  return R.compose(reduceValidAnimationTime, reduceValidSelection,
+		   L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor))(state)
 }
 
 
@@ -188,8 +187,8 @@ const makeCurrentSiteIntendedReducer = (state) => {
   state.map = Object.assign({}, state.map)
   state.map.intended = Object.assign({}, state.map.current,
                                      {
-                                       centerLon: state.selection.site[1].lon,
-                                       centerLat: state.selection.site[1].lat,
+                                       centerLon: state.selection.site.lon,
+                                       centerLat: state.selection.site.lat,
                                      })
   return state
 }
@@ -200,14 +199,13 @@ const cycleSiteReducer = (state, action) => {
   options.sort()
 
   // returns -1 if not found, which is handy as we just select the first then
-  const current = options.indexOf(state.selection.site[0])
+  const current = options.indexOf(state.selection.siteId)
   let newIndex = current + 1 == options.length ? 0 : current + 1
 
-  let newSite = [options[newIndex], state.catalog[options[newIndex]]]
-  let siteChanged = state.selection.site[0] != newSite[0]
+  let [newSiteId, newSite] = [options[newIndex], state.catalog[options[newIndex]]]
+  let siteChanged = state.selection.siteId != newSiteId
 
-  state = Object.assign({}, state)
-  state.selection = Object.assign({}, state.selection, {site: newSite})
+  state = R.compose(L.set(selectedSiteIdL, newSiteId), L.set(selectedSiteL, newSite))(state)
 
   if (siteChanged) {
     state = makeCurrentSiteIntendedReducer(state)
@@ -218,55 +216,44 @@ const cycleSiteReducer = (state, action) => {
 
 
 const cycleProductReducer = (state, action) => {
-  let options = Object.keys(state.selection.site[1].products)
+  let options = Object.keys(state.selection.site.products)
   options.sort()
 
   // returns -1 if not found, which is handy as we just select the first then
-  const current = options.indexOf(state.selection.product[0])
+  const current = options.indexOf(state.selection.productId)
   let newIndex = current + 1 == options.length ? 0 : current + 1
 
-  let newProduct = [options[newIndex], state.selection.site[1].products[options[newIndex]]]
-  state = Object.assign({}, state)
-  state.selection = Object.assign({}, state.selection, {product: newProduct})
+  let [newProductId, newProduct] = [options[newIndex], state.selection.site.products[options[newIndex]]]
+  state = R.compose(L.set(selectedProductIdL, newProductId), L.set(selectedProductL, newProduct))(state)
 
   return reduceValidAnimationTime(reduceValidSelection(state))
 }
 
 
 const cycleFlavorReducer = (state, action) => {
-  let options = Object.keys(state.selection.product[1].flavors)
+  let options = Object.keys(state.selection.product.flavors)
   options.sort()
 
   // returns -1 if not found, which is handy as we just select the first then
-  const current = options.indexOf(state.selection.flavor[0])
+  const current = options.indexOf(state.selection.flavorId)
   let newIndex = current + 1 == options.length ? 0 : current + 1
 
-  let newFlavor = [options[newIndex], state.selection.product[1].flavors[options[newIndex]]]
-  state = Object.assign({}, state)
-  state.selection = Object.assign({}, state.selection, {flavor: newFlavor})
+  let [newFlavorId, newFlavor] = [options[newIndex], state.selection.product.flavors[options[newIndex]]]
+  state = R.compose(L.set(selectedFlavorIdL, newFlavorId), L.set(selectedFlavorL, newFlavor))(state)
 
   return reduceValidAnimationTime(state)
 }
 
 
-const animationTickReducer = (state, action) => {
-  state = Object.assign({}, state)
-  state.animation = Object.assign({}, state.animation)
-  state.animation.nextProductTime = selectFlavorTime(state.selection.flavor[1], state.animation.nextProductTime)
-  return state
-}
+const animationTickReducer = (state, action) =>
+      L.set(nextProductTimeL,selectFlavorTime(state.selection.flavor, state.animation.nextProductTime), state)
 
 
-const tickClickedReducer = (state, action) => {
-  state = Object.assign({}, state)
-  state.animation = Object.assign({}, state.animation)
-  state.animation.nextProductTime = action.payload
-  return state
-}
+const tickClickedReducer = (state, action) => L.set(nextProductTimeL, action.payload, state)
 
 
 const forwardBackwardReducer = (state, forward) => {
-  let times = state.selection.flavor[1].times
+  let times = state.selection.flavor.times
   let previousIndex = null;
 
   if (forward) {
@@ -350,11 +337,14 @@ const productLoadUpdateReducer = (state, action) => {
 
 export const reducer = (state, action) => {
   if (state === undefined || action.type === ObserverActions.PRIME) {
-    state = {
+    return {
       selection: {
-        site: [null, null],
-        product: [null, null],
-        flavor: [null, null]
+        siteId: null,
+	site: null,
+        productId: null,
+        product: null,
+        flavorId: null,
+        flavor: null
       },
       catalog: {},
       loadedProducts: {}, // urls as keys, null values
@@ -371,44 +361,42 @@ export const reducer = (state, action) => {
       animation: {
         nextProductTime: null, // the product time we want to show next
         currentProductTime: null, // the product time we are currently showing
-        running: true
+        running: false
       }
     }
   } else if (action.type === ObserverActions.CATALOG_UPDATED) {
-    state = catalogUpdatedReducer(state, action);
+    return catalogUpdatedReducer(state, action);
   } else if (action.type === ObserverActions.SITE_SELECTED) {
-    state = siteSelectedReducer(state, action);
+    return siteSelectedReducer(state, action);
   } else if (action.type === ObserverActions.CYCLE_SITE) {
-    state = cycleSiteReducer(state, action);
+    return cycleSiteReducer(state, action);
   } else if (action.type === ObserverActions.CYCLE_PRODUCT) {
-    state = cycleProductReducer(state, action);
+    return cycleProductReducer(state, action);
   } else if (action.type === ObserverActions.CYCLE_FLAVOR) {
-    state = cycleFlavorReducer(state, action);
+    return cycleFlavorReducer(state, action);
   } else if (action.type === ObserverActions.PRODUCT_SELECTED) {
-    state = productSelectedReducer(state, action);
+    return productSelectedReducer(state, action);
   } else if (action.type === ObserverActions.FLAVOR_SELECTED) {
-    state = flavorSelectedReducer(state, action);
+    return flavorSelectedReducer(state, action);
   } else if (action.type === ObserverActions.MAP_CENTER_CHANGED) {
-    state = mapCenterChangedReducer(state, action)
+    return mapCenterChangedReducer(state, action)
   } else if (action.type === ObserverActions.MAP_MOVED) {
-    state = mapMovedReducer(state, action)
+    return mapMovedReducer(state, action)
   } else if (action.type === ObserverActions.MAKE_CURRENT_SITE_INTENDED) {
-    state = makeCurrentSiteIntendedReducer(state)
+    return makeCurrentSiteIntendedReducer(state)
   } else if (action.type === ObserverActions.ANIMATION_TICK) {
-    state = animationTickReducer(state, action);
+    return animationTickReducer(state, action);
   } else if (action.type === ObserverActions.TICK_CLICKED) {
-    state = tickClickedReducer(state, action);
+    return tickClickedReducer(state, action);
   } else if (action.type === ObserverActions.TICK_FORWARD) {
-    state = tickForwardReducer(state, action);
+    return tickForwardReducer(state, action);
   } else if (action.type === ObserverActions.TICK_BACKWARD) {
-    state = tickBackwardReducer(state, action);
+    return tickBackwardReducer(state, action);
   } else if (action.type === ObserverActions.PRODUCT_TIME_CHANGED) {
-    state = productTimeReducer(state, action);
+    return productTimeReducer(state, action);
   } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {
-    state = toggleAnimationReducer(state, action);
+    return toggleAnimationReducer(state, action);
   } else if (action.type === ObserverActions.PRODUCT_LOAD_UPDATE) {
-    state = productLoadUpdateReducer(state, action);
+    return productLoadUpdateReducer(state, action);
   }
-
-  return state;
 }

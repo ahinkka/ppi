@@ -138,7 +138,7 @@ export class ObserverApp extends React.Component {
     let store = this.props.store;
     let state = store.getState();
 
-    let flavor = state.selection.flavor[1]
+    let flavor = state.selection.flavor
 
     if (flavor == null) {
       return
@@ -221,9 +221,9 @@ export class ObserverApp extends React.Component {
     let state = store.getState();
 
     this.loadProducts()
-    if (state.selection.site[0] == null ||
-        state.selection.product[0] == null ||
-        state.selection.flavor[0] == null) {
+    if (state.selection.siteId == null ||
+        state.selection.productId == null ||
+        state.selection.flavorId == null) {
       return (<div></div>)
     }
 
@@ -237,7 +237,7 @@ export class ObserverApp extends React.Component {
     }
 
     let tickItems = []
-    const flavorTimes = state.selection.flavor[1].times
+    const flavorTimes = state.selection.flavor.times
     const minTime = Date.parse(flavorTimes[0].time)
     const maxTime = Date.parse(flavorTimes[flavorTimes.length-1].time)
     const spanMillis = maxTime - minTime
@@ -252,7 +252,7 @@ export class ObserverApp extends React.Component {
       if (time === state.animation.currentProductTime) {
         color = "#000000"
       } else {
-        const url = this.props.productUrlResolver(state.selection.flavor[1], time)
+        const url = this.props.productUrlResolver(state.selection.flavor, time)
         if (url in state.loadedProducts) {
           color = "#c0c0c0"
         }
@@ -268,7 +268,7 @@ export class ObserverApp extends React.Component {
     }
 
 
-    let productUrl = this.props.productUrlResolver(state.selection.flavor[1],
+    let productUrl = this.props.productUrlResolver(state.selection.flavor,
                                                    state.animation.nextProductTime)
 
     let product = null
@@ -281,21 +281,21 @@ export class ObserverApp extends React.Component {
           <div id="product-selection-row" className="row">
             <div className="col-md-4">
               <form className="form-inline">
-                <DropdownSelector currentValue={state.selection.site[0]}
+                <DropdownSelector currentValue={state.selection.siteId}
                                   legend="Site"
                                   items={siteSelections(state.catalog)}
                                   tooltip="Press R to cycle sites"
                                   action={ObserverActions.SITE_SELECTED}
                                   dispatch={store.dispatch} />
-                <DropdownSelector currentValue={state.selection.product[0]}
+                <DropdownSelector currentValue={state.selection.productId}
                                   legend="Product"
-                                  items={productSelections(state.selection.site[1])}
+                                  items={productSelections(state.selection.site)}
                                   tooltip="Press P to cycle products"
                                   action={ObserverActions.PRODUCT_SELECTED}
                                   dispatch={store.dispatch} />
-                <DropdownSelector currentValue={state.selection.flavor[0]}
+                <DropdownSelector currentValue={state.selection.flavorId}
                                   legend="Flavor"
-                                  items={flavorSelections(state.selection.product[1])}
+                                  items={flavorSelections(state.selection.product)}
                                   tooltip="Press F to cycle flavors"
                                   action={ObserverActions.FLAVOR_SELECTED}
                                   dispatch={store.dispatch} />
@@ -322,7 +322,7 @@ export class ObserverApp extends React.Component {
                dispatch={store.dispatch}
                product={product}
                productTime={state.animation.nextProductTime}
-               productSelection={[state.selection.site[0], state.selection.product[0], state.selection.flavor[0]]} />
+               productSelection={[state.selection.siteId, state.selection.productId, state.selection.flavorId]} />
           <ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
                       ranges={_NOAAReflectivityColorScale} />
         </div>

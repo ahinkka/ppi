@@ -43,7 +43,7 @@ buildincr: ## Build distribution incrementally into directory 'build'
 dev-build: ## Watch for filesystem changes and build on change
 	make buildincr
 	date
-	find Makefile src www css -type f | entr make build
+	find Makefile src www css -type f | entr make buildincr
 
 .PHONY: clean
 clean: ## Clean build directory
