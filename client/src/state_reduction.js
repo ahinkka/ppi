@@ -1,3 +1,4 @@
+// -*- indent-tabs-mode: nil; -*-
 import * as L from 'partial.lenses'
 import * as R from 'ramda'
 import {ObserverActions} from "./constants"
@@ -112,12 +113,14 @@ const reduceValidAnimationTime = (state) => {
   const nextTime = selectFlavorTime(state.selection.flavor, currentTime)
 
   return R.compose(L.set(currentProductTimeL, currentTime),
-		   L.set(nextProductTimeL, nextTime))(state)
+                   L.set(nextProductTimeL, nextTime))(state)
 }
 
 
 const catalogUpdatedReducer = (state, action) =>
-      R.compose(reduceValidAnimationTime, reduceValidSelection, L.set(catalogL, action.payload))(state)
+      R.pipe(L.set(catalogL, action.payload),
+             reduceValidSelection,
+             reduceValidAnimationTime)(state)
 
 
 const siteSelectedReducer = (state, action) => {
@@ -130,9 +133,9 @@ const siteSelectedReducer = (state, action) => {
   const withSiteSet = R.compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
 
   if (siteChanged) {
-    return R.compose(reduceValidAnimationTime, makeCurrentSiteIntendedReducer, reduceValidSelection)(withSiteSet)
+    return R.pipe(reduceValidSelection, makeCurrentSiteIntendedReducer, reduceValidAnimationTime)(withSiteSet)
   } else {
-    return R.compose(reduceValidAnimationTime, reduceValidSelection)(withSiteSet)
+    return R.pipe(reduceValidSelection, reduceValidAnimationTime)(withSiteSet)
   }
 }
 
@@ -140,11 +143,12 @@ const siteSelectedReducer = (state, action) => {
 const productSelectedReducer = (state, action) => {
   let [productId, product] = [action.payload, state.selection.site.products[action.payload]]
   if (product == undefined) {
-    let [productId, product] = selectProduct(state.selection.productId, selectedSite);
+    let [productId, product] = selectProduct(state.selection.productId, state.selection.site);
   }
 
-  return R.compose(reduceValidAnimationTime, reduceValidSelection,
-		   L.set(selectedProductIdL, productId), L.set(selectedProductL, product))(state)
+  return R.pipe(L.set(selectedProductIdL, productId), L.set(selectedProductL, product),
+                reduceValidSelection,
+                reduceValidAnimationTime)(state)
 }
 
 
@@ -154,8 +158,9 @@ const flavorSelectedReducer = (state, action) => {
     let [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product);
   }
 
-  return R.compose(reduceValidAnimationTime, reduceValidSelection,
-		   L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor))(state)
+  return R.pipe(L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor),
+                reduceValidAnimationTime,
+                reduceValidSelection)(state)
 }
 
 
@@ -261,16 +266,16 @@ const forwardBackwardReducer = (state, forward) => {
     for (let i=times.length-1; i>-1; i--) {
       let time = Date.parse(times[i].time)
       if (time === state.animation.currentProductTime) {
-	previousIndex = i
-	break
+        previousIndex = i
+        break
       }
     }
   } else {
     for (let i=0; i<times.length; i++) {
       let time = Date.parse(times[i].time)
       if (time === state.animation.currentProductTime) {
-	previousIndex = i
-	break
+        previousIndex = i
+        break
       }
     }
   }
@@ -318,7 +323,7 @@ export const reducer = (state, action) => {
     return {
       selection: {
         siteId: null,
-	site: null,
+        site: null,
         productId: null,
         product: null,
         flavorId: null,
@@ -327,14 +332,14 @@ export const reducer = (state, action) => {
       catalog: {},
       loadedProducts: {}, // urls as keys, null values
       map: {
-	current: { // the map element controls this
+        current: { // the map element controls this
           centerLon: 0,
           centerLat: 0,
-	},
-	intended: { // the app controls this; whenever this changes, map centers on it
+        },
+        intended: { // the app controls this; whenever this changes, map centers on it
           centerLon: 0,
           centerLat: 0,
-	},
+        },
       },
       animation: {
         nextProductTime: null, // the product time we want to show next
