@@ -17,8 +17,7 @@ And then navigate to directory build with your browser.
 
 ## Running development server
 
-    cd build
-    python -mSimpleHTTPServer
+    python serve_build.py
 
 ## Ideas
  - Should adopt prop-types https://www.npmjs.com/package/prop-types for the
