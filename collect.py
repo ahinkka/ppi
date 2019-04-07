@@ -199,10 +199,17 @@ def collect(infile, exporter, directory):
         catalog = copy.deepcopy(sites)
         json.dump(catalog, f)
 
+    skipped_count = 0
     # TODO: parallelize, this should be embarrassingly easy
     for src, dst, product_info in sources_dests_infos:
         try:
             dest_path = os.path.join(directory, dst)
+
+            if os.path.exists(dest_path + '.gz') and os.path.getsize(dest_path + '.gz') > 0:
+                err('Not dumping {}, already exists and is not an empty file!'.format(dest_path))
+                skipped_count += 1
+                continue
+
             # err(dest_path)
             # err(camelcapsify_dict(product_info))
             additional_metadata = {"productInfo": camelcapsify_dict(product_info)}
@@ -225,6 +232,8 @@ def collect(infile, exporter, directory):
         except Exception, e:
             err(u"Couldn't export {}: {}".format(src, e))
             err(traceback.format_exc())
+
+    err('Exported {} products, skipped {}'.format(len(sources_dests_infos), skipped_count))
 
 
 if __name__ == '__main__':
