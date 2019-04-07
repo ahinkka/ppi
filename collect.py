@@ -67,17 +67,39 @@ def collect_radar_rasters(input_products):
 
         Product dict has product ids as keys, dicts as values as follows:
           {
-            "name": ...,       # human-readable name of the product
+            "display": ...,    # human-readable name of the product (UI-displayable)
             "flavors": [       # flavors enable sub-selections for a product
-              "0.5": [         # if only one flavor, use 'default' for no selector)
+              "0.5": [         # if only one flavor, use 'default' for no selector
                 {              # each item under flavor is one timestep, a distinct product
                   "time": ..., # timestamp as UTC ISO8601, JS compatible format
                   "url": ...,  # relative URL to the product file
+                  "productInfo": ...
                 },
               }
             ]
           }
 
+        Product info is a dict containing information required to display the,
+        product, for example:
+          {
+            "dataScale": {
+                "noEcho": 0,
+                "notScanned": 252,
+                "offset": -32,
+                "step": 0.5
+          },
+            "dataType": "REFLECTIVITY",
+            "dataUnit": "dBZ",
+            "polarization": "HORIZONTAL",
+            "productType": "PPI"
+          }
+
+        Here data scale describes what the actual data unit values are; two
+        special values are included: noEcho and notScanned. Offset specifies
+        what 0 means (if it wasn't mapped to noEcho), here -32 dBZ, and the
+        actual value can be calculated by multiplying the step. E.g. if we
+        have the value 100 in the product data array, it would be
+        -32 + 100 * 0.5 = 18 dBZ.
     """
     radar_rasters = [product
                      for product in input_products
