@@ -13,10 +13,17 @@ deps-install: ## Install development dependencies
 deps-clean: ## Remove development dependencies (node_modules)
 	rm -rf ./node_modules
 
+.PHONY:
+lint: ## Run ESLint
+	./node_modules/.bin/eslint src
+
+.PHONY:
+fix-lint: ## Fix lint using ESLint
+	./node_modules/.bin/eslint --fix src
 
 # TODO: refactor to share code
 .PHONY: build
-build: ## Build distribution into directory 'build'
+build: lint ## Build distribution into directory 'build'
 	mkdir -p ./build/{js,css}
 	node_modules/.bin/browserify src/main.js \
 		-o build/js/observer.js \
