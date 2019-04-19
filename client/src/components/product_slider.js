@@ -1,6 +1,6 @@
-import React from "react"
-import {OverlayTrigger, Tooltip} from "react-bootstrap";
-import {ObserverActions} from "../constants"
+import React from 'react'
+import {OverlayTrigger, Tooltip} from 'react-bootstrap';
+import {ObserverActions} from '../constants'
 
 
 class Tick extends React.Component {
@@ -15,15 +15,15 @@ class Tick extends React.Component {
 
   render() {
     const tooltip = (
-        <Tooltip id={"tick-" + this.props.position + "-tooltip"}>{this.props.tooltip}</Tooltip>
+      <Tooltip id={'tick-' + this.props.position + '-tooltip'}>{this.props.tooltip}</Tooltip>
     )
 
     return (
-        <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <div style={{position: "absolute", left: (0.04 + 0.9 * this.props.position) * 100 + "%",
-                       color: this.props.color, cursor: "pointer"}}
-               onClick={this.onClick}>▎</div>
-        </OverlayTrigger>
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <div style={{position: 'absolute', left: (0.04 + 0.9 * this.props.position) * 100 + '%',
+          color: this.props.color, cursor: 'pointer'}}
+        onClick={this.onClick}>▎</div>
+      </OverlayTrigger>
     )
   }
 }
@@ -51,15 +51,15 @@ export class ProductSlider extends React.Component {
     const ticks = this.props.ticks.map(function(item) {
       return (
         <Tick key={'tick-' + item.position} position={item.position} color={item.color}
-              tooltip={item.tooltip} action={item.action} payload={item.payload}
-              dispatch={tmp.props.dispatch}/>
+          tooltip={item.tooltip} action={item.action} payload={item.payload}
+          dispatch={tmp.props.dispatch}/>
       )
     })
 
     return (
-        <div className="progress" onWheel={this.onWheel}>
-          {ticks}
-        </div>
+      <div className="progress" onWheel={this.onWheel}>
+        {ticks}
+      </div>
     )
   }
 }

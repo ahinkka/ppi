@@ -1,4 +1,4 @@
-import React from "react"
+import React from 'react'
 import Draggable from 'react-draggable'
 
 import {ScaleRangeType} from './coloring'
@@ -13,7 +13,7 @@ class SolidColorRange extends React.Component {
 		     fontSize: '0.8em', textAlign: 'center',
 		     rightPadding: '0.2em'}}>{this.props.start.value} &ndash; {this.props.end.value}</div>
         <div style={{width: '2em',
-		     backgroundColor: 'rgb(' + this.props.color.join(", ") + ')'}}></div>
+		     backgroundColor: 'rgb(' + this.props.color.join(', ') + ')'}}></div>
       </div>
     )
   }
@@ -35,7 +35,7 @@ export class ColorScale extends React.Component {
     tmp.reverse()
     const ranges = tmp.map(function(item) {
       if (item.type !== ScaleRangeType.STEP) {
-	throw new Exception("Unhandled step type: " + item.type);
+        throw new Exception('Unhandled step type: ' + item.type);
       }
 
       return (
@@ -47,10 +47,10 @@ export class ColorScale extends React.Component {
     })
 
     // TODO: use non-px units everywhere
-          // <div style={{width: '7em'}}>{this.props.name}</div><br/>
+    // <div style={{width: '7em'}}>{this.props.name}</div><br/>
     return (
       <Draggable grid={[25, 25]}>
-        <div style={{backgroundColor: "#c0c0c0", padding: "10px", "zIndex": 100, position: "absolute", top: 150, left: 25}}>
+        <div style={{backgroundColor: '#c0c0c0', padding: '10px', 'zIndex': 100, position: 'absolute', top: 150, left: 25}}>
           <div style={{width: '7em', fontSize: '0.9em'}}>{this.props.type}, {this.props.unit}</div>
 	  <div style={{display: 'flex', flexDirection: 'column'}}>
             {ranges}

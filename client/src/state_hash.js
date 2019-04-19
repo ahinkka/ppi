@@ -1,7 +1,7 @@
 const serializeHash = (contents) => {
   let keys = Object.keys(contents)
   keys.sort()
-  let result = "#"
+  let result = '#'
   let first = true;
   for (const key of keys) {
     let value = contents[key]
@@ -30,10 +30,10 @@ export const makeHashFromState = (state) => {
 
 
 export const parseHash = (hash) => {
-  let parts = hash.slice(1).split("&")
+  let parts = hash.slice(1).split('&')
   let result = {}
   for (let part of parts) {
-    let [key, value] = part.split("=")
+    let [key, value] = part.split('=')
     result[key] = value
   }
   return result

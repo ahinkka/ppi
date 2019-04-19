@@ -1,15 +1,15 @@
-import React from "react"
-import ReactDOM from "react-dom"
+import React from 'react'
+import ReactDOM from 'react-dom'
 import {createStore} from 'redux'
 
-import {httpGetPromise} from "./utils"
-import {ObserverApp} from "./components/app"
-import {ObserverActions} from "./constants"
-import {parseHash} from "./state_hash"
-import {reducer} from "./state_reduction"
+import {httpGetPromise} from './utils'
+import {ObserverApp} from './components/app'
+import {ObserverActions} from './constants'
+import {parseHash} from './state_hash'
+import {reducer} from './state_reduction'
 
 let store = createStore(reducer,
-			window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__())
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__())
 store.dispatch({type: ObserverActions.PRIME})
 
 
@@ -17,7 +17,7 @@ const productUrlResolver = (flavor, time) => {
   let urlPrefix = 'data/'
 
   if (flavor === undefined || flavor == null || time == null) {
-    console.warn("No URL found for flavor:", flavor, ", time:", time)
+    console.warn('No URL found for flavor:', flavor, ', time:', time)
     return null
   }
 
@@ -27,14 +27,14 @@ const productUrlResolver = (flavor, time) => {
     return urlPrefix + tmp.url
   }
 
-  console.warn("No URL found for flavor:", flavor, ", time:", time)
+  console.warn('No URL found for flavor:', flavor, ', time:', time)
   return null
 }
 
 
 // Returns true if state was loaded, false if not
 const loadHashState = () => {
-  if (window.location.hash != "") {
+  if (window.location.hash != '') {
     let parsed = parseHash(window.location.hash)
     const dispatch = store.dispatch
 
@@ -43,13 +43,13 @@ const loadHashState = () => {
     dispatch({type: ObserverActions.FLAVOR_SELECTED, payload: parsed.flavor})
     dispatch({type: ObserverActions.FLAVOR_SELECTED, payload: parsed.flavor})
 
-    let animationRunning = parsed.animationRunning == "true" ? true : false
+    let animationRunning = parsed.animationRunning == 'true' ? true : false
     if (store.getState().animation.running != animationRunning) {
       dispatch({type: ObserverActions.TOGGLE_ANIMATION})
     }
 
     if (parsed.lon !== undefined && parsed.lat !== undefined &&
-        parsed.lon !== "NaN" && parsed.lat !== "NaN") {
+        parsed.lon !== 'NaN' && parsed.lat !== 'NaN') {
       let lon = parseFloat(parsed.lon)
       let lat = parseFloat(parsed.lat)
       dispatch({type: ObserverActions.MAP_CENTER_CHANGED, payload: {lon: lon, lat: lat}})
@@ -65,16 +65,16 @@ const loadHashState = () => {
 
 
 const renderApp = () => {
-  console.log("About to render...");
+  console.log('About to render...');
   ReactDOM.render(
-      <ObserverApp store={store}
-                   productUrlResolver={productUrlResolver} />,
+    <ObserverApp store={store}
+      productUrlResolver={productUrlResolver} />,
     document.getElementById('observer')
   )
 }
 
 
-const url = "data/catalog.json"
+const url = 'data/catalog.json'
 let rendered = false
 const fetchCatalog = () => {
   httpGetPromise(url)

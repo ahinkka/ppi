@@ -1,11 +1,11 @@
 // -*- indent-tabs-mode: nil; -*-
-import React from "react"
-import pako from "pako";
-import LRU from "lru-cache"
+import React from 'react'
+import pako from 'pako';
+import LRU from 'lru-cache'
 
-import ndarray from "ndarray"
-import {d1 as l_interp} from "ndarray-linear-interpolate"
-import stringify from "json-stable-stringify"
+import ndarray from 'ndarray'
+import {d1 as l_interp} from 'ndarray-linear-interpolate'
+import stringify from 'json-stable-stringify'
 
 import {Attribution} from 'ol/control'
 import {ImageCanvas} from 'ol/source'
@@ -15,11 +15,11 @@ import {OSM} from 'ol/source'
 import {Tile} from 'ol/layer'
 import {fromLonLat, toLonLat} from 'ol/proj'
 
-import {httpGetPromise} from "../utils"
-import {ObserverActions} from "../constants"
+import {httpGetPromise} from '../utils'
+import {ObserverActions} from '../constants'
 
-import {DataValueType, integerToDataValue} from "./datavalue"
-import {NOT_SCANNED_COLOR, NO_ECHO_COLOR, reflectivityValueToNOAAColor} from "./coloring"
+import {DataValueType, integerToDataValue} from './datavalue'
+import {NOT_SCANNED_COLOR, NO_ECHO_COLOR, reflectivityValueToNOAAColor} from './coloring'
 
 
 const computeExtent = (affineTransform, width, height) => {
@@ -36,10 +36,10 @@ const computeExtent = (affineTransform, width, height) => {
 
   let origin = [affineTransform[0], affineTransform[3]]
   let extreme = [origin[0] + affineTransform[1] * width,
-                 origin[1] + affineTransform[5] * height]
+    origin[1] + affineTransform[5] * height]
   // extent = [minX, minY, maxX, maxY]
   return [Math.min(origin[0], extreme[0]), Math.min(origin[1], extreme[1]),
-          Math.max(origin[0], extreme[0]), Math.max(origin[1], extreme[1])]
+    Math.max(origin[0], extreme[0]), Math.max(origin[1], extreme[1])]
 }
 
 
@@ -112,8 +112,8 @@ export class Map extends React.Component {
   __onResize() {
     let elem = document.getElementById(this.props.headerElementId)
     let desiredHeight = window.innerHeight - elem.offsetHeight
-    let style = "" + desiredHeight + "px"
-    document.getElementById("map-element").style.height = style
+    let style = '' + desiredHeight + 'px'
+    document.getElementById('map-element').style.height = style
     this.map.updateSize()
   }
 
@@ -130,7 +130,7 @@ export class Map extends React.Component {
   }
 
   componentDidMount() {
-    console.log("Map.componentDidMount()")
+    console.log('Map.componentDidMount()')
     this.map = new OlMap({
       view: new View({
         center: [0, 0],
@@ -142,12 +142,12 @@ export class Map extends React.Component {
           source: new OSM({
             attributions: [
               new Attribution({
-              html:
+                html:
                 '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
                 ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
               })
             ],
-            url: "http://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
+            url: 'http://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
           })
         }),
 
@@ -156,12 +156,12 @@ export class Map extends React.Component {
           source: new OSM({
             attributions: [
               new Attribution({
-              html:
+                html:
                 '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
                 ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
               })
             ],
-            url: "http://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png"
+            url: 'http://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png'
           })
         })
       ],
@@ -187,7 +187,7 @@ export class Map extends React.Component {
 
       // let projCode = projection.getCode()
       dispatch({type: ObserverActions.MAP_MOVED,
-                payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
+        payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
     })
 
     setTimeout(this.__onResize, 200)
@@ -203,7 +203,7 @@ export class Map extends React.Component {
     this.canvas.height = Math.floor(size[1])
 
     if (this.props.product == null || this.props.product == undefined) {
-      console.warn("__canvasFunction not rendering because of null currentProduct")
+      console.warn('__canvasFunction not rendering because of null currentProduct')
       return this.canvas
     }
 
@@ -221,11 +221,11 @@ export class Map extends React.Component {
       return dataPxXY
     }
 
-    let ctx = this.canvas.getContext("2d")
+    let ctx = this.canvas.getContext('2d')
 
     // Cached rendering
     const cacheKey = stringify([this.props.productSelection, this.props.productTime,
-                                extent, this.canvas.width, this.canvas.height])
+      extent, this.canvas.width, this.canvas.height])
     const cached = this.__renderedProducts.get(cacheKey)
     if (cached !== undefined) {
       this.canvas = cached
@@ -233,7 +233,7 @@ export class Map extends React.Component {
       // let pixelCount = this.canvas.width * this.canvas.height
       // console.log("Cached rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
       this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
-                           payload: this.props.productTime})
+        payload: this.props.productTime})
       return this.canvas
     }
 
@@ -252,7 +252,7 @@ export class Map extends React.Component {
         }
 
         let color = null
-        if (metadata.productInfo.dataType == "REFLECTIVITY") {
+        if (metadata.productInfo.dataType == 'REFLECTIVITY') {
           const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
           if (valueType == DataValueType.NOT_SCANNED) {
             color = NOT_SCANNED_COLOR;
@@ -262,7 +262,7 @@ export class Map extends React.Component {
             const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
             color = [r, g, b, 255]
           } else {
-            throw Exception("Unknown DataValueType: " + valueType)
+            throw Exception('Unknown DataValueType: ' + valueType)
           }
         } else {
           if (value == metadata.productInfo.dataScale.notScanned) {
@@ -290,9 +290,9 @@ export class Map extends React.Component {
 
     let elapsedMs = new Date().getTime() - startRender;
     let pixelCount = this.canvas.width * this.canvas.height
-    console.log("Rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
+    console.log('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s')
     this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
-                         payload: this.props.productTime})
+      payload: this.props.productTime})
 
     return this.canvas
   }

@@ -5,7 +5,7 @@ export const NO_ECHO_COLOR = [0, 0, 0, 0]
 
 
 export const ScaleRangeType = {
-  STEP: "step",
+  STEP: 'step',
 }
 
 
@@ -13,29 +13,29 @@ export const ScaleRangeType = {
 //       as described in Wikipedia.  This is a discrete scale for reflectivity
 //       ranges.
 const NOAALowRedGreenBlue = [
-      // ND  96  101 97
-      [-30, 208, 255, 255],
-      [-25, 198, 152, 189],
-      [-20, 154, 104, 155],
-      [-15, 95,  47,  99],
-      [-10, 205, 205, 155],
-      [-5,  155, 154, 106],
-      [0,   100, 101, 96],
-      [5,   12,  230, 231],
-      [10,  1,   161, 249],
-      [15,  0,   0,   238],
-      [20,  4,   252, 5],
-      [25,  0,   200, 6],
-      [30,  0,   141, 1],
-      [35,  250, 242, 0],
-      [40,  229, 188, 0],
-      [45,  255, 157, 7],
-      [50,  253, 0,   2],
-      [55,  215, 0,   0],
-      [60,  189, 1,   0],
-      [65,  253, 0,   246],
-      [70,  154, 86,  195],
-      [75,  248, 246, 247]]
+  // ND  96  101 97
+  [-30, 208, 255, 255],
+  [-25, 198, 152, 189],
+  [-20, 154, 104, 155],
+  [-15, 95,  47,  99],
+  [-10, 205, 205, 155],
+  [-5,  155, 154, 106],
+  [0,   100, 101, 96],
+  [5,   12,  230, 231],
+  [10,  1,   161, 249],
+  [15,  0,   0,   238],
+  [20,  4,   252, 5],
+  [25,  0,   200, 6],
+  [30,  0,   141, 1],
+  [35,  250, 242, 0],
+  [40,  229, 188, 0],
+  [45,  255, 157, 7],
+  [50,  253, 0,   2],
+  [55,  215, 0,   0],
+  [60,  189, 1,   0],
+  [65,  253, 0,   246],
+  [70,  154, 86,  195],
+  [75,  248, 246, 247]]
 
 
 export const reflectivityValueToNOAAColor = (reflectivityValue) => {
@@ -65,17 +65,17 @@ export const NOAAScaleToScaleDescription = () => {
     if (nextRowIndex < NOAALowRedGreenBlue.length) {
       const [nextLow, nextRed, nextGreen, nextBlue] = NOAALowRedGreenBlue[nextRowIndex]
       result.push({
-	type: ScaleRangeType.STEP,
-	start: { value: low, open: false },
-	end: { value: nextLow, open: false },
-	color: [red, green, blue]
+        type: ScaleRangeType.STEP,
+        start: { value: low, open: false },
+        end: { value: nextLow, open: false },
+        color: [red, green, blue]
       })
     } else {
       result.push({
-	type: ScaleRangeType.STEP,
-	start: { value: low, open: false },
-	end: { value: low + 1, open: true },
-	color: [red, green, blue]
+        type: ScaleRangeType.STEP,
+        start: { value: low, open: false },
+        end: { value: low + 1, open: true },
+        color: [red, green, blue]
       })
     }
   }

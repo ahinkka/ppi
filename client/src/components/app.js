@@ -1,16 +1,16 @@
-import React from "react"
-import pako from "pako";
+import React from 'react'
+import pako from 'pako';
 
-import {httpGetPromise, objectEquals} from "../utils"
-import {ObserverActions} from "../constants"
+import {httpGetPromise, objectEquals} from '../utils'
+import {ObserverActions} from '../constants'
 
-import {makeHashFromState} from "../state_hash"
-import {DropdownSelector} from "./dropdown_selector"
-import {Map} from "./map.js"
-import {ToggleButton} from "./toggle_button"
-import {ProductSlider} from "./product_slider"
-import {ColorScale} from "./color_scale"
-import {NOAAScaleToScaleDescription} from "./coloring"
+import {makeHashFromState} from '../state_hash'
+import {DropdownSelector} from './dropdown_selector'
+import {Map} from './map.js'
+import {ToggleButton} from './toggle_button'
+import {ProductSlider} from './product_slider'
+import {ColorScale} from './color_scale'
+import {NOAAScaleToScaleDescription} from './coloring'
 
 
 let _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
@@ -20,7 +20,7 @@ const inflate = (stream) => {
   try {
     return pako.inflate(stream, { to: 'string' })
   } catch (err) {
-    console.log("Error while decompressing product file:", err);
+    console.log('Error while decompressing product file:', err);
   }
 }
 
@@ -56,7 +56,7 @@ const flavorSelections = (product) => {
 class TimeDisplay extends React.Component {
   render() {
     let isoString = new Date(this.props.currentValue).toISOString()
-    let title = "Current displayed product time is " + isoString
+    let title = 'Current displayed product time is ' + isoString
     return (
       <div title={title} className="h5">{isoString}</div>
     );
@@ -67,7 +67,7 @@ class TimeDisplay extends React.Component {
 export class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
-    console.log("ObserverApp.constructor()")
+    console.log('ObserverApp.constructor()')
 
     let state = this.props.store.getState()
 
@@ -88,7 +88,7 @@ export class ObserverApp extends React.Component {
   }
 
   componentDidMount() {
-    console.log("ObserverApp.componentDidMount()")
+    console.log('ObserverApp.componentDidMount()')
     this._dispatch = this.props.store.dispatch.bind(this);
     this._unsubscribe = this.props.store.subscribe(this.storeChanged).bind(this);
 
@@ -99,7 +99,7 @@ export class ObserverApp extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log("ObserverApp.componentDidUnmount()")
+    console.log('ObserverApp.componentDidUnmount()')
     this._unsubscribe();
     this.removeKeyboardListener()
   }
@@ -111,20 +111,20 @@ export class ObserverApp extends React.Component {
 
   onKeyDown(event) {
     let key = event.key
-    if (key == "ArrowRight") {
+    if (key == 'ArrowRight') {
       this._dispatch({type: ObserverActions.TICK_FORWARD})
-    } else if (key == "ArrowLeft") {
+    } else if (key == 'ArrowLeft') {
       this._dispatch({type: ObserverActions.TICK_BACKWARD})
     }
   }
 
   onKeyPress(event) {
     let key = String.fromCharCode(event.charCode);
-    if (key == "s" || key == "S") {
+    if (key == 's' || key == 'S') {
       this._dispatch({type: ObserverActions.CYCLE_SITE})
-    } else if (key == "p" || key == "P") {
+    } else if (key == 'p' || key == 'P') {
       this._dispatch({type: ObserverActions.CYCLE_PRODUCT})
-    } else if (key == "f" || key == "F") {
+    } else if (key == 'f' || key == 'F') {
       this._dispatch({type: ObserverActions.CYCLE_FLAVOR})
     } else if (event.keyCode == 32) {
       this._dispatch({type: ObserverActions.TOGGLE_ANIMATION})
@@ -174,14 +174,14 @@ export class ObserverApp extends React.Component {
               delete this.__loadingProducts[url];
               if (e instanceof SyntaxError) {
                 // TODO: properly handle
-                console.log("Error parsing " + url + ": " + e + " with input " +
+                console.log('Error parsing ' + url + ': ' + e + ' with input ' +
                             inflated.substring(0, 20) +
-                            " ... " +
+                            ' ... ' +
                             inflated.substring(inflated.length - 20, inflated.length - 1))
                 return
               } else {
                 // TODO: properly handle
-                console.warn("Unhandled exception during product load", e)
+                console.warn('Unhandled exception during product load', e)
                 throw e
               }
             }
@@ -189,10 +189,10 @@ export class ObserverApp extends React.Component {
             this.__loadedProducts[url] = parsed;
             tmp._dispatch({type: ObserverActions.PRODUCT_LOAD_UPDATE, payload: {loaded: [url], unloaded: new Array(removedUrls)}})
           })
-        .catch((reason) => {
+          .catch((reason) => {
           // TODO: properly handle
-          console.warn("Couldn't load product ", reason)
-        })
+            console.warn('Couldn\'t load product ', reason)
+          })
         setTimeout(this.loadProducts, 500)
         break
       }
@@ -207,13 +207,13 @@ export class ObserverApp extends React.Component {
   }
 
   initializeKeyboardListener() {
-    document.addEventListener("keypress", this.onKeyPress)
-    document.addEventListener("keydown", this.onKeyDown)
+    document.addEventListener('keypress', this.onKeyPress)
+    document.addEventListener('keydown', this.onKeyDown)
   }
 
   removeKeyboardListener() {
-    document.removeEventListener("keypress", this.onKeyPress)
-    document.removeEventListener("keydown", this.onKeyDown)
+    document.removeEventListener('keypress', this.onKeyPress)
+    document.removeEventListener('keydown', this.onKeyDown)
   }
 
   render() {
@@ -230,8 +230,8 @@ export class ObserverApp extends React.Component {
     let hash = makeHashFromState(state)
     if (hash != window.location.hash) {
       let hashLess = window.location.href
-      if (window.location.href.includes("#")) {
-	hashLess = window.location.href.split("#")[0]
+      if (window.location.href.includes('#')) {
+        hashLess = window.location.href.split('#')[0]
       }
       window.history.pushState(null, null, hashLess + hash)
     }
@@ -247,14 +247,14 @@ export class ObserverApp extends React.Component {
       const fromStartMillis = time - minTime
       const proportion = fromStartMillis / spanMillis
 
-      let color = "#ffffff"
+      let color = '#ffffff'
 
       if (time === state.animation.currentProductTime) {
-        color = "#000000"
+        color = '#000000'
       } else {
         const url = this.props.productUrlResolver(state.selection.flavor, time)
         if (url in state.loadedProducts) {
-          color = "#c0c0c0"
+          color = '#c0c0c0'
         }
       }
 
@@ -269,7 +269,7 @@ export class ObserverApp extends React.Component {
 
 
     let productUrl = this.props.productUrlResolver(state.selection.flavor,
-                                                   state.animation.nextProductTime)
+      state.animation.nextProductTime)
 
     let product = null
     if (productUrl in state.loadedProducts) {
@@ -277,55 +277,55 @@ export class ObserverApp extends React.Component {
     }
 
     return (
-	<div>
-          <div id="product-selection-row" className="row">
-            <div className="col-md-4">
-              <form className="form-inline">
-                <DropdownSelector currentValue={state.selection.siteId}
-                                  legend="Site"
-                                  items={siteSelections(state.catalog)}
-                                  tooltip="Press R to cycle sites"
-                                  action={ObserverActions.SITE_SELECTED}
-                                  dispatch={store.dispatch} />
-                <DropdownSelector currentValue={state.selection.productId}
-                                  legend="Product"
-                                  items={productSelections(state.selection.site)}
-                                  tooltip="Press P to cycle products"
-                                  action={ObserverActions.PRODUCT_SELECTED}
-                                  dispatch={store.dispatch} />
-                <DropdownSelector currentValue={state.selection.flavorId}
-                                  legend="Flavor"
-                                  items={flavorSelections(state.selection.product)}
-                                  tooltip="Press F to cycle flavors"
-                                  action={ObserverActions.FLAVOR_SELECTED}
-                                  dispatch={store.dispatch} />
-              </form>
-            </div>
-            <div className="col-md-1">
-              <div className="float-right">
-                <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
-                              onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
-                              action={ObserverActions.TOGGLE_ANIMATION}
-                              tooltip="Press SPACE to toggle animation" />
-              </div>
-            </div>
-            <div className="col-md-3 py-2">
-              <ProductSlider ticks={tickItems}
-                             dispatch={store.dispatch} />
-            </div>
-            <div className="col-md-2 py-2">
-              <TimeDisplay currentValue={state.animation.currentProductTime} />
+      <div>
+        <div id="product-selection-row" className="row">
+          <div className="col-md-4">
+            <form className="form-inline">
+              <DropdownSelector currentValue={state.selection.siteId}
+                legend="Site"
+                items={siteSelections(state.catalog)}
+                tooltip="Press R to cycle sites"
+                action={ObserverActions.SITE_SELECTED}
+                dispatch={store.dispatch} />
+              <DropdownSelector currentValue={state.selection.productId}
+                legend="Product"
+                items={productSelections(state.selection.site)}
+                tooltip="Press P to cycle products"
+                action={ObserverActions.PRODUCT_SELECTED}
+                dispatch={store.dispatch} />
+              <DropdownSelector currentValue={state.selection.flavorId}
+                legend="Flavor"
+                items={flavorSelections(state.selection.product)}
+                tooltip="Press F to cycle flavors"
+                action={ObserverActions.FLAVOR_SELECTED}
+                dispatch={store.dispatch} />
+            </form>
+          </div>
+          <div className="col-md-1">
+            <div className="float-right">
+              <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
+                onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
+                action={ObserverActions.TOGGLE_ANIMATION}
+                tooltip="Press SPACE to toggle animation" />
             </div>
           </div>
-          <Map headerElementId="product-selection-row"
-               intendedCenter={[state.map.intended.centerLon, state.map.intended.centerLat]}
-               dispatch={store.dispatch}
-               product={product}
-               productTime={state.animation.nextProductTime}
-               productSelection={[state.selection.siteId, state.selection.productId, state.selection.flavorId]} />
-          <ColorScale name={"NOAA Reflectivity Scale"} unit={'dBZ'} type={'Reflectivity'}
-                      ranges={_NOAAReflectivityColorScale} />
+          <div className="col-md-3 py-2">
+            <ProductSlider ticks={tickItems}
+              dispatch={store.dispatch} />
+          </div>
+          <div className="col-md-2 py-2">
+            <TimeDisplay currentValue={state.animation.currentProductTime} />
+          </div>
         </div>
+        <Map headerElementId="product-selection-row"
+          intendedCenter={[state.map.intended.centerLon, state.map.intended.centerLat]}
+          dispatch={store.dispatch}
+          product={product}
+          productTime={state.animation.nextProductTime}
+          productSelection={[state.selection.siteId, state.selection.productId, state.selection.flavorId]} />
+        <ColorScale name={'NOAA Reflectivity Scale'} unit={'dBZ'} type={'Reflectivity'}
+          ranges={_NOAAReflectivityColorScale} />
+      </div>
     )
   }
 }

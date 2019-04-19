@@ -11,9 +11,9 @@
 //     }
 // }
 export const DataValueType = {
-  NO_ECHO: "no echo",
-  NOT_SCANNED: "not scanned",
-  VALUE: "value"
+  NO_ECHO: 'no echo',
+  NOT_SCANNED: 'not scanned',
+  VALUE: 'value'
 }
 export const integerToDataValue = (dataScale, intValue) => {
   if (intValue == dataScale.noEcho) {

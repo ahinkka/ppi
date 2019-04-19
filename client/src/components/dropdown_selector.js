@@ -1,6 +1,6 @@
-import React from "react"
+import React from 'react'
 
-import {OverlayTrigger, Tooltip} from "react-bootstrap";
+import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 
 
 class DropdownSelectorOption extends React.Component {
@@ -27,7 +27,7 @@ export class DropdownSelector extends React.Component {
   render() {
     var options = this.props.items.map(function(item) {
       if (item.id == undefined) {
-        console.log("Warning: undefined item id attribute", item)
+        console.log('Warning: undefined item id attribute', item)
       }
       return (
         <DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>
@@ -38,17 +38,17 @@ export class DropdownSelector extends React.Component {
       <Tooltip id="{this.props.legend}-tooltip">{this.props.tooltip}</Tooltip>
     );
 
-    let selectTitle = "Select " + this.props.legend.toLowerCase();
+    let selectTitle = 'Select ' + this.props.legend.toLowerCase();
     return (
       <div className="form-group">
         <OverlayTrigger placement="bottom" overlay={tooltip}>
           <label className="dropdown-selector-label"
-                 htmlFor="{this.props.legend}-select"
-                 title={this.props.legend}>{this.props.legend}</label>
+            htmlFor="{this.props.legend}-select"
+            title={this.props.legend}>{this.props.legend}</label>
         </OverlayTrigger>
         <select id="{this.props.legend}-select" className="form-control"
-                value={this.props.currentValue} onChange={this.handleChange}
-                disabled={this.props.disabled} title={selectTitle}>
+          value={this.props.currentValue} onChange={this.handleChange}
+          disabled={this.props.disabled} title={selectTitle}>
           {options}
         </select>
       </div>

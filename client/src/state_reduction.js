@@ -1,7 +1,7 @@
 // -*- indent-tabs-mode: nil; -*-
 import * as L from 'partial.lenses'
 import * as R from 'ramda'
-import {ObserverActions} from "./constants"
+import {ObserverActions} from './constants'
 
 // Lenses into state
 const catalogL = L.prop('catalog')
@@ -68,7 +68,7 @@ const selectFlavor = (previousFlavor, product) => {
 
 const selectFlavorTime = (flavor, previousTime) => {
   if (flavor == null) {
-    console.warn("selectFlavorTime, flavor is null")
+    console.warn('selectFlavorTime, flavor is null')
     return null;
   }
 
@@ -113,14 +113,14 @@ const reduceValidAnimationTime = (state) => {
   const nextTime = selectFlavorTime(state.selection.flavor, currentTime)
 
   return R.compose(L.set(currentProductTimeL, currentTime),
-                   L.set(nextProductTimeL, nextTime))(state)
+    L.set(nextProductTimeL, nextTime))(state)
 }
 
 
 const catalogUpdatedReducer = (state, action) =>
-      R.pipe(L.set(catalogL, action.payload),
-             reduceValidSelection,
-             reduceValidAnimationTime)(state)
+  R.pipe(L.set(catalogL, action.payload),
+    reduceValidSelection,
+    reduceValidAnimationTime)(state)
 
 
 const siteSelectedReducer = (state, action) => {
@@ -147,8 +147,8 @@ const productSelectedReducer = (state, action) => {
   }
 
   return R.pipe(L.set(selectedProductIdL, productId), L.set(selectedProductL, product),
-                reduceValidSelection,
-                reduceValidAnimationTime)(state)
+    reduceValidSelection,
+    reduceValidAnimationTime)(state)
 }
 
 
@@ -159,8 +159,8 @@ const flavorSelectedReducer = (state, action) => {
   }
 
   return R.pipe(L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor),
-                reduceValidAnimationTime,
-                reduceValidSelection)(state)
+    reduceValidAnimationTime,
+    reduceValidSelection)(state)
 }
 
 
@@ -168,10 +168,10 @@ const mapCenterChangedReducer = (state, action) => {
   state = Object.assign({}, state)
   state.map = Object.assign({}, state.map)
   state.map.intended = Object.assign({}, state.map.intended,
-                                     {
-                                       centerLon: action.payload.lon,
-                                       centerLat: action.payload.lat,
-                                     })
+    {
+      centerLon: action.payload.lon,
+      centerLat: action.payload.lat,
+    })
   return state
 }
 
@@ -180,10 +180,10 @@ const mapMovedReducer = (state, action) => {
   state = Object.assign({}, state)
   state.map = Object.assign({}, state.map)
   state.map.current = Object.assign({}, state.map.current,
-                                    {
-                                      centerLon: action.payload.lon,
-                                      centerLat: action.payload.lat,
-                                    })
+    {
+      centerLon: action.payload.lon,
+      centerLat: action.payload.lat,
+    })
   return state
 }
 
@@ -192,10 +192,10 @@ const makeCurrentSiteIntendedReducer = (state) => {
   state = Object.assign({}, state)
   state.map = Object.assign({}, state.map)
   state.map.intended = Object.assign({}, state.map.current,
-                                     {
-                                       centerLon: state.selection.site.lon,
-                                       centerLat: state.selection.site.lat,
-                                     })
+    {
+      centerLon: state.selection.site.lon,
+      centerLat: state.selection.site.lat,
+    })
   return state
 }
 
@@ -252,7 +252,7 @@ const cycleFlavorReducer = (state, action) => {
 
 
 const animationTickReducer = (state, action) =>
-      L.set(nextProductTimeL,selectFlavorTime(state.selection.flavor, state.animation.nextProductTime), state)
+  L.set(nextProductTimeL,selectFlavorTime(state.selection.flavor, state.animation.nextProductTime), state)
 
 
 const tickClickedReducer = (state, action) => L.set(nextProductTimeL, action.payload, state)

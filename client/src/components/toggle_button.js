@@ -1,7 +1,7 @@
-import React from "react"
-import {OverlayTrigger, Tooltip} from "react-bootstrap";
+import React from 'react'
+import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 
-import {ObserverActions} from "../constants"
+import {ObserverActions} from '../constants'
 
 
 export class ToggleButton extends React.Component {
@@ -16,24 +16,24 @@ export class ToggleButton extends React.Component {
 
   render() {
     const tooltip = (
-	<Tooltip id="pause-tooltip">{this.props.tooltip}</Tooltip>
+      <Tooltip id="pause-tooltip">{this.props.tooltip}</Tooltip>
     )
 
     if (this.props.toggleStatus == false) {
       return (
-	<OverlayTrigger placement="bottom" overlay={tooltip}>
+        <OverlayTrigger placement="bottom" overlay={tooltip}>
 	  <button type="button" className="btn btn-primary"
 	          data-toggle="button" aria-pressed="false"
-                  onClick={this.handleChange}>{this.props.offSymbol}</button>
-	</OverlayTrigger>
+            onClick={this.handleChange}>{this.props.offSymbol}</button>
+        </OverlayTrigger>
       )
     } else {
       return (
-	<OverlayTrigger placement="bottom" overlay={tooltip}>
+        <OverlayTrigger placement="bottom" overlay={tooltip}>
 	  <button type="button" className="btn btn-primary active"
 	          data-toggle="button" aria-pressed="true"
-                  onClick={this.handleChange}>{this.props.onSymbol}</button>
-	</OverlayTrigger>
+            onClick={this.handleChange}>{this.props.onSymbol}</button>
+        </OverlayTrigger>
       )
     }
   }
