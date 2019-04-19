@@ -63,7 +63,7 @@ export const NOAAScaleToScaleDescription = () => {
     const [low, red, green, blue] = NOAALowRedGreenBlue[rowIndex]
 
     if (nextRowIndex < NOAALowRedGreenBlue.length) {
-      const [nextLow, nextRed, nextGreen, nextBlue] = NOAALowRedGreenBlue[nextRowIndex]
+      const [nextLow, nextRed, nextGreen, nextBlue] = NOAALowRedGreenBlue[nextRowIndex] // eslint-disable-line no-unused-vars
       result.push({
         type: ScaleRangeType.STEP,
         start: { value: low, open: false },

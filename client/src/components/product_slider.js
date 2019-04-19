@@ -9,7 +9,7 @@ class Tick extends React.Component {
     this.onClick = this.onClick.bind(this);
   }
 
-  onClick(e) {
+  onClick() {
     this.props.dispatch({type: this.props.action, payload: this.props.payload})
   }
 

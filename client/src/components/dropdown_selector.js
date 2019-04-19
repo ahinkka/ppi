@@ -27,7 +27,7 @@ export class DropdownSelector extends React.Component {
   render() {
     var options = this.props.items.map(function(item) {
       if (item.id == undefined) {
-        console.log('Warning: undefined item id attribute', item)
+        console.error('undefined item id attribute', item)
       }
       return (
         <DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>

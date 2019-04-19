@@ -126,7 +126,7 @@ const catalogUpdatedReducer = (state, action) =>
 const siteSelectedReducer = (state, action) => {
   let [siteId, site] = [action.payload, state.catalog[action.payload]]
   if (site == undefined) {
-    let [siteId, site] = selectSite(state.selection.siteId, state.catalog)
+    [siteId, site] = selectSite(state.selection.siteId, state.catalog)
   }
   let siteChanged = state.selection.siteId != siteId
 
@@ -143,7 +143,7 @@ const siteSelectedReducer = (state, action) => {
 const productSelectedReducer = (state, action) => {
   let [productId, product] = [action.payload, state.selection.site.products[action.payload]]
   if (product == undefined) {
-    let [productId, product] = selectProduct(state.selection.productId, state.selection.site);
+    [productId, product] = selectProduct(state.selection.productId, state.selection.site);
   }
 
   return R.pipe(L.set(selectedProductIdL, productId), L.set(selectedProductL, product),
@@ -155,7 +155,7 @@ const productSelectedReducer = (state, action) => {
 const flavorSelectedReducer = (state, action) => {
   let [flavorId, flavor] = [action.payload, state.selection.product.flavors[action.payload]]
   if (flavor == undefined) {
-    let [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product);
+    [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product);
   }
 
   return R.pipe(L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor),
@@ -200,7 +200,7 @@ const makeCurrentSiteIntendedReducer = (state) => {
 }
 
 
-const cycleSiteReducer = (state, action) => {
+const cycleSiteReducer = (state) => {
   let options = Object.keys(state.catalog)
   options.sort()
 
@@ -221,7 +221,7 @@ const cycleSiteReducer = (state, action) => {
 }
 
 
-const cycleProductReducer = (state, action) => {
+const cycleProductReducer = (state) => {
   let options = Object.keys(state.selection.site.products)
   options.sort()
 
@@ -236,7 +236,7 @@ const cycleProductReducer = (state, action) => {
 }
 
 
-const cycleFlavorReducer = (state, action) => {
+const cycleFlavorReducer = (state) => {
   let options = Object.keys(state.selection.product.flavors)
   options.sort()
 
@@ -251,7 +251,7 @@ const cycleFlavorReducer = (state, action) => {
 }
 
 
-const animationTickReducer = (state, action) =>
+const animationTickReducer = (state) =>
   L.set(nextProductTimeL,selectFlavorTime(state.selection.flavor, state.animation.nextProductTime), state)
 
 
@@ -291,14 +291,14 @@ const forwardBackwardReducer = (state, forward) => {
 
   return L.set(nextProductTimeL, newTime, state)
 }
-const tickForwardReducer = (state, action) => forwardBackwardReducer(state, true)
-const tickBackwardReducer = (state, action) => forwardBackwardReducer(state, false)
+const tickForwardReducer = (state) => forwardBackwardReducer(state, true)
+const tickBackwardReducer = (state) => forwardBackwardReducer(state, false)
 
 
 const productTimeReducer = (state, action) => L.set(currentProductTimeL, action.payload, state)
 
 
-const toggleAnimationReducer = (state, action) => L.set(animationRunningL, !L.get(animationRunningL, state), state)
+const toggleAnimationReducer = (state) => L.set(animationRunningL, !L.get(animationRunningL, state), state)
 
 
 const productLoadUpdateReducer = (state, action) => {
@@ -352,11 +352,11 @@ export const reducer = (state, action) => {
   } else if (action.type === ObserverActions.SITE_SELECTED) {
     return siteSelectedReducer(state, action);
   } else if (action.type === ObserverActions.CYCLE_SITE) {
-    return cycleSiteReducer(state, action);
+    return cycleSiteReducer(state);
   } else if (action.type === ObserverActions.CYCLE_PRODUCT) {
-    return cycleProductReducer(state, action);
+    return cycleProductReducer(state);
   } else if (action.type === ObserverActions.CYCLE_FLAVOR) {
-    return cycleFlavorReducer(state, action);
+    return cycleFlavorReducer(state);
   } else if (action.type === ObserverActions.PRODUCT_SELECTED) {
     return productSelectedReducer(state, action);
   } else if (action.type === ObserverActions.FLAVOR_SELECTED) {
@@ -368,13 +368,13 @@ export const reducer = (state, action) => {
   } else if (action.type === ObserverActions.MAKE_CURRENT_SITE_INTENDED) {
     return makeCurrentSiteIntendedReducer(state)
   } else if (action.type === ObserverActions.ANIMATION_TICK) {
-    return animationTickReducer(state, action);
+    return animationTickReducer(state);
   } else if (action.type === ObserverActions.TICK_CLICKED) {
     return tickClickedReducer(state, action);
   } else if (action.type === ObserverActions.TICK_FORWARD) {
-    return tickForwardReducer(state, action);
+    return tickForwardReducer(state);
   } else if (action.type === ObserverActions.TICK_BACKWARD) {
-    return tickBackwardReducer(state, action);
+    return tickBackwardReducer(state);
   } else if (action.type === ObserverActions.PRODUCT_TIME_CHANGED) {
     return productTimeReducer(state, action);
   } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {

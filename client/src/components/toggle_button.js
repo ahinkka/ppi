@@ -1,8 +1,6 @@
 import React from 'react'
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 
-import {ObserverActions} from '../constants'
-
 
 export class ToggleButton extends React.Component {
   constructor(props) {
@@ -10,7 +8,7 @@ export class ToggleButton extends React.Component {
     this.handleChange = this.handleChange.bind(this);
   }
 
-  handleChange(e) {
+  handleChange() {
     this.props.dispatch({type: this.props.action})
   }
 
@@ -22,16 +20,16 @@ export class ToggleButton extends React.Component {
     if (this.props.toggleStatus == false) {
       return (
         <OverlayTrigger placement="bottom" overlay={tooltip}>
-	  <button type="button" className="btn btn-primary"
-	          data-toggle="button" aria-pressed="false"
+          <button type="button" className="btn btn-primary"
+            data-toggle="button" aria-pressed="false"
             onClick={this.handleChange}>{this.props.offSymbol}</button>
         </OverlayTrigger>
       )
     } else {
       return (
         <OverlayTrigger placement="bottom" overlay={tooltip}>
-	  <button type="button" className="btn btn-primary active"
-	          data-toggle="button" aria-pressed="true"
+          <button type="button" className="btn btn-primary active"
+            data-toggle="button" aria-pressed="true"
             onClick={this.handleChange}>{this.props.onSymbol}</button>
         </OverlayTrigger>
       )

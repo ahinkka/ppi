@@ -1,7 +1,7 @@
 import React from 'react'
 import pako from 'pako';
 
-import {httpGetPromise, objectEquals} from '../utils'
+import {httpGetPromise} from '../utils'
 import {ObserverActions} from '../constants'
 
 import {makeHashFromState} from '../state_hash'
@@ -20,7 +20,7 @@ const inflate = (stream) => {
   try {
     return pako.inflate(stream, { to: 'string' })
   } catch (err) {
-    console.log('Error while decompressing product file:', err);
+    console.error('Error while decompressing product file:', err);
   }
 }
 
@@ -67,9 +67,6 @@ class TimeDisplay extends React.Component {
 export class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
-    console.log('ObserverApp.constructor()')
-
-    let state = this.props.store.getState()
 
     this.__loadingProducts = {}
     this.__loadedProducts = {}
@@ -84,11 +81,7 @@ export class ObserverApp extends React.Component {
     this.storeChanged = this.storeChanged.bind(this);
   }
 
-  componentWillMount() {
-  }
-
   componentDidMount() {
-    console.log('ObserverApp.componentDidMount()')
     this._dispatch = this.props.store.dispatch.bind(this);
     this._unsubscribe = this.props.store.subscribe(this.storeChanged).bind(this);
 
@@ -99,7 +92,6 @@ export class ObserverApp extends React.Component {
   }
 
   componentWillUnmount() {
-    console.log('ObserverApp.componentDidUnmount()')
     this._unsubscribe();
     this.removeKeyboardListener()
   }
@@ -174,7 +166,7 @@ export class ObserverApp extends React.Component {
               delete this.__loadingProducts[url];
               if (e instanceof SyntaxError) {
                 // TODO: properly handle
-                console.log('Error parsing ' + url + ': ' + e + ' with input ' +
+                console.error('Error parsing ' + url + ': ' + e + ' with input ' +
                             inflated.substring(0, 20) +
                             ' ... ' +
                             inflated.substring(inflated.length - 20, inflated.length - 1))

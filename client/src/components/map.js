@@ -1,6 +1,5 @@
 // -*- indent-tabs-mode: nil; -*-
 import React from 'react'
-import pako from 'pako';
 import LRU from 'lru-cache'
 
 import ndarray from 'ndarray'
@@ -15,7 +14,6 @@ import {OSM} from 'ol/source'
 import {Tile} from 'ol/layer'
 import {fromLonLat, toLonLat} from 'ol/proj'
 
-import {httpGetPromise} from '../utils'
 import {ObserverActions} from '../constants'
 
 import {DataValueType, integerToDataValue} from './datavalue'
@@ -130,7 +128,6 @@ export class Map extends React.Component {
   }
 
   componentDidMount() {
-    console.log('Map.componentDidMount()')
     this.map = new OlMap({
       view: new View({
         center: [0, 0],
@@ -195,7 +192,7 @@ export class Map extends React.Component {
     this.__updateMap()
   }
 
-  __canvasFunction(extent, resolution, pixelRatio, size, projection) {
+  __canvasFunction(extent, resolution, pixelRatio, size, projection) { // eslint-disable-line no-unused-vars
     let startRender = new Date().getTime();
 
     this.canvas = document.createElement('canvas');
@@ -262,12 +259,12 @@ export class Map extends React.Component {
             const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
             color = [r, g, b, 255]
           } else {
-            throw Exception('Unknown DataValueType: ' + valueType)
+            throw new Error('Unknown DataValueType: ' + valueType)
           }
         } else {
           if (value == metadata.productInfo.dataScale.notScanned) {
             // color.set([211, 211, 211, 76])
-            color = notScannedColor;
+            color = NOT_SCANNED_COLOR
           } else {
             color = [0, 0, 255, Math.floor((value / 150) * 255)]
           }
@@ -290,7 +287,7 @@ export class Map extends React.Component {
 
     let elapsedMs = new Date().getTime() - startRender;
     let pixelCount = this.canvas.width * this.canvas.height
-    console.log('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s')
+    console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
     this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
       payload: this.props.productTime})
 

@@ -65,12 +65,7 @@ const loadHashState = () => {
 
 
 const renderApp = () => {
-  console.log('About to render...');
-  ReactDOM.render(
-    <ObserverApp store={store}
-      productUrlResolver={productUrlResolver} />,
-    document.getElementById('observer')
-  )
+  ReactDOM.render(<ObserverApp store={store} productUrlResolver={productUrlResolver} />, document.getElementById('observer'))
 }
 
 
