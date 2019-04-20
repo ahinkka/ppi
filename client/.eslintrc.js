@@ -34,5 +34,8 @@ module.exports = {
         'no-console': [
 	    'error', { allow: ['warn', 'error'] }
 	],
+        'react/prop-types': [
+	    'warn'
+	],
     }
 }
