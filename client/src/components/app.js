@@ -56,7 +56,7 @@ const flavorSelections = (product) => {
 
 class TimeDisplay extends React.Component {
   render() {
-    let display = moment(this.props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
+    let display = moment.utc(this.props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
     let title = 'Current displayed product time is ' + display
     return (
       <div title={title} className="h5" id="product-time">{display}</div>
@@ -257,7 +257,7 @@ export class ObserverApp extends React.Component {
         position: proportion,
         color: color,
         character: character,
-        tooltip: t.time,
+        tooltip: moment.utc(this.props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC',
         action: ObserverActions.TICK_CLICKED,
         payload: time
       })
