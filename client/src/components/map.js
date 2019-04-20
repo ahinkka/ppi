@@ -6,7 +6,6 @@ import ndarray from 'ndarray'
 import {d1 as l_interp} from 'ndarray-linear-interpolate'
 import stringify from 'json-stable-stringify'
 
-import {Attribution} from 'ol/control'
 import {ImageCanvas} from 'ol/source'
 import {Image} from 'ol/layer'
 import {Map as OlMap, View} from 'ol'
@@ -138,11 +137,10 @@ export class Map extends React.Component {
           // https://cartodb.com/basemaps
           source: new OSM({
             attributions: [
-              new Attribution({
-                html:
-                '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
-                ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
-              })
+              // '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+              ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>, ' +
+              ' &copy; <a href="https://en.ilmatieteenlaitos.fi/open-data-manual-radar-data">FMI Open Radar Data</a>' +
+              ' <a href="https://en.ilmatieteenlaitos.fi/open-data-licence">CC BY 4.0</a>, '
             ],
             url: 'http://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
           })
@@ -151,13 +149,6 @@ export class Map extends React.Component {
         new Tile({
           // https://cartodb.com/basemaps
           source: new OSM({
-            attributions: [
-              new Attribution({
-                html:
-                '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
-                ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
-              })
-            ],
             url: 'http://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png'
           })
         })
