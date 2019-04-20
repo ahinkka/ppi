@@ -1,5 +1,6 @@
 import React from 'react'
 import pako from 'pako';
+import moment from 'moment';
 
 import {httpGetPromise} from '../utils'
 import {ObserverActions} from '../constants'
@@ -55,10 +56,10 @@ const flavorSelections = (product) => {
 
 class TimeDisplay extends React.Component {
   render() {
-    let isoString = new Date(this.props.currentValue).toISOString()
-    let title = 'Current displayed product time is ' + isoString
+    let display = moment(this.props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
+    let title = 'Current displayed product time is ' + display
     return (
-      <div title={title} className="h5" id="product-time">{isoString}</div>
+      <div title={title} className="h5" id="product-time">{display}</div>
     );
   }
 }
