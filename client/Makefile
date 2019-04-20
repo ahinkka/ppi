@@ -19,13 +19,14 @@ lint: ## Run ESLint
 
 .PHONY:
 fix-lint: ## Fix lint using ESLint
-	./node_modules/.bin/eslint --fix src
+	./node_modules/.bin/eslint --fix $(find src -type d)
 
 # TODO: refactor to share code
 .PHONY: build
 build: lint ## Build distribution into directory 'build'
 	mkdir -p ./build/{js,css}
-	node_modules/.bin/browserify src/main.js \
+	cp node_modules/jquery/dist/jquery.min.js build/js/
+	node_modules/.bin/browserify -p tinyify src/main.js \
 		-o build/js/observer.js \
 		-g [ tfilter --include '**/node_modules/ol/**/*.js' babelify --presets [ @babel/preset-env ] ] \
 		-t [ babelify --presets [ @babel/preset-env @babel/preset-react ] ]

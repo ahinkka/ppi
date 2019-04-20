@@ -7,14 +7,16 @@
     "@babel/preset-react": "^7.0.0",
     "babelify": "^10.0.0",
     "browserify": ">=0.0.0",
+    "browserify-incremental": "^3.1.1",
+    "browserify-shim": "^3.8.14",
     "eslint": "^5.16.0",
     "eslint-plugin-react": "^7.12.4",
     "node-sass": ">=4.11.0",
-    "tfilter": "^1.0.1"
+    "tfilter": "^1.0.1",
+    "tinyify": "^2.5.0"
   },
   "dependencies": {
     "bootstrap": "^4.3.1",
-    "browserify-incremental": "^3.1.1",
     "jquery": "^3.3.1",
     "json-stable-stringify": "^1.0.1",
     "lru-cache": "^5.1.1",
@@ -32,6 +34,14 @@
     "react-draggable": "^3.2.1",
     "react-redux": "~6.0.1",
     "redux": "~4.0.1"
+  },
+  "browserify": {
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "jQuery": "global:jQuery"
   },
   "license": "AGPL-3.0"
 }
