@@ -1,4 +1,6 @@
 #!/bin/bash
+exit 1 # needs to be configured
+
 set -euo pipefail
 # CODE_ROOT="$HOME/Projects/observer"
 
@@ -21,4 +23,4 @@ done
 popd > /dev/null
 
 # Then cleanup
-#find "$CODE_ROOT/fmi/downloader/data" -mmin 2880 -delete
+find "$CODE_ROOT/fmi/downloader/data" -mmin 2880 -delete
