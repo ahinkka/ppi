@@ -58,7 +58,7 @@ class TimeDisplay extends React.Component {
     let isoString = new Date(this.props.currentValue).toISOString()
     let title = 'Current displayed product time is ' + isoString
     return (
-      <div title={title} className="h5">{isoString}</div>
+      <div title={title} className="h5" id="product-time">{isoString}</div>
     );
   }
 }
@@ -239,20 +239,23 @@ export class ObserverApp extends React.Component {
       const fromStartMillis = time - minTime
       const proportion = fromStartMillis / spanMillis
 
-      let color = '#ffffff'
+      let character = '▎'
+      let color = '#e0e0e0'
 
       if (time === state.animation.currentProductTime) {
         color = '#000000'
+        character = '▌'
       } else {
         const url = this.props.productUrlResolver(state.selection.flavor, time)
         if (url in state.loadedProducts) {
-          color = '#c0c0c0'
+          color = '#808080'
         }
       }
 
       tickItems.push({
         position: proportion,
         color: color,
+        character: character,
         tooltip: t.time,
         action: ObserverActions.TICK_CLICKED,
         payload: time
@@ -270,46 +273,40 @@ export class ObserverApp extends React.Component {
 
     return (
       <div>
-        <div id="product-selection-row" className="row">
-          <div className="col-md-4">
-            <form className="form-inline">
-              <DropdownSelector currentValue={state.selection.siteId}
-                legend="Site"
-                items={siteSelections(state.catalog)}
-                tooltip="Press R to cycle sites"
-                action={ObserverActions.SITE_SELECTED}
-                dispatch={store.dispatch} />
-              <DropdownSelector currentValue={state.selection.productId}
-                legend="Product"
-                items={productSelections(state.selection.site)}
-                tooltip="Press P to cycle products"
-                action={ObserverActions.PRODUCT_SELECTED}
-                dispatch={store.dispatch} />
-              <DropdownSelector currentValue={state.selection.flavorId}
-                legend="Flavor"
-                items={flavorSelections(state.selection.product)}
-                tooltip="Press F to cycle flavors"
-                action={ObserverActions.FLAVOR_SELECTED}
-                dispatch={store.dispatch} />
-            </form>
-          </div>
-          <div className="col-md-1">
-            <div className="float-right">
-              <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
-                onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
-                action={ObserverActions.TOGGLE_ANIMATION}
-                tooltip="Press SPACE to toggle animation" />
-            </div>
-          </div>
-          <div className="col-md-3 py-2">
-            <ProductSlider ticks={tickItems}
+        <div id="header-row">
+          <div id="header-row__selector-container">
+            <DropdownSelector className="header-row__site-selector"
+              currentValue={state.selection.siteId}
+              legend="Site"
+              items={siteSelections(state.catalog)}
+              tooltip="Press R to cycle sites"
+              action={ObserverActions.SITE_SELECTED}
+              dispatch={store.dispatch} />
+            <DropdownSelector className="header-row__product-selector"
+              currentValue={state.selection.productId}
+              legend="Product"
+              items={productSelections(state.selection.site)}
+              tooltip="Press P to cycle products"
+              action={ObserverActions.PRODUCT_SELECTED}
+              dispatch={store.dispatch} />
+            <DropdownSelector className="header-row__flavor-selector"
+              currentValue={state.selection.flavorId}
+              legend="Flavor"
+              items={flavorSelections(state.selection.product)}
+              tooltip="Press F to cycle flavors"
+              action={ObserverActions.FLAVOR_SELECTED}
               dispatch={store.dispatch} />
           </div>
-          <div className="col-md-2 py-2">
-            <TimeDisplay currentValue={state.animation.currentProductTime} />
+          <div id="play-controls">
+            <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
+              onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
+              action={ObserverActions.TOGGLE_ANIMATION}
+              tooltip="Press SPACE to toggle animation" />
+            <ProductSlider ticks={tickItems} dispatch={store.dispatch} />
           </div>
+          <TimeDisplay currentValue={state.animation.currentProductTime} />
         </div>
-        <Map headerElementId="product-selection-row"
+        <Map headerElementId="header-row"
           intendedCenter={[state.map.intended.centerLon, state.map.intended.centerLat]}
           dispatch={store.dispatch}
           product={product}

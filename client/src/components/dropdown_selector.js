@@ -40,13 +40,13 @@ export class DropdownSelector extends React.Component {
 
     let selectTitle = 'Select ' + this.props.legend.toLowerCase();
     return (
-      <div className="form-group">
+      <div className="dropdown-selector">
         <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <label className="dropdown-selector-label"
+          <label className="dropdown-selector__label"
             htmlFor="{this.props.legend}-select"
             title={this.props.legend}>{this.props.legend}</label>
         </OverlayTrigger>
-        <select id="{this.props.legend}-select" className="form-control"
+        <select id="{this.props.legend}-select" className="form-control dropdown-selector__select"
           value={this.props.currentValue} onChange={this.handleChange}
           disabled={this.props.disabled} title={selectTitle}>
           {options}

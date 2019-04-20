@@ -1,17 +1,87 @@
-@import "bootstrap.scss";
+$spacer: 0.5em
+
 
 body
   overflow: hidden
 
-.dropdown-selector-label
-  padding-right: ($spacer * .5)
-  padding-left: ($spacer * .75)
 
-#product-selection-row
-  padding-top: ($spacer * .5)
-  /* padding-bottom: ($spacer * .5)
+#header-row
+  margin-left: calc(50% - 50vw)
+  width: 100vw
+
   margin-bottom: 0
   border-bottom: 0
+
+  display: flex
+  flex-direction: row
+  flex-wrap: wrap
+  align-items: flex-end
+  align-items: center
+
+
+#play-controls
+  flex-grow: 1
+  display: flex
+  flex-direction: row
+  justify-content: flex-beginning
+  align-items: center
+
+  @media all and (max-width: 1350px)
+    flex-grow: 0
+    width: 95vw
+    margin-left: 2.5vw
+
+.time-slider
+  flex-grow: 1
+  height: 9ex
+  align-items: center
+  margin-bottom: 0
+  margin-left: $spacer
+  margin-right: $spacer
+  padding-top: 2.75ex
+  display: grid
+
+.time-slider__line
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center
+  height: 9ex
+
+.time-slider__ticks
+  position: relative
+  grid-column: 1
+  grid-row: 1
+  align-self: center
+  height: 9ex
+  padding-top: 0.5ex
+
+
+#header-row__selector-container
+  display: flex
+  flex-direction: row
+  justify-content: flex-beginning
+  margin-right: ($spacer * 2.0)
+
+.dropdown-selector
+  display: flex
+
+.dropdown-selector__label
+  align-self: center
+  padding-right: ($spacer * 0.75)
+  padding-left: ($spacer * 1.25)
+  margin-bottom: 0
+
+.dropdown-selector__select
+  align-self: center
+  margin-bottom: 0
+
+
+#product-time
+  align-self: center
+  padding-right: ($spacer * 1.25)
+  padding-left: ($spacer * 1.25)
+  margin-bottom: 0
+
 
 .vcenter
   display: inline-block

@@ -20,9 +20,8 @@ class Tick extends React.Component {
 
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <div style={{position: 'absolute', left: (0.04 + 0.9 * this.props.position) * 100 + '%',
-          color: this.props.color, cursor: 'pointer'}}
-        onClick={this.onClick}>▎</div>
+        <div style={{position: 'absolute', left: (0.01 + 0.98 * this.props.position) * 100 + '%',
+          color: this.props.color, cursor: 'pointer'}} onClick={this.onClick}>{this.props.character}</div>
       </OverlayTrigger>
     )
   }
@@ -50,15 +49,20 @@ export class ProductSlider extends React.Component {
     const tmp = this
     const ticks = this.props.ticks.map(function(item) {
       return (
-        <Tick key={'tick-' + item.position} position={item.position} color={item.color}
+        <Tick key={'tick-' + item.position} position={item.position} color={item.color} character={item.character}
           tooltip={item.tooltip} action={item.action} payload={item.payload}
           dispatch={tmp.props.dispatch}/>
       )
     })
 
     return (
-      <div className="progress" onWheel={this.onWheel}>
-        {ticks}
+      <div ref={this.containerRef} className='time-slider' onWheel={this.onWheel}>
+        <div className='time-slider__line'>
+          <hr></hr>
+        </div>
+        <div className='time-slider__ticks'>
+          { ticks }
+        </div>
       </div>
     )
   }
