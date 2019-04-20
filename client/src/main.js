@@ -89,4 +89,4 @@ const fetchCatalog = () => {
 }
 
 fetchCatalog()
-setTimeout(fetchCatalog, 30000)
+setInterval(fetchCatalog, 30000)
