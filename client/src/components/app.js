@@ -240,12 +240,12 @@ export class ObserverApp extends React.Component {
       const fromStartMillis = time - minTime
       const proportion = fromStartMillis / spanMillis
 
-      let character = '▎'
+      let character = '▏'
       let color = '#e0e0e0'
 
       if (time === state.animation.currentProductTime) {
         color = '#000000'
-        character = '▌'
+        character = '▎'
       } else {
         const url = this.props.productUrlResolver(state.selection.flavor, time)
         if (url in state.loadedProducts) {
