@@ -69,12 +69,15 @@ const selectFlavor = (previousFlavor, product) => {
 const selectFlavorTime = (flavor, previousTime) => {
   if (flavor == null) {
     console.warn('selectFlavorTime, flavor is null')
-    return null;
+    return null
+  } else if (flavor.times.length == 0) {
+    console.warn('no flavor times')
+    return null
   }
 
   // We start looking from the end because the mechanism breaks if there are
   // multiple identical times.
-  let previousIndex = null;
+  let previousIndex = null
   for (let i=flavor.times.length-1; i>-1; i--) {
     let time = Date.parse(flavor.times[i].time)
     if (time === previousTime) {
@@ -92,7 +95,7 @@ const selectFlavorTime = (flavor, previousTime) => {
     return Date.parse(flavor.times[nextIndex].time)
   }
 
-  return Date.parse(flavor.times[0].time)
+  return Date.parse(flavor.times[flavor.times.length - 1].time)
 }
 
 
