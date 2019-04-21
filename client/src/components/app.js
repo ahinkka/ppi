@@ -253,11 +253,15 @@ export class ObserverApp extends React.Component {
         }
       }
 
+      const utcTime = moment.utc(t.time)
+      const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
+      const displayHours = Math.floor(minutes / 60)
+      const displayMinutes = Math.floor(minutes - displayHours * 60)
       tickItems.push({
         position: proportion,
         color: color,
         character: character,
-        tooltip: moment.utc(this.props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC',
+        tooltip: utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`,
         action: ObserverActions.TICK_CLICKED,
         payload: time
       })
