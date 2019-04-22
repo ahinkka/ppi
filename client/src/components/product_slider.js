@@ -49,7 +49,7 @@ export class ProductSlider extends React.Component {
     const tmp = this
     const ticks = this.props.ticks.map(function(item) {
       return (
-        <Tick key={'tick-' + item.position} position={item.position} color={item.color} character={item.character}
+        <Tick key={item.key} position={item.position} color={item.color} character={item.character}
           tooltip={item.tooltip} action={item.action} payload={item.payload}
           dispatch={tmp.props.dispatch}/>
       )

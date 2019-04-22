@@ -258,6 +258,7 @@ export class ObserverApp extends React.Component {
       const displayHours = Math.floor(minutes / 60)
       const displayMinutes = Math.floor(minutes - displayHours * 60)
       tickItems.push({
+        key: [state.selection.site, state.selection.product, state.selection.flavor, t.time].join('|'),
         position: proportion,
         color: color,
         character: character,
