@@ -13,6 +13,14 @@ lint: ## Run ESLint
 fix-lint: ## Fix lint using ESLint
 	./node_modules/.bin/eslint --fix $(find src -type d)
 
+.PHONY: test
+test: ## Run tests
+	./node_modules/.bin/jest
+
+.PHONY: dev-test
+dev-test: ## Run tests continuously
+	./node_modules/.bin/jest --watch
+
 .PHONY: style
 style:
 	mkdir -p ./build/css

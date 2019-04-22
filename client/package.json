@@ -5,15 +5,17 @@
     "@babel/core": "^7.4.0",
     "@babel/preset-env": "^7.4.2",
     "@babel/preset-react": "^7.0.0",
+    "babel-jest": "^24.7.1",
+    "babel-loader": "^8.0.5",
     "babelify": "^10.0.0",
     "eslint": "^5.16.0",
     "eslint-plugin-react": "^7.12.4",
+    "jest": "^24.7.1",
     "node-sass": ">=4.11.0",
     "webpack": "^4.30.0",
     "webpack-cli": "^3.3.0"
   },
   "dependencies": {
-    "babel-loader": "^8.0.5",
     "bootstrap": "^4.3.1",
     "jquery": "^3.3.1",
     "json-stable-stringify": "^1.0.1",

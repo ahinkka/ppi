@@ -66,36 +66,38 @@ const selectFlavor = (previousFlavor, product) => {
 }
 
 
-const selectFlavorTime = (flavor, previousTime) => {
+export const selectFlavorTime = (flavor, currentTime, chooseNext) => {
   if (flavor == null) {
     console.warn('selectFlavorTime, flavor is null')
     return null
   } else if (flavor.times.length == 0) {
-    console.warn('no flavor times')
+    console.warn('selectFlavorTime, no flavor times')
     return null
   }
 
   // We start looking from the end because the mechanism breaks if there are
   // multiple identical times.
-  let previousIndex = null
+  let currentIndex = null
   for (let i=flavor.times.length-1; i>-1; i--) {
     let time = Date.parse(flavor.times[i].time)
-    if (time === previousTime) {
-      previousIndex = i
+    if (time === currentTime) {
+      currentIndex = i
       break
     }
   }
 
   // TODO: if no exact match is found, choose the next one chronologically.
-  if (previousIndex != null) {
-    let nextIndex = previousIndex + 1
-    if (nextIndex == flavor.times.length) {
-      nextIndex = 0
+  if (currentIndex != null) {
+    let resultIndex = chooseNext ? currentIndex + 1 : currentIndex
+    if (resultIndex == flavor.times.length) {
+      resultIndex = 0
     }
-    return Date.parse(flavor.times[nextIndex].time)
+    return Date.parse(flavor.times[resultIndex].time)
   }
 
-  return Date.parse(flavor.times[flavor.times.length - 1].time)
+  return chooseNext ?
+    Date.parse(flavor.times[0].time) :
+    Date.parse(flavor.times[flavor.times.length - 1].time)
 }
 
 
@@ -111,9 +113,9 @@ const reduceValidSelection = (state) => {
 }
 
 
-const reduceValidAnimationTime = (state) => {
-  const currentTime = selectFlavorTime(state.selection.flavor, null)
-  const nextTime = selectFlavorTime(state.selection.flavor, currentTime)
+export const reduceValidAnimationTime = (state) => {
+  const currentTime = selectFlavorTime(state.selection.flavor, L.get(currentProductTimeL, state), false)
+  const nextTime = selectFlavorTime(state.selection.flavor, L.get(currentProductTimeL, state), true)
 
   return R.compose(L.set(currentProductTimeL, currentTime),
     L.set(nextProductTimeL, nextTime))(state)
@@ -255,7 +257,7 @@ const cycleFlavorReducer = (state) => {
 
 
 const animationTickReducer = (state) =>
-  L.set(nextProductTimeL,selectFlavorTime(state.selection.flavor, state.animation.nextProductTime), state)
+  L.set(nextProductTimeL, selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true), state)
 
 
 const tickClickedReducer = (state, action) => L.set(nextProductTimeL, action.payload, state)
@@ -345,8 +347,8 @@ export const reducer = (state, action) => {
         },
       },
       animation: {
-        nextProductTime: null, // the product time we want to show next
         currentProductTime: null, // the product time we are currently showing
+        nextProductTime: null, // the product time we want to show next
         running: false
       }
     }
