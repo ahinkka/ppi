@@ -2,8 +2,6 @@
 import React from 'react'
 import LRU from 'lru-cache'
 
-import ndarray from 'ndarray'
-import {d1 as l_interp} from 'ndarray-linear-interpolate'
 import stringify from 'json-stable-stringify'
 
 import {ImageCanvas} from 'ol/source'
@@ -70,19 +68,22 @@ let makeLonLatToProductPxFunction = (productAffineTransform, productWidth, produ
 }
 
 
-let _canvasPxToLonLat = (canvasWidth, canvasHeight, xCanvasExtents, yCanvasExtents, x, y) => {
-  let propX = x / canvasWidth
-  let propY = 1 - y / canvasHeight
-  let lon = l_interp(xCanvasExtents, propX)
-  let lat = l_interp(yCanvasExtents, propY)
+const lerp = (a, b, f) => (a * (1.0 - f)) + (b * f)
+const _canvasPxToLonLat = (canvasWidth, canvasHeight, xMin, xMax, yMin, yMax, x, y) => {
+  const propX = x / canvasWidth
+  const propY = 1 - y / canvasHeight
+  const lon = lerp(xMin, xMax, propX)
+  const lat = lerp(yMin, yMax, propY)
   return [lon, lat]
 }
 
 
-let makeCanvasPxToLonLatFunction = (canvasExtent, canvasWidth, canvasHeight) => {
-  let xCanvasExtents = ndarray(new Float32Array([canvasExtent[0], canvasExtent[2]], 1, 2))
-  let yCanvasExtents = ndarray(new Float32Array([canvasExtent[1], canvasExtent[3]], 1, 2))
-  return (x, y) => _canvasPxToLonLat(canvasWidth, canvasHeight, xCanvasExtents, yCanvasExtents, x, y)
+const makeCanvasPxToLonLatFunction = (canvasExtent, canvasWidth, canvasHeight) => {
+  return (x, y) => _canvasPxToLonLat(
+    canvasWidth, canvasHeight,
+    canvasExtent[0], canvasExtent[2],
+    canvasExtent[1], canvasExtent[3],
+    x, y)
 }
 
 
