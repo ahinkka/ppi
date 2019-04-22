@@ -23,4 +23,4 @@ done
 popd > /dev/null
 
 # Then cleanup
-find "$CODE_ROOT/fmi/downloader/data" -mtime 2 -delete
+find "$CODE_ROOT/fmi/downloader/data" -mtime +1 -delete
