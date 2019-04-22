@@ -285,7 +285,7 @@ export class ObserverApp extends React.Component {
               currentValue={state.selection.siteId}
               legend="Site"
               items={siteSelections(state.catalog)}
-              tooltip="Press R to cycle sites"
+              tooltip="Press S to cycle sites"
               action={ObserverActions.SITE_SELECTED}
               dispatch={store.dispatch} />
             <DropdownSelector className="header-row__product-selector"
