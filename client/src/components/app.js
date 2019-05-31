@@ -12,7 +12,7 @@ import {ToggleButton} from './toggle_button'
 import {ProductSlider} from './product_slider'
 import {ColorScale} from './color_scale'
 import {NOAAScaleToScaleDescription} from './coloring'
-
+import {orderForLoading} from '../product_time_loading_order'
 
 let _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
@@ -128,31 +128,29 @@ export class ObserverApp extends React.Component {
   }
 
   loadProducts() {
-    let store = this.props.store;
-    let state = store.getState();
+    const store = this.props.store
+    const state = store.getState()
 
-    let flavor = state.selection.flavor
+    const flavor = state.selection.flavor
 
     if (flavor == null) {
       return
     }
 
+    const removedUrls = new Set()
+    const loadingOrderedTimes = orderForLoading(flavor.times.map((t) => Date.parse(t.time)))
+    const intendedUrls = loadingOrderedTimes.map((t) => this.props.productUrlResolver(flavor, t))
 
-    let intendedUrls = new Set()
-    let removedUrls = new Set()
-    for (const i in flavor.times) {
-      intendedUrls.add(this.props.productUrlResolver(flavor, Date.parse(flavor.times[i].time)))
-    }
     const currentlyLoaded = new Set(Object.keys(this.__loadedProducts))
     for (const url of currentlyLoaded) {
-      if (!intendedUrls.has(url)) {
+      if (!intendedUrls.includes(url)) {
         delete this.__loadedProducts[url];
         removedUrls.add(url)
       }
     }
 
     // Then start loading actual products
-    let tmp = this;
+    const tmp = this;
     for (const url of intendedUrls) {
       if (!(url in this.__loadedProducts) && !(url in this.__loadingProducts)) {
         this.__loadingProducts[url] = new Date()
@@ -180,7 +178,7 @@ export class ObserverApp extends React.Component {
             }
             delete this.__loadingProducts[url];
             this.__loadedProducts[url] = parsed;
-            tmp._dispatch({type: ObserverActions.PRODUCT_LOAD_UPDATE, payload: {loaded: [url], unloaded: new Array(removedUrls)}})
+            tmp._dispatch({type: ObserverActions.PRODUCT_LOAD_UPDATE, payload: {loaded: [url], unloaded: Array.from(removedUrls)}})
           })
           .catch((reason) => {
           // TODO: properly handle
