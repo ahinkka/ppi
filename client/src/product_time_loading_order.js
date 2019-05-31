@@ -1,5 +1,4 @@
 import * as R from 'ramda'
-import moment from 'moment'
 
 const descendingTimeComparator = (a, b) => a.valueOf() < b.valueOf() ? 1 : -1
 
