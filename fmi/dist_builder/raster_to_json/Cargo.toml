@@ -1,0 +1,10 @@
+[package]
+name = "raster_to_json"
+version = "0.1.0"
+authors = ["Atte Hinkka <atte.hinkka@iki.fi>"]
+edition = "2018"
+
+[dependencies]
+gdal = "0.5.0"
+gdal-sys = "0.2.0"
+serde_json = "1.0.41"

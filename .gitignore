@@ -3,7 +3,6 @@ client/node_modules
 client/build
 fmi/downloader/env
 fmi/downloader/config.ini
-fmi/dist_builder/raster_to_json
 *.json
 *.tiff.gz
 *.json.gz
