@@ -10,7 +10,7 @@ python fmi/dist_builder/collect_radar_products.py fmi/downloader/data | \
 	python collect.py fmi/dist_builder/raster_to_json/target/release/raster_to_json dist
 
 # Remove old files
-find dist -mtime +1 -delete
+find dist -mmin +1440 -delete
 
 # Set proper permissions
 find dist -exec chmod 777 {} \;
