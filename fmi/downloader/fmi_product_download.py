@@ -1,129 +1,102 @@
-"""http://wms.fmi.fi/fmi-apikey/{key}/geoserver/Radar/wms?service=WMS&version=1.3.0&request=GetCapabilities
-
-Finnish composite, products:
- dbz   radar reflectivity
- rr    rain intensity
- rr1h  rain 1h
- rr12h rain 12h
- rr24h rain 24h
-
-Individual radars:
- dbz     radar reflectivity
- vrad    radial velocity
- hclass  water form classification
- etop_20 echo tops 20(?)
-
-Two different styles: by default the colored image, but if lossless is
-required, the image should be downloaded in "raster" style.
-
-Parameterized by time.  Individual radars also require elevation parameter.
-
-Use GeoTIFF output format.
-
-Black and white images the value describes the parameter value.
-
-For radar reflectivity it is the proportional reflectivity; p = dbz*2+64,
-where p is pixel's value.  For rain intensity one value corresponds to 0.01
-mm/h of rain and in in cumulative images 0.01 mm of rain.
-
-"""
-from __future__ import print_function
-
+import io
+import os
 import sys
 import traceback
-import codecs
+import urllib.parse
+import urllib.request
 import json
-import urllib
 
-from os import environ as env
 from os import getcwd, unlink, makedirs
 from os.path import join as path_join
 from os.path import exists as path_exists
-
-from string import Template
-from datetime import datetime
-from urllib import quote_plus as quote
+from datetime import datetime as dt
+from collections import namedtuple
 
 import dateutil.parser
-
-from owslib.wms import WebMapService
-
-utf8_stdout = codecs.getwriter('utf-8')(sys.stdout)
-utf8_stderr = codecs.getwriter('utf-8')(sys.stderr)
+from owslib.wfs import WebFeatureService
+from lxml import etree
 
 
-BASE_URL = "http://wms.fmi.fi/fmi-apikey/{key}/geoserver/Radar/ows" # ?SERVICE=WMS"
-MIME = "image/geotiff"
-CRS = "CRS:84"
-STYLE = "raster"
-
-DEFAULT_SIDE_LENGTH = 2048
 DEFAULT_SITES = ['luosto', 'anjalankoski', 'ikaalinen', 'vimpeli', 'utajarvi',
-                 'kuopio', 'vantaa', 'korpo', 'petajavesi', 'kesalahti']
+                 'kuopio', 'vantaa', 'korpo', 'petajavesi', 'kesalahti', 'nurmes']
+
 
 sample_config = """
 [fmi_product_download]
 sites = %s
-side-length = %i
 output-directory = %s
-fmi-api-key = %s
-""" % (", ".join(DEFAULT_SITES), DEFAULT_SIDE_LENGTH, getcwd(),
-       env.get("FMI_API_KEY", "???"))
+""" % (", ".join(DEFAULT_SITES), os.getcwd())
 
 
-def last_time_position(obj):
-    """
-    Parses the last time from a given object.  Sometimes a list, sometimes
-    a string in the form x/y/z where y is the latest time position.
-    """
-    if len(obj) == 1 and isinstance(obj[0], basestring):
-        parts = obj[0].split("/")
-        return parts[1]
-    else:
-        return obj[-1]
+def print_elem(e, level=0, recursive=True, first_child_only=False, file=sys.stdout):
+    indent = ''
+    for i in range(level):
+        indent += '  '
+
+    text = e.text
+    if e.text is not None:
+        text = e.text.strip()
+    print(f'{indent}TAG:    {e.tag}', file=file)
+    print(f'{indent}TEXT:   "{text}"', file=file)
+    print(f'{indent}ATTRIB: {e.attrib}', file=file)
+
+    if recursive:
+        for c in e:
+            print_elem(c, level + 1, recursive=recursive, first_child_only=first_child_only, file=file)
+
+            if first_child_only:
+                break
 
 
-def format_iso_8601(time_object):
-    """ISO 8601, standard. Yeah right."""
-    result = time_object.isoformat()
-    if result.endswith("+00:00"):
-        return result.replace("+00:00", "Z")
-    else:
-        return result
+def first_child_by_tag(tag, e):
+    try:
+        return next(e.iter('{*}' + tag))
+    except StopIteration:
+        output = io.StringIO()
+        print_elem(e, level=1, recursive=False, file=output)
+        contents = output.getvalue()
+        output.close()
+        raise Exception(f'Child by tag {tag} not found from element {e}:\n{contents}')
+
+
+def first_child_by_tag_path(tag_path, e):
+    current = e
+    for tag in tag_path:
+        current = first_child_by_tag(tag, current)
+    return current
+
+
+def named_value_with_name_with_attrib_containing_substring(substring, e):
+    for c in e.iter('{*}NamedValue'):
+        name_e = first_child_by_tag('name', c)
+        if any(substring in v for v in name_e.attrib.values()):
+            return c
+
+
+def ludicrous_named_value(attrib_value_substring, e):
+    return first_child_by_tag(
+        'Measure',
+        named_value_with_name_with_attrib_containing_substring(attrib_value_substring, e))
 
 
 class Product(object):
-    def __init__(self, layer_name, site, product, bounding_box, last_time_position, elevation=None):
-        self.layer_name = layer_name
+    def __init__(self, site, product, bounding_box, srs, time, url, elevation=None,
+                 linear_transformation_gain=None, linear_transformation_offset=None):
         self.site = site
         self.product = product
         self.bounding_box = bounding_box
-        self.last_time_position = last_time_position
-        self.last_time_date = dateutil.parser.parse(last_time_position)
+        self.srs = srs
+        self.time = time
+        self.url = url
         self.elevation = elevation
+        self.linear_transformation_gain = linear_transformation_gain
+        self.linear_transformation_offset = linear_transformation_offset
 
     def file_name(self):
         if self.elevation:
-            return u"{0}--{1}--{2}--{3}".format(self.site, self.product,
-                                                self.elevation,
-                                                # "_".join(map(str, self.bounding_box)),
-                                                self.last_time_position)
+            return u"{0}--{1}--{2}--{3}".format(self.site, self.product, self.elevation, self.time)
         else:
-            return u"{0}--{1}--{2}".format(self.site, self.product,
-                                           # "_".join(map(str, self.bounding_box)),
-                                           self.last_time_position)
-
-    def url(self, api_key=env.get('FMI_API_KEY'), side_length=DEFAULT_SIDE_LENGTH):
-        template = Template("http://wms.fmi.fi/fmi-apikey/$key/geoserver/Radar/wms?service=WMS&version=1.3.0&request=GetMap&CRS=CRS:84&BBOX=$bbox&WIDTH=$side_length&HEIGHT=$side_length&LAYERS=$layer&FORMAT=$format&time=$time")
-
-        return template.substitute({
-            "key": api_key,
-            "bbox": ",".join(map(str, self.bounding_box)),
-            "layer": quote(self.layer_name),
-            "format": quote(MIME),
-            "time": quote(format_iso_8601(self.last_time_date)),
-            "side_length": side_length
-        })
+            return u"{0}--{1}--{2}".format(self.site, self.product, self.time)
 
     def metadata(self):
         return {
@@ -133,61 +106,98 @@ class Product(object):
             'min_lat': self.bounding_box[1],
             'max_lon': self.bounding_box[2],
             'max_lat': self.bounding_box[3],
-            'time': self.last_time_date,
-            'elevation': self.elevation
+            'srs': self.srs,
+            'time': self.time,
+            'elevation': self.elevation,
+            'linear_transformation_gain': self.linear_transformation_gain,
+            'linear_transformation_offset': self.linear_transformation_offset            
         }
 
 
-def fetch_product_list(api_key=env.get("FMI_API_KEY"), side_length=DEFAULT_SIDE_LENGTH,
-                       sites=DEFAULT_SITES):
-    wms = WebMapService(BASE_URL.replace("{key}", api_key), version='1.1.1')
+def fetch_product_list(sites=DEFAULT_SITES):
+    # Radar reflectivity (dbz) from single radars.
+    # Possible query parameters:
+    #     starttime
+    #     endtime
+    #     bbox
+    #     elevation
+    wfs = WebFeatureService(url='http://opendata.fmi.fi/wfs', version='2.0.0')
+    resp = wfs.getfeature(storedQueryID='fmi::radar::single::dbz')
+    contents = resp.read()
+    tree = etree.fromstring(contents)
 
-    layers = list(wms.contents)
+    result = []
+    for e in tree.iter('{*}member'):
+        # phenomenon_time = first_child_by_tag_path(['phenomenonTime', 'timePosition'], e).text
+        # result_time = first_child_by_tag_path(['resultTime', 'timePosition'], e).text
+        # bin_count = int(ludicrous_named_value('binCount', e).text)
+        # bin_length = int(ludicrous_named_value('binLength', e).text)
+        # elevation_angle = float(ludicrous_named_value('elevationAngle', e).text)
 
-    products = []
-    for layer_name in layers:
-        layer = wms[layer_name]
+        errors = False
+        try:
+            linear_transformation_gain = float(ludicrous_named_value('linearTransformationGain', e).text)
+            linear_transformation_offset = float(ludicrous_named_value('linearTransformationOffset', e).text)
+        except:
+            errors = True
 
-        if not layer.queryable:
-            continue
+        url = first_child_by_tag('fileReference', e).text
 
-        site = layer_name.split("_")[0]
+        params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+
+        _, site_product = params['layers'][0].split(':')
+        site, product_name = site_product.split('_')
+
         if site not in sites:
             continue
 
-        product_name = "_".join(layer_name.split("_")[1:])
+        bbox = params['bbox'][0].split(',')
+        if len(bbox) != 4:
+            raise Exception(f'Bounding box of length {len(bbox)}')
+        srs = params['srs'][0]
+        image_format = params['format'][0]
+        width = int(params['width'][0])
+        height = int(params['height'][0])
+        elevation_angle = float(params['elevation'][0])
+        time = dateutil.parser.parse(params['time'][0])
 
-        if layer.elevations:
-            for elevation in layer.elevations:
-                product = Product(layer_name, site, product_name,
-                                  layer.boundingBoxWGS84,
-                                  last_time_position(layer.timepositions),
-                                  elevation=elevation)
-                products.append(product)
-        else:
-            product = Product(layer_name, site, product_name,
-                              layer.boundingBoxWGS84,
-                              last_time_position(layer.timepositions))
-            products.append(product)
+        # first_child_by_tag(
+        #     'Measure',
+        #     named_value_with_name_with_attrib_containing_substring('elevationAngle', e)).text
 
-    return products
+        # bin_count = first_child_by_tag(
+        #     'Measure',
+        #     named_value_with_name_with_attrib_containing_substring('binCount', e)).text
+
+        # print(params)
+
+        if errors:
+            print_elem(e, recursive=True)
+            sys.exit(1)
+
+        product = Product(site, product_name, bbox, srs, time, url, elevation=elevation_angle,
+                          linear_transformation_gain=linear_transformation_gain,
+                          linear_transformation_offset=linear_transformation_offset)
+        result.append(product)
+
+        # print_elem(e, recursive=True)
+        # break
+
+    return result
 
 
 def read_configuration(path):
-    import ConfigParser
+    import configparser
     import io
 
-    config = ConfigParser.RawConfigParser(allow_no_value=True)
-    with codecs.open(path, 'r', encoding='utf-8') as f:
-        config.readfp(f)
-
+    config = configparser.ConfigParser()
+    config.read(path)
+    
     get = lambda key: config.get("fmi_product_download", key)
 
     return {
         "sites": [s.strip() for s in get("sites").split(',')],
-        "side-length": int(get("side-length")),
-        "output-directory": get("output-directory"),
-        "fmi-api-key": get("fmi-api-key")
+        "output-directory": get("output-directory")
     }
 
 
@@ -195,27 +205,25 @@ def default(obj):
     """Default JSON serializer."""
     import calendar
 
-    if isinstance(obj, datetime):
+    if isinstance(obj, dt):
         return obj.isoformat()
     else:
         raise Exception("Unknown type")
 
 
 def main():
-    from optparse import OptionParser
+    from argparse import ArgumentParser
 
-    parser = OptionParser()
-    parser.add_option("-d", "--dry-run", dest="dry_run",
-                      help="Don't actually download anything",
-                      action="store_true", default=False)
-    parser.add_option("-c", "--config", dest="config",
-                      help="read configuration from FILE", metavar="FILE")
-    opts, args = parser.parse_args()
+    parser = ArgumentParser()
+    parser.add_argument("-d", "--dry-run", dest="dry_run", help="Don't actually download anything",
+                        action="store_true", default=False)
+    parser.add_argument("-c", "--config", dest="config", help="read configuration from FILE", metavar="FILE")
+    args = parser.parse_args()
 
     try:
-        configuration = read_configuration(opts.config)
-        print(configuration, file=utf8_stderr)
-    except Exception, e:
+        configuration = read_configuration(args.config)
+        print(configuration, file=sys.stderr)
+    except:
         traceback.print_exc()
         print()
         print("Sample configuration:")
@@ -224,40 +232,40 @@ def main():
         print("---")
         parser.error("Couldn't read configuration file passed in")
 
-    products = fetch_product_list(sites=configuration['sites'], api_key=configuration['fmi-api-key'],
-                                  side_length=configuration['side-length'])
+    products = fetch_product_list(sites=configuration['sites'])
 
-    for index, product in enumerate(products):
-        if not opts.dry_run:
-            now = datetime.utcnow()
+    newest_products = {}
+    for p in products:
+        key = p.site, p.product, p.elevation
+        newest_currently = newest_products.get(key)
+        if newest_currently is None or newest_currently.time < p.time:
+            newest_products[key] = p
+
+    for index, product in enumerate(newest_products.values()):
+        if not args.dry_run:
+            now = dt.utcnow()
             dir_part = [configuration['output-directory'], str(now.year), str(now.month), str(now.day)]
             if not path_exists(path_join(*dir_part)):
                 makedirs(path_join(*dir_part))
-            
+
             json_dest_path = path_join(*(dir_part + [product.file_name() + ".json"]))
             tiff_dest_path = path_join(*(dir_part + [product.file_name() + ".tiff"]))
 
-            url = product.url(api_key=configuration['fmi-api-key'],
-                              side_length=configuration['side-length'])
-
             if path_exists(json_dest_path):
-                print("%s already exists, not downloading %s" % (json_dest_path, url),
-                      file=utf8_stderr)
+                print("%s already exists, not downloading %s" % (json_dest_path, product.url),
+                      file=sys.stderr)
             else:
                 if path_exists(tiff_dest_path):
                     unlink(tiff_dest_path)
-                urllib.urlretrieve(url, tiff_dest_path)
+                urllib.request.urlretrieve(product.url, tiff_dest_path)
 
-                with codecs.open(json_dest_path, 'w', encoding='utf-8') as f:
-                    json.dump(product.metadata(), f, default=default,
-                              ensure_ascii=False, indent=4)
+                with open(json_dest_path, 'w', encoding='utf-8') as f:
+                    json.dump(product.metadata(), f, default=default, ensure_ascii=False, indent=4)
                 print(tiff_dest_path)
 
-        json.dump(product.metadata(), utf8_stderr, default=default,
-                  ensure_ascii=False, indent=4)
-        print(file=utf8_stderr)
-        print("%i/%i" % (index + 1, len(products)),
-              file=utf8_stderr)
+        json.dump(product.metadata(), sys.stderr, default=default, ensure_ascii=False, indent=4)
+        print(file=sys.stderr)
+        print("%i/%i" % (index + 1, len(newest_products)), file=sys.stderr)
 
 
 if __name__ == '__main__':

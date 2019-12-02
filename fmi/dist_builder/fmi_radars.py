@@ -3,9 +3,12 @@
 FMI's radars, from http://ilmatieteenlaitos.fi/suomen-tutkaverkko
 """
 import unicodedata
+
+
 def strip_accents(s):
     return ''.join(c for c in unicodedata.normalize('NFD', s)
                    if unicodedata.category(c) != 'Mn')
+
 
 _radar_list = [
     {
@@ -47,6 +50,10 @@ _radar_list = [
     {
         "name": u"Petäjävesi",
         "lat": 62.3045, "lon": 25.4401, "altitude": 271
+    },
+    {
+        "name": "Nurmes",
+        "lat": "63.8378", "lon": 29.4489, "altitude": 323
     }
 ]
 
