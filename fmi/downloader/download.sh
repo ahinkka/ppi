@@ -9,7 +9,7 @@ pushd "$CODE_ROOT/fmi/downloader" > /dev/null
 set +u
 source env/bin/activate
 set -u
-FILES=$(python fmi_product_download.py -c config.ini)
+FILES=$(env/bin/python fmi_product_download.py -c config.ini)
 set +u
 deactivate
 set -u

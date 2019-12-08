@@ -6,8 +6,8 @@ set -euo pipefail
 # WWW_ROOT="/dev/null"
 
 # Create an updated distribution
-python fmi/dist_builder/collect_radar_products.py fmi/downloader/data | \
-	python collect.py fmi/dist_builder/raster_to_json/target/release/raster_to_json dist
+python3 fmi/dist_builder/collect_radar_products.py fmi/downloader/data | \
+	python3 collect.py fmi/dist_builder/raster_to_json/target/release/raster_to_json dist
 
 # Remove old files
 find dist -mmin +1440 -delete
