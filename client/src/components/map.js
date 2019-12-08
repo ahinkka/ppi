@@ -150,7 +150,8 @@ export class Map extends React.Component {
         new Tile({
           // https://cartodb.com/basemaps
           source: new OSM({
-            url: 'http://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png'
+            url: 'http://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
+            opaque: false
           })
         })
       ],
