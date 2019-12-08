@@ -18,19 +18,15 @@ import sys
 import traceback
 
 
-utf8_stdout = codecs.getwriter('utf-8')(sys.stdout)
-utf8_stderr = codecs.getwriter('utf-8')(sys.stderr)
-
-
 def err(*args, **kwargs):
     if kwargs.get('file', None) is None:
-        kwargs['file'] = utf8_stderr
+        kwargs['file'] = sys.stderr
     return print(*args, **kwargs)
 
 
 def pr(*args, **kwargs):
     if kwargs.get('file', None) is None:
-        kwargs['file'] = utf8_stdout
+        kwargs['file'] = sys.stdout
     return print(*args, **kwargs)
 
 
@@ -42,7 +38,7 @@ def camelcapsify(snake_str):
 
 def camelcapsify_dict(d):
     result = {}
-    for k, v in d.iteritems():
+    for k, v in d.items():
         if isinstance(v, dict):
             v = camelcapsify_dict(v)
         result[camelcapsify(k)] = v
@@ -161,11 +157,11 @@ def collect_radar_rasters(input_products):
         flavors_dict[flavor_key]["times"].sort(key=operator.itemgetter("time"))
         sources_dests_infos.append((product["data_file"], dest_path, product["radar_product_info"]))
 
-    for site, site_dict in result.iteritems():
+    for site, site_dict in result.items():
         err(u"Site {} ({})".format(site_dict["display"], site))
-        for product_id, product in site_dict["products"].iteritems():
+        for product_id, product in site_dict["products"].items():
             err(u"  Product {} ({})".format(product["display"], product_id))
-            for flavor_id, flavor in product["flavors"].iteritems():
+            for flavor_id, flavor in product["flavors"].items():
                 if len(flavor["times"]) > 5:
                     times = [t["time"] for t in [flavor["times"][0], flavor["times"][-1]]]
                     times.insert(1, "...")
@@ -243,15 +239,15 @@ def collect(infile, exporter, directory):
                 err(u"Writing product as JSON to '{}'...".format(dest_path))
                 process = subprocess.Popen([exporter, src],
                                            stdout=f, stdin=subprocess.PIPE)
-                process.stdin.write(json.dumps(additional_metadata))
+                process.stdin.write(json.dumps(additional_metadata).encode('utf-8'))
                 process.stdin.close()
                 process.wait()
             err(u"Written. Compressing...")
             subprocess.check_call(["gzip", "-v", dest_path])
             err(u"Exported in {} s".format((datetime.datetime.now() - started).total_seconds()))
-        except KeyboardInterrupt, kbi:
+        except KeyboardInterrupt as kbi:
             raise kbi
-        except Exception, e:
+        except Exception as e:
             err(u"Couldn't export {}: {}".format(src, e))
             err(traceback.format_exc())
 

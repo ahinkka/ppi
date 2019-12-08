@@ -16,23 +16,19 @@ import sys
 from fmi_radars import radars
 
 
-utf8_stdout = codecs.getwriter('utf-8')(sys.stdout)
-utf8_stderr = codecs.getwriter('utf-8')(sys.stderr)
-
-
 def err(*args, **kwargs):
     if kwargs.get('file', None) is None:
-        kwargs['file'] = utf8_stderr
+        kwargs['file'] = sys.stderr
     return print(*args, **kwargs)
 
 def pr(*args, **kwargs):
     if kwargs.get('file', None) is None:
-        kwargs['file'] = utf8_stdout
+        kwargs['file'] = sys.stdout
     return print(*args, **kwargs)
 
 
 def read_product(path):
-    err(u"Reading in product information from '{}'...".format(path))
+    err("Reading in product information from '{}'...".format(path))
     with codecs.open(path, 'r') as f:
         contents = f.read()
         product = json.loads(contents)
@@ -104,14 +100,14 @@ def read_product(path):
 
 def collect(directory):
     if not os.path.isdir(directory):
-        parser.error(u"Product directory '{}' must exist".format(directory))
+        parser.error("Product directory '{}' must exist".format(directory))
 
     # now = datetime.datetime.utcnow()
     # dir_parts = [directory, str(now.year), str(now.month), str(now.day)]
     # dir_path = os.path.abspath("/".join(dir_parts))
 
     products = []
-    err(u"Scanning '{}' for product information files...".format(directory))
+    err("Scanning '{}' for product information files...".format(directory))
 
     for root, dirs, files in os.walk(directory):
         path = root.split(os.sep)
