@@ -7,9 +7,7 @@ set -euo pipefail
 # First download
 pushd "$CODE_ROOT/fmi/downloader" > /dev/null
 
-bash foo.sh | \
-
-env/bin/python fmi_product_download.py -c config.ini) | \
+env/bin/python fmi_product_download.py -c config.ini | \
 while read f
 do
   echo "Compressing \"$f\"..." >&2
