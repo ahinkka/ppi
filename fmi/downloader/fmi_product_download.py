@@ -258,7 +258,7 @@ def main():
                     '-dstnodata', '0',
                     # https://lists.osgeo.org/pipermail/gdal-dev/2010-May/024553.html
                     '-wo', 'INIT_DEST=255'
-                ])
+                ], stdout=subprocess.DEVNULL) # gdalwarp produces debug output into stdout...
                 unlink(orig_tiff_dest_path)
                 print(reproj_tiff_dest_path, file=sys.stderr)
                 print(reproj_tiff_dest_path)
