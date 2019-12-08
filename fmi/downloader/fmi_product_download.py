@@ -29,7 +29,7 @@ output-directory = %s
 """ % (", ".join(DEFAULT_SITES), os.getcwd())
 
 
-def print_elem(e, level=0, recursive=True, first_child_only=False, file=sys.stdout):
+def print_elem(e, level=0, recursive=True, first_child_only=False, file=sys.stderr):
     indent = ''
     for i in range(level):
         indent += '  '
@@ -162,8 +162,8 @@ def fetch_product_list(sites=DEFAULT_SITES):
         # print(params)
 
         if errors:
-            print_elem(e, recursive=True)
-            sys.exit(1)
+            print_elem(e, recursive=True, file=sys.stderr)
+            sys.exit("Encountered errors, exiting")
 
         product = Product(site, product_name, time, url, elevation=elevation_angle,
                           linear_transformation_gain=linear_transformation_gain,
@@ -259,8 +259,8 @@ def main():
                     # https://lists.osgeo.org/pipermail/gdal-dev/2010-May/024553.html
                     '-wo', 'INIT_DEST=255'
                 ])
-                print(reproj_tiff_dest_path, file=sys.stderr)
                 unlink(orig_tiff_dest_path)
+                print(reproj_tiff_dest_path)
 
                 with open(json_dest_path, 'w', encoding='utf-8') as f:
                     json.dump(product.metadata(), f, default=default, ensure_ascii=False, indent=4)
