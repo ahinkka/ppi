@@ -251,8 +251,13 @@ def main():
                 urllib.request.urlretrieve(product.url, orig_tiff_dest_path)
                 print(orig_tiff_dest_path, file=sys.stderr)
                 subprocess.check_call([
-                    # Is NoData value 0 or 252? I.e. NOT_SCANNED vs NO_DATA as declared by the file.
-                    'gdalwarp', '-overwrite', orig_tiff_dest_path, reproj_tiff_dest_path, '-t_srs', 'EPSG:4326'
+                    'gdalwarp', '-overwrite', orig_tiff_dest_path, reproj_tiff_dest_path,
+                    '-t_srs', 'EPSG:4326',
+                    '-ts',  '1000', '1000',
+                    '-srcnodata', '255',
+                    '-dstnodata', '0',
+                    # https://lists.osgeo.org/pipermail/gdal-dev/2010-May/024553.html
+                    '-wo', 'INIT_DEST=255'
                 ])
                 print(reproj_tiff_dest_path, file=sys.stderr)
                 unlink(orig_tiff_dest_path)

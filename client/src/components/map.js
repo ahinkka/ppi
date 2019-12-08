@@ -244,9 +244,9 @@ export class Map extends React.Component {
         if (metadata.productInfo.dataType == 'REFLECTIVITY') {
           const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
           if (valueType == DataValueType.NOT_SCANNED) {
-            color = NOT_SCANNED_COLOR;
+            color = NOT_SCANNED_COLOR
           } else if (valueType == DataValueType.NO_ECHO) {
-            color = NO_ECHO_COLOR;
+            color = NO_ECHO_COLOR
           } else if (valueType == DataValueType.VALUE) {
             const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
             color = [r, g, b, 255]
@@ -255,7 +255,6 @@ export class Map extends React.Component {
           }
         } else {
           if (value == metadata.productInfo.dataScale.notScanned) {
-            // color.set([211, 211, 211, 76])
             color = NOT_SCANNED_COLOR
           } else {
             color = [0, 0, 255, Math.floor((value / 150) * 255)]

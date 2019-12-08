@@ -67,7 +67,7 @@ def read_product(path):
                 # (dBZ = step * pixval - offset)
                 "offset": product["linear_transformation_offset"],
                 "step": product["linear_transformation_gain"],
-                "not_scanned": 252,
+                "not_scanned": 255,
                 "no_echo": 0
             }
         }

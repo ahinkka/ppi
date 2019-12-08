@@ -34,7 +34,8 @@ bundle: lint
 
 .PHONY: build
 build: bundle style ## Build distribution into directory 'build'
-	mkdir -p ./build/{js,css}
+	mkdir -p ./build/js
+	mkdir -p ./build/css
 	cp node_modules/jquery/dist/jquery.min.js build/js/
 
 	cp node_modules/ol/ol.css build/css/
