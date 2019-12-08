@@ -41,7 +41,7 @@ def read_product(path):
     result["site_location"] = {"lon": radars[result["site_id"]]["lon"],
                                "lat": radars[result["site_id"]]["lat"]}
 
-    for key in ["elevation", "time", "min_lat", "min_lon", "max_lat", "max_lon"]:
+    for key in ["elevation", "time"]:
         result[key] = product[key]
 
     without_ext = os.path.splitext(path)[0]

@@ -5,6 +5,7 @@ import traceback
 import urllib.parse
 import urllib.request
 import json
+import subprocess
 
 from os import getcwd, unlink, makedirs
 from os.path import join as path_join
@@ -80,12 +81,10 @@ def ludicrous_named_value(attrib_value_substring, e):
 
 
 class Product(object):
-    def __init__(self, site, product, bounding_box, srs, time, url, elevation=None,
+    def __init__(self, site, product, time, url, elevation=None,
                  linear_transformation_gain=None, linear_transformation_offset=None):
         self.site = site
         self.product = product
-        self.bounding_box = bounding_box
-        self.srs = srs
         self.time = time
         self.url = url
         self.elevation = elevation
@@ -102,11 +101,6 @@ class Product(object):
         return {
             'site': self.site,
             'product': self.product,
-            'min_lon': self.bounding_box[0],
-            'min_lat': self.bounding_box[1],
-            'max_lon': self.bounding_box[2],
-            'max_lat': self.bounding_box[3],
-            'srs': self.srs,
             'time': self.time,
             'elevation': self.elevation,
             'linear_transformation_gain': self.linear_transformation_gain,
@@ -151,10 +145,6 @@ def fetch_product_list(sites=DEFAULT_SITES):
         if site not in sites:
             continue
 
-        bbox = params['bbox'][0].split(',')
-        if len(bbox) != 4:
-            raise Exception(f'Bounding box of length {len(bbox)}')
-        srs = params['srs'][0]
         image_format = params['format'][0]
         width = int(params['width'][0])
         height = int(params['height'][0])
@@ -175,7 +165,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
             print_elem(e, recursive=True)
             sys.exit(1)
 
-        product = Product(site, product_name, bbox, srs, time, url, elevation=elevation_angle,
+        product = Product(site, product_name, time, url, elevation=elevation_angle,
                           linear_transformation_gain=linear_transformation_gain,
                           linear_transformation_offset=linear_transformation_offset)
         result.append(product)
@@ -249,19 +239,26 @@ def main():
                 makedirs(path_join(*dir_part))
 
             json_dest_path = path_join(*(dir_part + [product.file_name() + ".json"]))
-            tiff_dest_path = path_join(*(dir_part + [product.file_name() + ".tiff"]))
+            orig_tiff_dest_path = path_join(*(dir_part + [product.file_name() + ".orig.tiff"]))
+            reproj_tiff_dest_path = path_join(*(dir_part + [product.file_name() + ".tiff"]))
 
             if path_exists(json_dest_path):
                 print("%s already exists, not downloading %s" % (json_dest_path, product.url),
                       file=sys.stderr)
             else:
-                if path_exists(tiff_dest_path):
-                    unlink(tiff_dest_path)
-                urllib.request.urlretrieve(product.url, tiff_dest_path)
+                if path_exists(orig_tiff_dest_path):
+                    unlink(orig_tiff_dest_path)
+                urllib.request.urlretrieve(product.url, orig_tiff_dest_path)
+                print(orig_tiff_dest_path, file=sys.stderr)
+                subprocess.check_call([
+                    # Is NoData value 0 or 252? I.e. NOT_SCANNED vs NO_DATA as declared by the file.
+                    'gdalwarp', '-overwrite', orig_tiff_dest_path, reproj_tiff_dest_path, '-t_srs', 'EPSG:4326'
+                ])
+                print(reproj_tiff_dest_path, file=sys.stderr)
+                unlink(orig_tiff_dest_path)
 
                 with open(json_dest_path, 'w', encoding='utf-8') as f:
                     json.dump(product.metadata(), f, default=default, ensure_ascii=False, indent=4)
-                print(tiff_dest_path)
 
         json.dump(product.metadata(), sys.stderr, default=default, ensure_ascii=False, indent=4)
         print(file=sys.stderr)
