@@ -260,6 +260,7 @@ def main():
                     '-wo', 'INIT_DEST=255'
                 ])
                 unlink(orig_tiff_dest_path)
+                print(reproj_tiff_dest_path, file=sys.stderr)
                 print(reproj_tiff_dest_path)
 
                 with open(json_dest_path, 'w', encoding='utf-8') as f:

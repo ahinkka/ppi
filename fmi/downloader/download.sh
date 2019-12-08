@@ -16,8 +16,9 @@ set -u
 
 # Then compress
 for f in $FILES; do
-    gzip $f
-    echo "Compressed $f" >&2
+    echo "Compressing \"$f\"..." >&2
+    gzip "$f"
+    echo "Compressed \"$f\"." >&2
 done
 
 popd > /dev/null
