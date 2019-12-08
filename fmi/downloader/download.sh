@@ -6,19 +6,15 @@ set -euo pipefail
 
 # First download
 pushd "$CODE_ROOT/fmi/downloader" > /dev/null
-set +u
-source env/bin/activate
-set -u
-FILES=$(env/bin/python fmi_product_download.py -c config.ini)
-set +u
-deactivate
-set -u
 
-# Then compress
-for f in $FILES; do
-    echo "Compressing \"$f\"..." >&2
-    gzip "$f"
-    echo "Compressed \"$f\"." >&2
+bash foo.sh | \
+
+env/bin/python fmi_product_download.py -c config.ini) | \
+while read f
+do
+  echo "Compressing \"$f\"..." >&2
+  gzip "$f"
+  echo "Compressed \"$f\"." >&2
 done
 
 popd > /dev/null
