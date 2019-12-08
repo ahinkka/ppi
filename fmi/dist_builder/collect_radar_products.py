@@ -65,29 +65,11 @@ def read_product(path):
             "polarization": "HORIZONTAL",
             "data_scale": {
                 # (dBZ = step * pixval - offset)
-                "offset": -32,
-                "step": 0.5,
+                "offset": product["linear_transformation_offset"],
+                "step": product["linear_transformation_gain"],
                 "not_scanned": 252,
                 "no_echo": 0
             }
-        }
-    elif product_name.startswith("etop"):
-        result["radar_product_info"] = {
-            "product_type": "TOPS",
-            "data_type": "HEIGHT",
-            "data_unit": "m"
-        }
-    elif product_name == "hclass":
-        result["radar_product_info"] = {
-            "product_type": "PPI",
-            "data_type": "HYDROMETEOR_CLASSIFICATION",
-            "data_unit": "HCLASS_UNIT"
-        }
-    elif product_name == "vrad":
-        result["radar_product_info"] = {
-            "product_type": "PPI",
-            "data_type": "RADIAL_VELOCITY",
-            "data_unit": "m/s"
         }
     else:
         err("Unhandled product name: {}".format(product_name))
