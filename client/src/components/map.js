@@ -54,17 +54,22 @@ let _lonLatToProductPx = (productExtent, productLonWidth, productLatHeight, prod
 }
 
 
-let makeLonLatToProductPxFunction = (productAffineTransform, productWidth, productHeight) => {
-  let productLonLatExtent = computeExtent(productAffineTransform, productWidth, productHeight)
-  let minLonLat = [productLonLatExtent[0], productLonLatExtent[1]]
-  let maxLonLat = [productLonLatExtent[2], productLonLatExtent[3]]
+let toMapCoordsExtent = (lonLatExtent) => {
+  let minLonLat = [lonLatExtent[0], lonLatExtent[1]]
+  let maxLonLat = [lonLatExtent[2], lonLatExtent[3]]
   let min = fromLonLat(minLonLat)
   let max = fromLonLat(maxLonLat)
-  let productExtent = [min[0], min[1], max[0], max[1]]
-  let lonWidth = productExtent[2] - productExtent[0]
-  let latHeight = productExtent[3] - productExtent[1]
+  return  [min[0], min[1], max[0], max[1]]
+}
 
-  return (lon, lat) => _lonLatToProductPx(productExtent, lonWidth, latHeight, productWidth, productHeight, lon, lat)
+
+let makeLonLatToProductPxFunction = (productAffineTransform, productWidth, productHeight) => {
+  let productCoordsExtent = computeExtent(productAffineTransform, productWidth, productHeight)
+  let mapCoordsExtent = toMapCoordsExtent(productCoordsExtent)
+  let mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
+  let mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
+
+  return (lon, lat) => _lonLatToProductPx(mapCoordsExtent, mapCoordsWidth, mapCoordsHeight, productWidth, productHeight, lon, lat)
 }
 
 
