@@ -38,57 +38,64 @@ const computeExtent = (affineTransform, width, height) => {
 }
 
 
-// Currently we expect the products to be in EPSG:3426 and the map in
-// EPSG:3857.  We should support arbitrary input projections. And we also
-// expect to work with positive Web Mercator coordinates...
-let _lonLatToProductPx = (productExtent, productLonWidth, productLatHeight, productPixWidth, productPixHeight, lon, lat) => {
-  if (lon < productExtent[0] || lon > productExtent[2] ||
-      lat < productExtent[1] || lat > productExtent[3]) {
-    return [-1, -1]
-  }
-  let propX = (lon - productExtent[0]) / productLonWidth
-  let propY = 1 - (lat - productExtent[1]) / productLatHeight
-  let x = Math.floor(propX * productPixWidth)
-  let y = Math.floor(propY * productPixHeight)
-  return [x, y]
-}
-
-
-let toMapCoordsExtent = (lonLatExtent) => {
-  let minLonLat = [lonLatExtent[0], lonLatExtent[1]]
-  let maxLonLat = [lonLatExtent[2], lonLatExtent[3]]
+let toMapCoordsExtent = (wgs84Extent) => {
+  let minLonLat = [wgs84Extent[0], wgs84Extent[1]]
+  let maxLonLat = [wgs84Extent[2], wgs84Extent[3]]
   let min = fromLonLat(minLonLat)
   let max = fromLonLat(maxLonLat)
   return  [min[0], min[1], max[0], max[1]]
 }
 
 
-let makeLonLatToProductPxFunction = (productAffineTransform, productWidth, productHeight) => {
-  let productCoordsExtent = computeExtent(productAffineTransform, productWidth, productHeight)
-  let mapCoordsExtent = toMapCoordsExtent(productCoordsExtent)
-  let mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
-  let mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
-
-  return (lon, lat) => _lonLatToProductPx(mapCoordsExtent, mapCoordsWidth, mapCoordsHeight, productWidth, productHeight, lon, lat)
-}
-
-
 const lerp = (a, b, f) => (a * (1.0 - f)) + (b * f)
-const _canvasPxToLonLat = (canvasWidth, canvasHeight, xMin, xMax, yMin, yMax, x, y) => {
+const _canvasPxToMapCoords = (canvasWidth, canvasHeight, xMin, xMax, yMin, yMax, x, y) => {
   const propX = x / canvasWidth
   const propY = 1 - y / canvasHeight
-  const lon = lerp(xMin, xMax, propX)
-  const lat = lerp(yMin, yMax, propY)
-  return [lon, lat]
+  const mapX = lerp(xMin, xMax, propX)
+  const mapY = lerp(yMin, yMax, propY)
+  return [mapX, mapY]
 }
 
 
-const makeCanvasPxToLonLatFunction = (canvasExtent, canvasWidth, canvasHeight) => {
-  return (x, y) => _canvasPxToLonLat(
+// Currently we expect the products to be in EPSG:3426 and the map in
+// EPSG:3857.  We should support arbitrary input projections. And we also
+// expect to work with positive Web Mercator coordinates...
+let _mapCoordsToProductPx = (
+  productMapCoordsExtent, productMapCoordsWidth, productMapCoordsHeight,
+  productPixWidth, productPixHeight,
+  x, y
+) => {
+  if (x < productMapCoordsExtent[0] || x > productMapCoordsExtent[2] ||
+      y < productMapCoordsExtent[1] || y > productMapCoordsExtent[3]) {
+    return [-1, -1]
+  }
+  let propX = (x - productMapCoordsExtent[0]) / productMapCoordsWidth
+  let propY = 1 - (y - productMapCoordsExtent[1]) / productMapCoordsHeight
+  let pxX = Math.floor(propX * productPixWidth)
+  let pxY = Math.floor(propY * productPixHeight)
+  return [pxX, pxY]
+}
+
+
+const canvasPxToProductPx = (
+  productAffineTransform, productWidth, productHeight, productExtent,
+  mapCoordsWidth, mapCoordsHeight,
+  canvasExtent, canvasWidth, canvasHeight,
+  x, y
+) => {
+  let mapCoordsXY = _canvasPxToMapCoords(
     canvasWidth, canvasHeight,
     canvasExtent[0], canvasExtent[2],
     canvasExtent[1], canvasExtent[3],
-    x, y)
+    x, y
+  )
+  let dataPxXY = _mapCoordsToProductPx(
+    productExtent,
+    mapCoordsWidth, mapCoordsHeight,
+    productWidth, productHeight,
+    mapCoordsXY[0], mapCoordsXY[1]
+  )
+  return dataPxXY
 }
 
 
@@ -175,12 +182,10 @@ export class Map extends React.Component {
     let dispatch = this.props.dispatch;
     this.map.on('moveend', function(event) {
       let view = event.map.getView()
-      // let extent = view.calculateExtent(event.map.getSize())
       let center = view.getCenter()
       let projection = view.getProjection()
       let lonLatCenter = toLonLat(center, projection)
 
-      // let projCode = projection.getCode()
       dispatch({type: ObserverActions.MAP_MOVED,
         payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
     })
@@ -206,16 +211,6 @@ export class Map extends React.Component {
     let data = this.props.product.data
     let metadata = this.props.product.metadata
 
-    // Grid to grid lookup functions
-    let lonLatToProductPx = makeLonLatToProductPxFunction(metadata.affineTransform, metadata.width, metadata.height)
-    let canvasPxToLonLat = makeCanvasPxToLonLatFunction(extent, this.canvas.width, this.canvas.height)
-
-    let canvasPxToProductPx = (x, y) => {
-      let lonLatXY = canvasPxToLonLat(x, y)
-      let dataPxXY = lonLatToProductPx(lonLatXY[0], lonLatXY[1])
-      return dataPxXY
-    }
-
     let ctx = this.canvas.getContext('2d')
 
     // Cached rendering
@@ -232,12 +227,25 @@ export class Map extends React.Component {
       return this.canvas
     }
 
+    let productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
+    let mapCoordsExtent = toMapCoordsExtent(productCoordsExtent)
+    let mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
+    let mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
+
     // Normal rendering
     let imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
     let iData = imageData.data
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
-        let dataPxXY = canvasPxToProductPx(x, y)
+        let dataPxXY = canvasPxToProductPx(
+          metadata.affineTransform,
+          metadata.width, metadata.height,
+          mapCoordsExtent,
+          mapCoordsWidth, mapCoordsHeight,
+          extent,
+          this.canvas.width, this.canvas.height,
+          x, y
+        )
 
         let value = metadata.productInfo.dataScale.notScanned
         if (dataPxXY[0] != -1) {
