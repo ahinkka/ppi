@@ -44,7 +44,7 @@ const computeExtent = (affineTransform, width, height) => {
 let _lonLatToProductPx = (productExtent, productLonWidth, productLatHeight, productPixWidth, productPixHeight, lon, lat) => {
   if (lon < productExtent[0] || lon > productExtent[2] ||
       lat < productExtent[1] || lat > productExtent[3]) {
-    return [undefined, undefined]
+    return [-1, -1]
   }
   let propX = (lon - productExtent[0]) / productLonWidth
   let propY = 1 - (lat - productExtent[1]) / productLatHeight
@@ -234,10 +234,8 @@ export class Map extends React.Component {
       for (let y=0; y<this.canvas.height; y++) {
         let dataPxXY = canvasPxToProductPx(x, y)
 
-        let value = undefined
-        if (dataPxXY[0] === undefined) {
-          value = metadata.productInfo.dataScale.notScanned
-        } else {
+        let value = metadata.productInfo.dataScale.notScanned
+        if (dataPxXY[0] != -1) {
           value = data[dataPxXY[0]][dataPxXY[1]]
         }
 
