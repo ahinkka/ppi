@@ -139,10 +139,6 @@ export class Map extends React.Component {
     const cached = this.__renderedProducts.get(cacheKey)
     if (cached !== undefined) {
       this.canvas = cached
-      this.props.dispatch({
-        type: ObserverActions.PRODUCT_TIME_CHANGED,
-        payload: this.props.productTime
-      })
       return this.canvas
     }
 
@@ -210,11 +206,6 @@ export class Map extends React.Component {
     let elapsedMs = new Date().getTime() - startRender;
     let pixelCount = this.canvas.width * this.canvas.height
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
-
-    this.props.dispatch({
-      type: ObserverActions.PRODUCT_TIME_CHANGED,
-      payload: this.props.productTime
-    })
 
     return this.canvas
   }

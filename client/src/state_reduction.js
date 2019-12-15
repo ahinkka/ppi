@@ -17,7 +17,6 @@ const selectedFlavorL = L.compose(selectionL, 'flavor')
 
 const animationL = L.prop('animation')
 const currentProductTimeL = L.compose(animationL, 'currentProductTime')
-const nextProductTimeL = L.compose(animationL, 'nextProductTime')
 const animationRunningL = L.compose(animationL, 'running')
 
 
@@ -115,10 +114,7 @@ const reduceValidSelection = (state) => {
 
 export const reduceValidAnimationTime = (state) => {
   const currentTime = selectFlavorTime(state.selection.flavor, L.get(currentProductTimeL, state), false)
-  const nextTime = selectFlavorTime(state.selection.flavor, L.get(currentProductTimeL, state), true)
-
-  return R.compose(L.set(currentProductTimeL, currentTime),
-    L.set(nextProductTimeL, nextTime))(state)
+  return L.set(currentProductTimeL, currentTime)(state)
 }
 
 
@@ -256,11 +252,13 @@ const cycleFlavorReducer = (state) => {
 }
 
 
-const animationTickReducer = (state) =>
-  L.set(nextProductTimeL, selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true), state)
+export const animationTickReducer = (state) =>
+  L.set(currentProductTimeL,
+    selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true),
+    state)
 
 
-const tickClickedReducer = (state, action) => L.set(nextProductTimeL, action.payload, state)
+const tickClickedReducer = (state, action) => L.set(currentProductTimeL, action.payload, state)
 
 
 const forwardBackwardReducer = (state, forward) => {
@@ -294,7 +292,7 @@ const forwardBackwardReducer = (state, forward) => {
   }
   newTime = Date.parse(times[nextIndex].time)
 
-  return L.set(nextProductTimeL, newTime, state)
+  return L.set(currentProductTimeL, newTime, state)
 }
 const tickForwardReducer = (state) => forwardBackwardReducer(state, true)
 const tickBackwardReducer = (state) => forwardBackwardReducer(state, false)
@@ -348,7 +346,6 @@ export const reducer = (state, action) => {
       },
       animation: {
         currentProductTime: null, // the product time we are currently showing
-        nextProductTime: null, // the product time we want to show next
         running: false
       }
     }

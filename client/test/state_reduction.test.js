@@ -1,4 +1,4 @@
-import { reduceValidAnimationTime, selectFlavorTime } from '../src/state_reduction'
+import { reduceValidAnimationTime, selectFlavorTime, animationTickReducer } from '../src/state_reduction'
 
 const times = ['2019-04-19T18:10:00+00:00', '2019-04-19T19:10:00+00:00',
   '2019-04-19T20:10:00+00:00', '2019-04-19T21:10:00+00:00',
@@ -36,7 +36,7 @@ describe('On catalog update', () => {
   const before = {
     catalog: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorBefore }}}}},
     selection: { flavor: flavorBefore },
-    animation: { currentProductTime: datesBefore[3], nextProductTime: datesBefore[4] }}
+    animation: { currentProductTime: datesBefore[3] }}
 
   const flavorAfter = { times: timesAfter.map((t) => { return {time: t} }) }
   const after = {
@@ -44,29 +44,22 @@ describe('On catalog update', () => {
     selection: { flavor: flavorAfter }}
 
   test('keep the same time as before', () => {
-    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[1], nextProductTime: datesBefore[2] }})
+    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[1] }})
     const reduced = reduceValidAnimationTime(state)
 
     expect(reduced.animation.currentProductTime).toEqual(datesAfter[0])
-    expect(reduced.animation.nextProductTime).toEqual(datesAfter[1])
-
     expect(reduced.animation.currentProductTime).toEqual(state.animation.currentProductTime)
-    expect(reduced.animation.nextProductTime).toEqual(state.animation.nextProductTime)
 })
 
   test('select new last time if current time is last', () => {
-    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[2], nextProductTime: datesBefore[0] }})
-    const reduced = reduceValidAnimationTime(after)
-
-    expect(reduced.animation.currentProductTime).toEqual(datesAfter[2])
-    expect(reduced.animation.nextProductTime).toEqual(datesAfter[0])
+    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[3] }})
+    const reduced = animationTickReducer(state)
+    expect(reduced.animation.currentProductTime).toEqual(datesAfter[0])
   })
 
   test("select last time if current time isn't available", () => {
-    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[0], nextProductTime: datesBefore[1] }})
+    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[0] }})
     const reduced = reduceValidAnimationTime(after)
-
     expect(reduced.animation.currentProductTime).toEqual(datesAfter[2])
-    expect(reduced.animation.nextProductTime).toEqual(datesAfter[0])
   })
 })
