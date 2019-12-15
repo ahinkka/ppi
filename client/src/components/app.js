@@ -1,8 +1,6 @@
 import React from 'react'
-import pako from 'pako';
 import moment from 'moment';
 
-import {httpGetPromise, twoDtoUint8Array} from '../utils'
 import {ObserverActions} from '../constants'
 
 import {makeHashFromState} from '../state_hash'
@@ -12,18 +10,9 @@ import {ToggleButton} from './toggle_button'
 import {ProductSlider} from './product_slider'
 import {ColorScale} from './color_scale'
 import {NOAAScaleToScaleDescription} from './coloring'
-import {orderForLoading} from '../product_time_loading_order'
+import {loadProducts} from '../product_loading'
 
 let _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
-
-
-const inflate = (stream) => {
-  try {
-    return pako.inflate(stream, { to: 'string' })
-  } catch (err) {
-    console.error('Error while decompressing product file:', err);
-  }
-}
 
 
 const siteSelections = (catalog) => {
@@ -130,74 +119,22 @@ export class ObserverApp extends React.Component {
   loadProducts() {
     const store = this.props.store
     const state = store.getState()
-
     const flavor = state.selection.flavor
 
     if (flavor == null) {
       return
     }
 
-    const removedUrls = new Set()
-    const loadingOrderedTimes = orderForLoading(flavor.times.map((t) => Date.parse(t.time)))
-    const intendedUrls = loadingOrderedTimes.map((t) => this.props.productUrlResolver(flavor, t))
-
-    const currentlyLoaded = new Set(Object.keys(this.__loadedProducts))
-    for (const url of currentlyLoaded) {
-      if (!intendedUrls.includes(url)) {
-        delete this.__loadedProducts[url];
-        removedUrls.add(url)
-      }
+    if (this._dispatch) {
+      loadProducts(
+        this._dispatch,
+        this.props.productUrlResolver,
+        this.__loadedProducts,
+        this.__loadingProducts,
+        flavor
+      )
     }
-
-    // Then start loading actual products
-    const tmp = this;
-    for (const url of intendedUrls) {
-      if (!(url in this.__loadedProducts) && !(url in this.__loadingProducts)) {
-        this.__loadingProducts[url] = new Date()
-        httpGetPromise(url, true)
-          .then((resp) => {
-            let inflated = null;
-            let parsed = null;
-            try {
-              inflated = inflate(resp)
-              parsed = JSON.parse(inflated)
-              let [cols, rows, buffer] = twoDtoUint8Array(parsed.data)
-              parsed._cols = cols
-              parsed._rows = rows
-              parsed.data = buffer
-            } catch (e) {
-              delete this.__loadingProducts[url];
-              if (e instanceof SyntaxError) {
-                // TODO: properly handle
-                console.error('Error parsing ' + url + ': ' + e + ' with input ' +
-                              inflated.substring(0, 20) +
-                              ' ... ' +
-                              inflated.substring(inflated.length - 20, inflated.length - 1))
-                return
-              } else {
-                // TODO: properly handle
-                console.warn('Unhandled exception during product load', e)
-                throw e
-              }
-            }
-            delete this.__loadingProducts[url];
-            this.__loadedProducts[url] = parsed;
-            tmp._dispatch({
-              type: ObserverActions.PRODUCT_LOAD_UPDATE,
-              payload: {
-                loaded: [url],
-                unloaded: Array.from(removedUrls)
-              }
-            })
-          })
-          .catch((reason) => {
-            // TODO: properly handle
-            console.warn('Couldn\'t load product ', reason)
-          })
-        setTimeout(this.loadProducts, 500)
-        break
-      }
-    }
+    setTimeout(this.loadProducts, 500)
   }
 
   animationTick() {
