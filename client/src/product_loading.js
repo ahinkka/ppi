@@ -75,4 +75,12 @@ export async function loadProducts(dispatch, productUrlResolver, loadedProducts,
     })
     break
   }
+
+  for (const url of intendedUrls) {
+    if (!(url in loadedProducts)) {
+      return true
+    }
+  }
+
+  return false
 }

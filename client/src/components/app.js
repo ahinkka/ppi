@@ -126,15 +126,19 @@ export class ObserverApp extends React.Component {
     }
 
     if (this._dispatch) {
-      loadProducts(
+      const moreProducts = loadProducts(
         this._dispatch,
         this.props.productUrlResolver,
         this.__loadedProducts,
         this.__loadingProducts,
         flavor
       )
+      if (moreProducts) {
+        setTimeout(this.loadProducts, 500)
+      }
+    } else {
+      setTimeout(this.loadProducts, 500)
     }
-    setTimeout(this.loadProducts, 500)
   }
 
   animationTick() {
