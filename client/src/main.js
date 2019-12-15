@@ -8,8 +8,13 @@ import {ObserverActions} from './constants'
 import {parseHash} from './state_hash'
 import {reducer} from './state_reduction'
 
-let store = createStore(reducer,
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__())
+const debugRedux = false
+let store = !debugRedux ? createStore(reducer) : createStore(
+  reducer,
+  window.__REDUX_DEVTOOLS_EXTENSION__ &&
+    window.__REDUX_DEVTOOLS_EXTENSION__({ serialize: true, trace: true })
+)
+
 store.dispatch({type: ObserverActions.PRIME})
 
 
