@@ -25,8 +25,9 @@ DEFAULT_SITES = ['luosto', 'anjalankoski', 'ikaalinen', 'vimpeli', 'utajarvi',
 sample_config = """
 [fmi_product_download]
 sites = %s
+side-length = %s
 output-directory = %s
-""" % (", ".join(DEFAULT_SITES), os.getcwd())
+""" % (", ".join(DEFAULT_SITES), 1000, os.getcwd())
 
 
 def print_elem(e, level=0, recursive=True, first_child_only=False, file=sys.stderr):
@@ -187,6 +188,7 @@ def read_configuration(path):
 
     return {
         "sites": [s.strip() for s in get("sites").split(',')],
+        "side-length": int(get("side-length")),
         "output-directory": get("output-directory")
     }
 
@@ -253,7 +255,7 @@ def main():
                 subprocess.check_call([
                     'gdalwarp', '-overwrite', orig_tiff_dest_path, reproj_tiff_dest_path,
                     '-t_srs', 'EPSG:4326',
-                    '-ts',  '1000', '1000',
+                    '-ts', str(configuration['side-length']), str(configuration['side-length']),
                     '-srcnodata', '255',
                     '-dstnodata', '0',
                     # https://lists.osgeo.org/pipermail/gdal-dev/2010-May/024553.html
