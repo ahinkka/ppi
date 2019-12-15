@@ -49,12 +49,15 @@ describe('On catalog update', () => {
 
     expect(reduced.animation.currentProductTime).toEqual(datesAfter[0])
     expect(reduced.animation.currentProductTime).toEqual(state.animation.currentProductTime)
-})
+  })
 
   test('select new last time if current time is last', () => {
-    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[3] }})
-    const reduced = animationTickReducer(state)
-    expect(reduced.animation.currentProductTime).toEqual(datesAfter[0])
+    const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[2] }})
+    const reduced = reduceValidAnimationTime(after)
+
+    expect(reduced.animation.currentProductTime).not.toEqual(state.animation.currentProductTime)
+    expect(reduced.animation.currentProductTime).toBeGreaterThan(state.animation.currentProductTime)
+    expect(reduced.animation.currentProductTime).toEqual(datesAfter[2])
   })
 
   test("select last time if current time isn't available", () => {
