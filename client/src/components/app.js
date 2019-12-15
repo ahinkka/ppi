@@ -2,7 +2,7 @@ import React from 'react'
 import pako from 'pako';
 import moment from 'moment';
 
-import {httpGetPromise} from '../utils'
+import {httpGetPromise, twoDtoUint8Array} from '../utils'
 import {ObserverActions} from '../constants'
 
 import {makeHashFromState} from '../state_hash'
@@ -161,6 +161,10 @@ export class ObserverApp extends React.Component {
             try {
               inflated = inflate(resp)
               parsed = JSON.parse(inflated)
+	      let [cols, rows, buffer] = twoDtoUint8Array(parsed.data)
+	      parsed._cols = cols
+	      parsed._rows = rows
+	      parsed.data = buffer
             } catch (e) {
               delete this.__loadingProducts[url];
               if (e instanceof SyntaxError) {

@@ -128,6 +128,8 @@ export class Map extends React.Component {
 
 
     let data = this.props.product.data
+    let dataView = new Uint8Array(data)
+    let dataRows = this.props.product._rows
     let metadata = this.props.product.metadata
 
     let ctx = this.canvas.getContext('2d')
@@ -168,7 +170,7 @@ export class Map extends React.Component {
 
         let value = metadata.productInfo.dataScale.notScanned
         if (dataPxXY[0] != -1) {
-          value = data[dataPxXY[0]][dataPxXY[1]]
+          value = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
         }
 
         let color = null
