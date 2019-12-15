@@ -69,7 +69,6 @@ export class Map extends React.Component {
           // https://cartodb.com/basemaps
           source: new OSM({
             attributions: [
-              // '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
               ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>, ' +
               ' &copy; <a href="https://en.ilmatieteenlaitos.fi/open-data-manual-radar-data">FMI Open Radar Data</a>' +
               ' <a href="https://en.ilmatieteenlaitos.fi/open-data-licence">CC BY 4.0</a>, '
@@ -140,11 +139,10 @@ export class Map extends React.Component {
     const cached = this.__renderedProducts.get(cacheKey)
     if (cached !== undefined) {
       this.canvas = cached
-      // let elapsedMs = new Date().getTime() - startRender;
-      // let pixelCount = this.canvas.width * this.canvas.height
-      // console.log("Cached rendering took", elapsedMs, "ms @", Math.floor(pixelCount / (elapsedMs / 1000) / 1000), "kpx/s")
-      this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
-        payload: this.props.productTime})
+      this.props.dispatch({
+        type: ObserverActions.PRODUCT_TIME_CHANGED,
+        payload: this.props.productTime
+      })
       return this.canvas
     }
 
@@ -212,8 +210,11 @@ export class Map extends React.Component {
     let elapsedMs = new Date().getTime() - startRender;
     let pixelCount = this.canvas.width * this.canvas.height
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
-    this.props.dispatch({type: ObserverActions.PRODUCT_TIME_CHANGED,
-      payload: this.props.productTime})
+
+    this.props.dispatch({
+      type: ObserverActions.PRODUCT_TIME_CHANGED,
+      payload: this.props.productTime
+    })
 
     return this.canvas
   }

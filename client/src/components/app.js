@@ -161,18 +161,18 @@ export class ObserverApp extends React.Component {
             try {
               inflated = inflate(resp)
               parsed = JSON.parse(inflated)
-	      let [cols, rows, buffer] = twoDtoUint8Array(parsed.data)
-	      parsed._cols = cols
-	      parsed._rows = rows
-	      parsed.data = buffer
+              let [cols, rows, buffer] = twoDtoUint8Array(parsed.data)
+              parsed._cols = cols
+              parsed._rows = rows
+              parsed.data = buffer
             } catch (e) {
               delete this.__loadingProducts[url];
               if (e instanceof SyntaxError) {
                 // TODO: properly handle
                 console.error('Error parsing ' + url + ': ' + e + ' with input ' +
-                            inflated.substring(0, 20) +
-                            ' ... ' +
-                            inflated.substring(inflated.length - 20, inflated.length - 1))
+                              inflated.substring(0, 20) +
+                              ' ... ' +
+                              inflated.substring(inflated.length - 20, inflated.length - 1))
                 return
               } else {
                 // TODO: properly handle
@@ -182,10 +182,16 @@ export class ObserverApp extends React.Component {
             }
             delete this.__loadingProducts[url];
             this.__loadedProducts[url] = parsed;
-            tmp._dispatch({type: ObserverActions.PRODUCT_LOAD_UPDATE, payload: {loaded: [url], unloaded: Array.from(removedUrls)}})
+            tmp._dispatch({
+              type: ObserverActions.PRODUCT_LOAD_UPDATE,
+              payload: {
+                loaded: [url],
+                unloaded: Array.from(removedUrls)
+              }
+            })
           })
           .catch((reason) => {
-          // TODO: properly handle
+            // TODO: properly handle
             console.warn('Couldn\'t load product ', reason)
           })
         setTimeout(this.loadProducts, 500)
