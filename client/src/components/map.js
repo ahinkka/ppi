@@ -69,18 +69,18 @@ export class Map extends React.Component {
           // https://cartodb.com/basemaps
           source: new OSM({
             attributions: [
-              ' &copy; <a href="http://cartodb.com/attributions">CartoDB</a>, ' +
+              ' &copy; <a href="https://cartodb.com/attributions">CartoDB</a>, ' +
               ' &copy; <a href="https://en.ilmatieteenlaitos.fi/open-data-manual-radar-data">FMI Open Radar Data</a>' +
               ' <a href="https://en.ilmatieteenlaitos.fi/open-data-licence">CC BY 4.0</a>, '
             ],
-            url: 'http://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
+            url: 'https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
           })
         }),
 
         new Tile({
           // https://cartodb.com/basemaps
           source: new OSM({
-            url: 'http://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
+            url: 'https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
             opaque: false
           })
         })
