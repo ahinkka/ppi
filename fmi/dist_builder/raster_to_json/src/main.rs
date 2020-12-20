@@ -6,13 +6,14 @@ use std::time::Instant;
 use std::collections::HashMap;
 use std::path::Path;
 
-use gdal::raster::dataset::Dataset;
+use gdal::raster::RasterBand;
+use gdal::Dataset;
 use gdal_sys::GDALDataType;
 
 use serde_json::{Value, json};
 
 fn populate_metadata(ds: &Dataset, metadata: &mut Value) {
-    let (width, height) = ds.size();
+    let (width, height) = ds.raster_size();
     let projection = ds.projection();
 
     metadata["width"] = json!(width);
@@ -24,14 +25,16 @@ fn populate_metadata(ds: &Dataset, metadata: &mut Value) {
 }
 
 fn populate_data(ds: &Dataset) -> Vec<Vec<u8>> {
-    let (width, height) = ds.size();
-    let band_count = ds.count();
+    let (width, height) = ds.raster_size();
+    let band_count = ds.raster_count();
 
     if band_count != 1 {
         panic!("More or less than one raster band");
     }
 
-    let band_type = ds.band_type(1).unwrap();
+    let band: RasterBand = ds.rasterband(1).unwrap();
+
+    let band_type = band.band_type();
     if band_type != GDALDataType::GDT_Byte {
         panic!("Can only handle Byte data; got {}", band_type);
     }
@@ -43,7 +46,7 @@ fn populate_data(ds: &Dataset) -> Vec<Vec<u8>> {
         if percentage as u32 % 10 == 0 {
             eprintln!("{:.0}%", percentage);
         }
-        let d: Vec<u8> = ds.read_raster(1, (x as isize, 0), (1, height), (1, height))
+        let d: Vec<u8> = band.read_as::<u8>((x as isize, 0), (1, height), (1, height))
             .unwrap()
             .data
             .clone();
