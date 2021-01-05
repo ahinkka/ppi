@@ -134,6 +134,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
             linear_transformation_gain = float(ludicrous_named_value('linearTransformationGain', e).text)
             linear_transformation_offset = float(ludicrous_named_value('linearTransformationOffset', e).text)
         except:
+            traceback.print_exc()
             errors = True
 
         url = first_child_by_tag('fileReference', e).text
