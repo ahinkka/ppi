@@ -79,14 +79,51 @@ const TimeDisplay = (props) => {
 }
 
 
+const _loadProducts = (dispatch, store, productUrlResolver, loadedProducts, loadingProducts) => {
+  const state = store.getState()
+  const flavor = state.selection.flavor
+
+  if (state.selection.siteId == null ||
+      state.selection.productId == null ||
+      state.selection.flavorId == null) {
+    return
+  }
+
+  if (dispatch) {
+    const moreProducts = loadProducts(
+      dispatch,
+      productUrlResolver,
+      loadedProducts,
+      loadingProducts,
+      flavor
+    )
+    if (moreProducts) {
+      setTimeout(() => _loadProducts(
+	dispatch,
+	store,
+	productUrlResolver,
+	loadedProducts,
+	loadingProducts
+      ), 500)
+    }
+  } else {
+    setTimeout(() => _loadProducts(
+      dispatch,
+      store,
+      productUrlResolver,
+      loadedProducts,
+      loadingProducts
+    ), 500)
+  }
+}
+
+
 export class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
 
     this.__loadingProducts = {}
     this.__loadedProducts = {}
-
-    this.loadProducts = this.loadProducts.bind(this);
   }
 
   componentDidMount() {
@@ -114,41 +151,23 @@ export class ObserverApp extends React.Component {
     document.removeEventListener('keydown', this._onKeyDown)
   }
 
-  loadProducts() {
-    const store = this.props.store
-    const state = store.getState()
-    const flavor = state.selection.flavor
-
-    if (flavor == null) {
-      return
-    }
-
-    if (this._dispatch) {
-      const moreProducts = loadProducts(
-        this._dispatch,
-        this.props.productUrlResolver,
-        this.__loadedProducts,
-        this.__loadingProducts,
-        flavor
-      )
-      if (moreProducts) {
-        setTimeout(this.loadProducts, 500)
-      }
-    } else {
-      setTimeout(this.loadProducts, 500)
-    }
-  }
-
   render() {
     let store = this.props.store;
     let state = store.getState();
 
-    this.loadProducts()
     if (state.selection.siteId == null ||
         state.selection.productId == null ||
         state.selection.flavorId == null) {
       return (<div></div>)
     }
+
+    _loadProducts(
+      this._dispatch,
+      store,
+      this.props.productUrlResolver,
+      this.__loadedProducts,
+      this.__loadingProducts
+    )
 
     let hash = makeHashFromState(state)
     if (hash != window.location.hash) {
