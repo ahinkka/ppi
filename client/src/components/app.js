@@ -88,12 +88,13 @@ export class ObserverApp extends React.Component {
 
     this.loadProducts = this.loadProducts.bind(this);
     this.animationTick = this.animationTick.bind(this);
-    this.storeChanged = this.storeChanged.bind(this);
   }
 
   componentDidMount() {
     this._dispatch = this.props.store.dispatch.bind(this);
-    this._unsubscribe = this.props.store.subscribe(this.storeChanged).bind(this);
+
+    this._storeChanged = () => this.setState(this.props.store.getState())
+    this._unsubscribe = this.props.store.subscribe(this._storeChanged).bind(this)
 
     setTimeout(this.animationTick, 500)
     this.animationTimerToken = setInterval(this.animationTick, 1500)
@@ -105,15 +106,10 @@ export class ObserverApp extends React.Component {
   }
 
   componentWillUnmount() {
-    this._unsubscribe();
+    this._unsubscribe()
 
     document.removeEventListener('keypress', this._onKeyPress)
     document.removeEventListener('keydown', this._onKeyDown)
-  }
-
-  storeChanged() {
-    this.setState(this.props.store.getState());
-    this.forceUpdate();
   }
 
   loadProducts() {
