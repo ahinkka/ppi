@@ -87,7 +87,6 @@ export class ObserverApp extends React.Component {
     this.__loadedProducts = {}
 
     this.loadProducts = this.loadProducts.bind(this);
-    this.animationTick = this.animationTick.bind(this);
   }
 
   componentDidMount() {
@@ -96,8 +95,11 @@ export class ObserverApp extends React.Component {
     this._storeChanged = () => this.setState(this.props.store.getState())
     this._unsubscribe = this.props.store.subscribe(this._storeChanged).bind(this)
 
-    setTimeout(this.animationTick, 500)
-    this.animationTimerToken = setInterval(this.animationTick, 1500)
+    this._animationTick = () =>
+      this.props.store.getState().animation.running ? this._dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
+
+    setTimeout(this._animationTick, 500)
+    this.animationTimerToken = setInterval(this._animationTick, 1500)
 
     this._onKeyPress = (event) => handleKeyPress(this._dispatch, event)
     this._onKeyDown = (event) => handleKeyDown(this._dispatch, event)
@@ -135,13 +137,6 @@ export class ObserverApp extends React.Component {
     } else {
       setTimeout(this.loadProducts, 500)
     }
-  }
-
-  animationTick() {
-    if (this.props.store.getState().animation.running == false) {
-      return
-    }
-    this._dispatch({type: ObserverActions.ANIMATION_TICK})
   }
 
   render() {
