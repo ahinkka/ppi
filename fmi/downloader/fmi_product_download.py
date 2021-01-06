@@ -123,22 +123,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
 
     result = []
     for e in tree.iter('{*}member'):
-        # phenomenon_time = first_child_by_tag_path(['phenomenonTime', 'timePosition'], e).text
-        # result_time = first_child_by_tag_path(['resultTime', 'timePosition'], e).text
-        # bin_count = int(ludicrous_named_value('binCount', e).text)
-        # bin_length = int(ludicrous_named_value('binLength', e).text)
-        # elevation_angle = float(ludicrous_named_value('elevationAngle', e).text)
-
-        errors = False
-        try:
-            linear_transformation_gain = float(ludicrous_named_value('linearTransformationGain', e).text)
-            linear_transformation_offset = float(ludicrous_named_value('linearTransformationOffset', e).text)
-        except:
-            traceback.print_exc()
-            errors = True
-
         url = first_child_by_tag('fileReference', e).text
-
         params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
 
         _, site_product = params['layers'][0].split(':')
@@ -152,6 +137,21 @@ def fetch_product_list(sites=DEFAULT_SITES):
         height = int(params['height'][0])
         elevation_angle = float(params['elevation'][0])
         time = dateutil.parser.parse(params['time'][0])
+
+        # phenomenon_time = first_child_by_tag_path(['phenomenonTime', 'timePosition'], e).text
+        # result_time = first_child_by_tag_path(['resultTime', 'timePosition'], e).text
+        # bin_count = int(ludicrous_named_value('binCount', e).text)
+        # bin_length = int(ludicrous_named_value('binLength', e).text)
+        # elevation_angle = float(ludicrous_named_value('elevationAngle', e).text)
+
+        errors = False
+        try:
+            linear_transformation_gain = float(ludicrous_named_value('linearTransformationGain', e).text)
+            linear_transformation_offset = float(ludicrous_named_value('linearTransformationOffset', e).text)
+        except:
+            print(f'Current element debug: {site=} {product_name=} {params=}', file=sys.stderr)
+            traceback.print_exc()
+            errors = True
 
         # first_child_by_tag(
         #     'Measure',
