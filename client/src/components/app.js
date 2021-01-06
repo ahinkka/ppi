@@ -43,6 +43,33 @@ const flavorSelections = (product) => {
 }
 
 
+const handleKeyPress = (dispatch, event) => {
+  let key = String.fromCharCode(event.charCode)
+  if (key == 's' || key == 'S') {
+    dispatch({type: ObserverActions.CYCLE_SITE})
+  } else if (key == 'p' || key == 'P') {
+    dispatch({type: ObserverActions.CYCLE_PRODUCT})
+  } else if (key == 'f' || key == 'F') {
+    dispatch({type: ObserverActions.CYCLE_FLAVOR})
+  } else if (event.keyCode == 32) {
+    dispatch({type: ObserverActions.TOGGLE_ANIMATION})
+  }
+
+  // TODO: bind shift + arrows for navigating the map
+  // TODO: bind + and - for zooming the map
+}
+
+
+const handleKeyDown = (dispatch, event) => {
+  let key = event.key
+  if (key == 'ArrowRight') {
+    dispatch({type: ObserverActions.TICK_FORWARD})
+  } else if (key == 'ArrowLeft') {
+    dispatch({type: ObserverActions.TICK_BACKWARD})
+  }
+}
+
+
 const TimeDisplay = (props) => {
   let display = moment.utc(props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
   let title = 'Current displayed product time is ' + display
@@ -90,28 +117,11 @@ export class ObserverApp extends React.Component {
   }
 
   onKeyDown(event) {
-    let key = event.key
-    if (key == 'ArrowRight') {
-      this._dispatch({type: ObserverActions.TICK_FORWARD})
-    } else if (key == 'ArrowLeft') {
-      this._dispatch({type: ObserverActions.TICK_BACKWARD})
-    }
+    handleKeyDown(this._dispatch, event)
   }
 
   onKeyPress(event) {
-    let key = String.fromCharCode(event.charCode);
-    if (key == 's' || key == 'S') {
-      this._dispatch({type: ObserverActions.CYCLE_SITE})
-    } else if (key == 'p' || key == 'P') {
-      this._dispatch({type: ObserverActions.CYCLE_PRODUCT})
-    } else if (key == 'f' || key == 'F') {
-      this._dispatch({type: ObserverActions.CYCLE_FLAVOR})
-    } else if (event.keyCode == 32) {
-      this._dispatch({type: ObserverActions.TOGGLE_ANIMATION})
-    }
-
-    // TODO: bind shift + arrows for navigating the map
-    // TODO: bind + and - for zooming the map
+    handleKeyPress(this._dispatch, event)
   }
 
   loadProducts() {
