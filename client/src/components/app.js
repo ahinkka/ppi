@@ -86,11 +86,6 @@ export class ObserverApp extends React.Component {
     this.__loadingProducts = {}
     this.__loadedProducts = {}
 
-    this.onKeyPress = this.onKeyPress.bind(this);
-    this.onKeyDown = this.onKeyDown.bind(this);
-    this.initializeKeyboardListener = this.initializeKeyboardListener.bind(this);
-    this.removeKeyboardListener = this.removeKeyboardListener.bind(this);
-
     this.loadProducts = this.loadProducts.bind(this);
     this.animationTick = this.animationTick.bind(this);
     this.storeChanged = this.storeChanged.bind(this);
@@ -103,25 +98,22 @@ export class ObserverApp extends React.Component {
     setTimeout(this.animationTick, 500)
     this.animationTimerToken = setInterval(this.animationTick, 1500)
 
-    this.initializeKeyboardListener()
+    this._onKeyPress = (event) => handleKeyPress(this._dispatch, event)
+    this._onKeyDown = (event) => handleKeyDown(this._dispatch, event)
+    document.addEventListener('keypress', this._onKeyPress)
+    document.addEventListener('keydown', this._onKeyDown)
   }
 
   componentWillUnmount() {
     this._unsubscribe();
-    this.removeKeyboardListener()
+
+    document.removeEventListener('keypress', this._onKeyPress)
+    document.removeEventListener('keydown', this._onKeyDown)
   }
 
   storeChanged() {
     this.setState(this.props.store.getState());
     this.forceUpdate();
-  }
-
-  onKeyDown(event) {
-    handleKeyDown(this._dispatch, event)
-  }
-
-  onKeyPress(event) {
-    handleKeyPress(this._dispatch, event)
   }
 
   loadProducts() {
@@ -154,16 +146,6 @@ export class ObserverApp extends React.Component {
       return
     }
     this._dispatch({type: ObserverActions.ANIMATION_TICK})
-  }
-
-  initializeKeyboardListener() {
-    document.addEventListener('keypress', this.onKeyPress)
-    document.addEventListener('keydown', this.onKeyDown)
-  }
-
-  removeKeyboardListener() {
-    document.removeEventListener('keypress', this.onKeyPress)
-    document.removeEventListener('keydown', this.onKeyDown)
   }
 
   render() {
