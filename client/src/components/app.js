@@ -43,14 +43,12 @@ const flavorSelections = (product) => {
 }
 
 
-class TimeDisplay extends React.Component {
-  render() {
-    let display = moment.utc(this.props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
-    let title = 'Current displayed product time is ' + display
-    return (
-      <div title={title} className="h5" id="product-time">{display}</div>
-    );
-  }
+const TimeDisplay = (props) => {
+  let display = moment.utc(props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
+  let title = 'Current displayed product time is ' + display
+  return (
+    <div title={title} className="h5" id="product-time">{display}</div>
+  );
 }
 
 

@@ -3,12 +3,10 @@ import React from 'react'
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 
 
-class DropdownSelectorOption extends React.Component {
-  render() {
-    return (
-      <option key={this.props.id} value={this.props.id}>{this.props.display}</option>
-    );
-  }
+const DropdownSelectorOption = (props) => {
+  return (
+    <option key={props.id} value={props.id}>{props.display}</option>
+  )
 }
 
 
