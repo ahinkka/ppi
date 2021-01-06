@@ -10,7 +10,7 @@ class Tick extends React.Component {
   }
 
   onClick() {
-    this.props.dispatch({type: this.props.action, payload: this.props.payload})
+    this.props.clicked()
   }
 
   render() {
@@ -49,9 +49,8 @@ export class ProductSlider extends React.Component {
     const tmp = this
     const ticks = this.props.ticks.map(function(item) {
       return (
-        <Tick key={item.key} position={item.position} color={item.color} character={item.character}
-          tooltip={item.tooltip} action={item.action} payload={item.payload}
-          dispatch={tmp.props.dispatch}/>
+        <Tick key={item.key} position={item.position} color={item.color}
+              character={item.character} tooltip={item.tooltip} clicked={item.clicked} />
       )
     })
 

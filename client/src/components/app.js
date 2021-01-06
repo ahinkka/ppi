@@ -110,6 +110,40 @@ const _loadProducts = (dispatch, store, productUrlResolver, loadedProducts, load
 }
 
 
+const resolveMinAnimationTime = (times) => {
+  if (times.length == 0) {
+    return null
+  }
+
+  // Only time - 5 minutes
+  if (times.length == 1) {
+    return new Date(Date.parse(times[0].time) - 5 * 60 * 1000)
+  }
+
+  // Use the product interval from the first two products
+  const firstTime = Date.parse(times[0].time)
+  const secondTime = Date.parse(times[1].time)
+  return new Date(firstTime - (secondTime - firstTime))
+}
+
+
+const resolveMaxAnimationTime = (times) => {
+  if (times.length == 0) {
+    return null
+  }
+
+  // Only time + 5 minutes
+  if (times.length == 1) {
+    return new Date(Date.parse(times[0]) + 5 * 60 * 1000)
+  }
+
+  // Use the product interval from the last two products
+  const secondToLastTime = Date.parse(times[times.length - 2].time)
+  const lastTime = Date.parse(times[times.length - 1].time)
+  return new Date(lastTime + (lastTime - secondToLastTime) / 1000)
+}
+
+
 const renderTooltip = (time) => {
   const utcTime = moment.utc(time)
   const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
@@ -123,6 +157,8 @@ export class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
 
+    this.state = {animationTime: new Date()}
+
     this.__loadingProducts = {}
     this.__loadedProducts = {}
   }
@@ -133,11 +169,35 @@ export class ObserverApp extends React.Component {
     this._storeChanged = () => this.setState(this.props.store.getState())
     this._unsubscribe = this.props.store.subscribe(this._storeChanged).bind(this)
 
-    this._animationTick = () =>
-      this.props.store.getState().animation.running ? this._dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
+    const animationCallback = (() => {
+      this.setState((state, props) => {
+        if (!this.props.store.getState().animation.running) {
+          return
+        }
 
-    setTimeout(this._animationTick, 500)
-    this.animationTimerToken = setInterval(this._animationTick, 1500)
+        const currentAnimationTime = state.animationTime
+        let nextAnimationTime = new Date(currentAnimationTime.getTime() + 5 * 60 * 1000)
+
+        const flavor = props.store.getState().selection.flavor
+        if (!flavor) {
+          console.warn("no flavor, not animating by time", flavor)
+          return
+        }
+
+        const maxAnimationTime = resolveMaxAnimationTime(flavor.times)
+        if (nextAnimationTime > maxAnimationTime) {
+          nextAnimationTime = resolveMinAnimationTime(flavor.times)
+        }
+
+        setTimeout(() => this.props.store.dispatch({
+          type: ObserverActions.ANIMATION_TIMER_TICK,
+          animationTime: nextAnimationTime
+        }), 0)
+
+        return {animationTime: nextAnimationTime}
+      })
+    })
+    this._animationTimerToken = setInterval(animationCallback, 500)
 
     this._onKeyPress = (event) => handleKeyPress(this._dispatch, event)
     this._onKeyDown = (event) => handleKeyDown(this._dispatch, event)
@@ -147,6 +207,7 @@ export class ObserverApp extends React.Component {
 
   componentWillUnmount() {
     this._unsubscribe()
+    clearInterval(this._animationTimerToken)
 
     document.removeEventListener('keypress', this._onKeyPress)
     document.removeEventListener('keydown', this._onKeyDown)
@@ -179,11 +240,29 @@ export class ObserverApp extends React.Component {
       window.history.pushState(null, null, hashLess + hash)
     }
 
+    const tickClickCallback = (time) => {
+      this._dispatch({
+        type: ObserverActions.TICK_CLICKED,
+        payload: time
+      })
+      this.setState({animationTime: new Date(time)})
+    }
+
     let tickItems = []
     const flavorTimes = state.selection.flavor.times
-    const minTime = Date.parse(flavorTimes[0].time)
-    const maxTime = Date.parse(flavorTimes[flavorTimes.length-1].time)
+    const minTime = resolveMinAnimationTime(flavorTimes)
+    const maxTime = resolveMaxAnimationTime(flavorTimes)
     const spanMillis = maxTime - minTime
+
+    tickItems.push({
+      key: this.state.animationTime,
+      position: (this.state.animationTime - minTime) / spanMillis,
+      color: '#FF0000',
+      character: '⬤',
+      tooltip: renderTooltip(this.state.animationTime),
+      clicked: () => {}
+    })
+
     for (let i=0; i<flavorTimes.length; i++) {
       const t = flavorTimes[i]
       const time = Date.parse(t.time)
@@ -209,11 +288,9 @@ export class ObserverApp extends React.Component {
         color: color,
         character: character,
         tooltip: renderTooltip(t.time),
-        action: ObserverActions.TICK_CLICKED,
-        payload: time
+        clicked: () => tickClickCallback(time)
       })
     }
-
 
     let productUrl = this.props.productUrlResolver(state.selection.flavor, state.animation.currentProductTime)
 

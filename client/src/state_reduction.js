@@ -100,6 +100,32 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext) => {
 }
 
 
+export const selectClosestFlavorTime = (flavor, desiredTime) => {
+  if (flavor == null) {
+    console.warn('selectClosestFlavorTime, flavor is null')
+    return null
+  } else if (flavor.times.length == 0) {
+    console.warn('selectClosestFlavorTime, no flavor times')
+    return null
+  }
+
+  // There's room for improvement here as we always scan the whole
+  // array. E.g. use a variant of binary search.
+  let closestIndex = null
+  let closestMinDiff = Number.MAX_VALUE
+  for (let i=0; i<flavor.times.length; i++) {
+    const time = Date.parse(flavor.times[i].time)
+    const diff = Math.abs(time - desiredTime)
+    if (diff < closestMinDiff) {
+      closestIndex = i
+      closestMinDiff = diff
+    }
+  }
+
+  return Date.parse(flavor.times[closestIndex].time)
+}
+
+
 const reduceValidSelection = (state) => {
   const [siteId, site] = selectSite(L.get(selectedSiteIdL, state), L.get(catalogL, state))
   const withValidSite = R.compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
@@ -252,10 +278,10 @@ const cycleFlavorReducer = (state) => {
 }
 
 
-export const animationTickReducer = (state) =>
+export const animationTimerTickReducer = (state, action) =>
   L.set(currentProductTimeL,
-    selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true),
-    state)
+        selectClosestFlavorTime(state.selection.flavor, action.animationTime),
+        state)
 
 
 const tickClickedReducer = (state, action) => L.set(currentProductTimeL, action.payload, state)
@@ -369,8 +395,8 @@ export const reducer = (state, action) => {
     return mapMovedReducer(state, action)
   } else if (action.type === ObserverActions.MAKE_CURRENT_SITE_INTENDED) {
     return makeCurrentSiteIntendedReducer(state)
-  } else if (action.type === ObserverActions.ANIMATION_TICK) {
-    return animationTickReducer(state);
+  } else if (action.type === ObserverActions.ANIMATION_TIMER_TICK) {
+    return animationTimerTickReducer(state, action);
   } else if (action.type === ObserverActions.TICK_CLICKED) {
     return tickClickedReducer(state, action);
   } else if (action.type === ObserverActions.TICK_FORWARD) {
