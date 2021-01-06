@@ -83,30 +83,22 @@ const _loadProducts = (dispatch, store, productUrlResolver, loadedProducts, load
   const state = store.getState()
   const flavor = state.selection.flavor
 
-  if (state.selection.siteId == null ||
+  if (dispatch == null ||
+      state.selection.siteId == null ||
       state.selection.productId == null ||
       state.selection.flavorId == null) {
     return
   }
 
-  if (dispatch) {
-    const moreProducts = loadProducts(
-      dispatch,
-      productUrlResolver,
-      loadedProducts,
-      loadingProducts,
-      flavor
-    )
-    if (moreProducts) {
-      setTimeout(() => _loadProducts(
-	dispatch,
-	store,
-	productUrlResolver,
-	loadedProducts,
-	loadingProducts
-      ), 500)
-    }
-  } else {
+  const moreProducts = loadProducts(
+    dispatch,
+    productUrlResolver,
+    loadedProducts,
+    loadingProducts,
+    flavor
+  )
+
+  if (moreProducts) {
     setTimeout(() => _loadProducts(
       dispatch,
       store,
