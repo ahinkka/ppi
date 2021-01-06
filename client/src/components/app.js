@@ -110,6 +110,15 @@ const _loadProducts = (dispatch, store, productUrlResolver, loadedProducts, load
 }
 
 
+const renderTooltip = (time) => {
+  const utcTime = moment.utc(time)
+  const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
+  const displayHours = Math.floor(minutes / 60)
+  const displayMinutes = Math.floor(minutes - displayHours * 60)
+  return utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
+}
+
+
 export class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
@@ -194,16 +203,12 @@ export class ObserverApp extends React.Component {
         }
       }
 
-      const utcTime = moment.utc(t.time)
-      const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
-      const displayHours = Math.floor(minutes / 60)
-      const displayMinutes = Math.floor(minutes - displayHours * 60)
       tickItems.push({
         key: [state.selection.site, state.selection.product, state.selection.flavor, t.time].join('|'),
         position: proportion,
         color: color,
         character: character,
-        tooltip: utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`,
+        tooltip: renderTooltip(t.time),
         action: ObserverActions.TICK_CLICKED,
         payload: time
       })
