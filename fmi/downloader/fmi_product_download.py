@@ -18,8 +18,8 @@ from owslib.wfs import WebFeatureService
 from lxml import etree
 
 
-DEFAULT_SITES = ['luosto', 'anjalankoski', 'ikaalinen', 'vimpeli', 'utajarvi',
-                 'kuopio', 'vantaa', 'korpo', 'petajavesi', 'kesalahti', 'nurmes']
+DEFAULT_SITES = ['anjalankoski', 'ikaalinen', 'kesalahti', 'korpo', 'kuopio',
+                 'luosto', 'nurmes', 'petajavesi', 'utajarvi', 'vantaa', 'vimpeli']
 
 
 sample_config = """
