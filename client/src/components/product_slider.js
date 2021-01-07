@@ -3,28 +3,18 @@ import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 import {ObserverActions} from '../constants'
 
 
-class Tick extends React.Component {
-  constructor(props) {
-    super(props);
-    this.onClick = this.onClick.bind(this);
-  }
+const Tick = (props) => {
+  const tooltip = (
+    <Tooltip id={'tick-' + props.position + '-tooltip'}>{props.tooltip}</Tooltip>
+  )
 
-  onClick() {
-    this.props.dispatch({type: this.props.action, payload: this.props.payload})
-  }
-
-  render() {
-    const tooltip = (
-      <Tooltip id={'tick-' + this.props.position + '-tooltip'}>{this.props.tooltip}</Tooltip>
-    )
-
-    return (
-      <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <div style={{position: 'absolute', left: (0.01 + 0.98 * this.props.position) * 100 + '%',
-          color: this.props.color, cursor: 'pointer'}} onClick={this.onClick}>{this.props.character}</div>
-      </OverlayTrigger>
-    )
-  }
+  return (
+    <OverlayTrigger placement="bottom" overlay={tooltip}>
+      <div style={{position: 'absolute', left: (0.01 + 0.98 * props.position) * 100 + '%',
+		   color: props.color, cursor: 'pointer'}}
+           onClick={props.clicked}>{props.character}</div>
+    </OverlayTrigger>
+  )
 }
 
 
