@@ -110,12 +110,84 @@ const _loadProducts = (dispatch, store, productUrlResolver, loadedProducts, load
 }
 
 
+const resolveMinAnimationTime = (times) => {
+  if (times.length == 0) {
+    return null
+  }
+
+  // Only time - 5 minutes
+  if (times.length == 1) {
+    return new Date(Date.parse(times[0].time) - 5 * 60 * 1000)
+  }
+
+  // Use the product interval from the first two products
+  const firstTime = Date.parse(times[0].time)
+  const secondTime = Date.parse(times[1].time)
+  return new Date(firstTime - (secondTime - firstTime))
+}
+
+
+const resolveMaxAnimationTime = (times) => {
+  if (times.length == 0) {
+    return null
+  }
+
+  // Only time + 5 minutes
+  if (times.length == 1) {
+    return new Date(Date.parse(times[0]) + 5 * 60 * 1000)
+  }
+
+  // Use the product interval from the last two products
+  const secondToLastTime = Date.parse(times[times.length - 2].time)
+  const lastTime = Date.parse(times[times.length - 1].time)
+  return new Date(lastTime + (lastTime - secondToLastTime) / 1000)
+}
+
+
 const renderTooltip = (time) => {
   const utcTime = moment.utc(time)
   const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
   const displayHours = Math.floor(minutes / 60)
   const displayMinutes = Math.floor(minutes - displayHours * 60)
   return utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
+}
+
+
+const resolveTickItems = (flavorTimes, isTimeLoaded, currentProductTime, tickKey, tickClickCallback) => {
+  const result = []
+
+  const minTime = resolveMinAnimationTime(flavorTimes)
+  const maxTime = resolveMaxAnimationTime(flavorTimes)
+  const spanMillis = maxTime - minTime
+  for (let i=0; i<flavorTimes.length; i++) {
+    const t = flavorTimes[i]
+    const time = Date.parse(t.time)
+    const fromStartMillis = time - minTime
+    const proportion = fromStartMillis / spanMillis
+
+    let character = '▏'
+    let color = '#e0e0e0'
+
+    if (time === currentProductTime) {
+      color = '#000000'
+      character = '▎'
+    } else {
+      if (isTimeLoaded(time)) {
+        color = '#808080'
+      }
+    }
+
+    result.push({
+      key: tickKey(t.time),
+      position: proportion,
+      color: color,
+      character: character,
+      tooltip: renderTooltip(t.time),
+      clicked: () => tickClickCallback(time)
+    })
+  }
+
+  return result
 }
 
 
@@ -179,41 +251,23 @@ export class ObserverApp extends React.Component {
       window.history.pushState(null, null, hashLess + hash)
     }
 
-    let tickItems = []
-    const flavorTimes = state.selection.flavor.times
-    const minTime = Date.parse(flavorTimes[0].time)
-    const maxTime = Date.parse(flavorTimes[flavorTimes.length-1].time)
-    const spanMillis = maxTime - minTime
-    for (let i=0; i<flavorTimes.length; i++) {
-      const t = flavorTimes[i]
-      const time = Date.parse(t.time)
-      const fromStartMillis = time - minTime
-      const proportion = fromStartMillis / spanMillis
-
-      let character = '▏'
-      let color = '#e0e0e0'
-
-      if (time === state.animation.currentProductTime) {
-        color = '#000000'
-        character = '▎'
-      } else {
-        const url = this.props.productUrlResolver(state.selection.flavor, time)
-        if (url in state.loadedProducts) {
-          color = '#808080'
-        }
-      }
-
-      tickItems.push({
-        key: [state.selection.site, state.selection.product, state.selection.flavor, t.time].join('|'),
-        position: proportion,
-        color: color,
-        character: character,
-        tooltip: renderTooltip(t.time),
-        action: ObserverActions.TICK_CLICKED,
+    const tickClickCallback = (time) => {
+      this._dispatch({
+        type: ObserverActions.TICK_CLICKED,
         payload: time
       })
+      this.setState({animationTime: new Date(time)})
     }
 
+    const flavorTimes = state.selection.flavor.times
+    const tickItems = resolveTickItems(
+      flavorTimes,
+      (time) =>
+	((this.props.productUrlResolver(state.selection.flavor, time)) in state.loadedProducts),
+      state.animation.currentProductTime,
+      (t) => [state.selection.site.display, state.selection.product.display, state.selection.flavor.display, t].join('|'),
+      tickClickCallback
+    )
 
     let productUrl = this.props.productUrlResolver(state.selection.flavor, state.animation.currentProductTime)
 
