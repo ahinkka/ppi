@@ -19,12 +19,11 @@ const Tick = (props) => {
 
 
 export default function(props) {
-  const ticks = props.ticks.map(function(item) {
-    return (
-      <Tick key={item.key} position={item.position} color={item.color}
-            character={item.character} tooltip={item.tooltip} clicked={item.clicked} />
-    )
-  })
+  const ticks = props.ticks.map(
+    (item) =>
+      (<Tick key={item.key} position={item.position} color={item.color}
+             character={item.character} tooltip={item.tooltip} clicked={item.clicked} />)
+  )
 
   const onWheel = (event) => {
     if (event.deltaY < 0) {
