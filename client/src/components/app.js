@@ -12,11 +12,11 @@ import ColorScale from './color_scale'
 import {NOAAScaleToScaleDescription} from './coloring'
 import {loadProducts} from '../product_loading'
 
-let _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
+const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
 
 const siteSelections = (catalog) => {
-  let result = []
+  const result = []
   for (const siteId in catalog) {
     result.push({id: siteId, display: catalog[siteId].display})
   }
@@ -25,7 +25,7 @@ const siteSelections = (catalog) => {
 }
 
 const productSelections = (site) => {
-  let result = []
+  const result = []
   for (const productId in site.products) {
     result.push({id: productId, display: site.products[productId].display})
   }
@@ -34,7 +34,7 @@ const productSelections = (site) => {
 }
 
 const flavorSelections = (product) => {
-  let result = []
+  const result = []
   for (const flavorId in product.flavors) {
     result.push({id: flavorId, display: product.flavors[flavorId].display})
   }
@@ -44,7 +44,7 @@ const flavorSelections = (product) => {
 
 
 const handleKeyPress = (dispatch, event) => {
-  let key = String.fromCharCode(event.charCode)
+  const key = String.fromCharCode(event.charCode)
   if (key == 's' || key == 'S') {
     dispatch({type: ObserverActions.CYCLE_SITE})
   } else if (key == 'p' || key == 'P') {
@@ -61,7 +61,7 @@ const handleKeyPress = (dispatch, event) => {
 
 
 const handleKeyDown = (dispatch, event) => {
-  let key = event.key
+  const key = event.key
   if (key == 'ArrowRight') {
     dispatch({type: ObserverActions.TICK_FORWARD})
   } else if (key == 'ArrowLeft') {
@@ -71,8 +71,8 @@ const handleKeyDown = (dispatch, event) => {
 
 
 const TimeDisplay = (props) => {
-  let display = moment.utc(props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
-  let title = 'Current displayed product time is ' + display
+  const display = moment.utc(props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
+  const title = 'Current displayed product time is ' + display
   return (
     <div title={title} className="h5" id="product-time">{display}</div>
   );
@@ -252,8 +252,8 @@ export class ObserverApp extends React.Component {
   }
 
   render() {
-    let store = this.props.store;
-    let state = store.getState();
+    const store = this.props.store;
+    const state = store.getState();
 
     if (state.selection.siteId == null ||
         state.selection.productId == null ||
@@ -269,7 +269,7 @@ export class ObserverApp extends React.Component {
       this.__loadingProducts
     )
 
-    let hash = makeHashFromState(state)
+    const hash = makeHashFromState(state)
     if (hash != window.location.hash) {
       let hashLess = window.location.href
       if (window.location.href.includes('#')) {
@@ -308,7 +308,7 @@ export class ObserverApp extends React.Component {
       clicked: () => {}
     })
 
-    let productUrl = this.props.productUrlResolver(state.selection.flavor, state.animation.currentProductTime)
+    const productUrl = this.props.productUrlResolver(state.selection.flavor, state.animation.currentProductTime)
 
     let product = null
     if (productUrl in state.loadedProducts) {
