@@ -4,7 +4,7 @@ import moment from 'moment';
 import {ObserverActions} from '../constants'
 
 import {makeHashFromState} from '../state_hash'
-import {DropdownSelector} from './dropdown_selector'
+import DropdownSelector from './dropdown_selector'
 import {Map} from './map.js'
 import ToggleButton from './toggle_button'
 import ProductSlider from './product_slider'

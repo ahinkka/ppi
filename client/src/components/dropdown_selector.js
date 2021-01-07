@@ -1,6 +1,6 @@
 import React from 'react'
 
-import {OverlayTrigger, Tooltip} from 'react-bootstrap';
+import {OverlayTrigger, Tooltip} from 'react-bootstrap'
 
 
 const DropdownSelectorOption = (props) => {
@@ -10,46 +10,31 @@ const DropdownSelectorOption = (props) => {
 }
 
 
-// https://facebook.github.io/react/docs/jsx-gotchas.html
-// https://facebook.github.io/react/docs/dom-differences.html
-export class DropdownSelector extends React.Component {
-  constructor(props) {
-    super(props);
-    this.handleChange = this.handleChange.bind(this);
-  }
+export default function(props) {
+  const options = props.items.map(
+    (item) => (<DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>)
+  )
 
-  handleChange(e) {
-    this.props.dispatch({type: this.props.action, payload: e.target.value})
-  }
+  const tooltipId = `{props.legend}-tooltip`
+  const tooltip = (
+    <Tooltip id={tooltipId}>{props.tooltip}</Tooltip>
+  )
 
-  render() {
-    var options = this.props.items.map(function(item) {
-      if (item.id == undefined) {
-        console.error('undefined item id attribute', item)
-      }
-      return (
-        <DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>
-      )
-    })
+  const handleChange = (e) => props.dispatch({type: props.action, payload: e.target.value})
 
-    const tooltip = (
-      <Tooltip id="{this.props.legend}-tooltip">{this.props.tooltip}</Tooltip>
-    );
-
-    let selectTitle = 'Select ' + this.props.legend.toLowerCase();
-    return (
-      <div className="dropdown-selector">
-        <OverlayTrigger placement="bottom" overlay={tooltip}>
-          <label className="dropdown-selector__label"
-            htmlFor="{this.props.legend}-select"
-            title={this.props.legend}>{this.props.legend}</label>
-        </OverlayTrigger>
-        <select id="{this.props.legend}-select" className="form-control dropdown-selector__select"
-          value={this.props.currentValue} onChange={this.handleChange}
-          disabled={this.props.disabled} title={selectTitle}>
-          {options}
-        </select>
-      </div>
-    );
-  }
+  const selectTitle = 'Select ' + props.legend.toLowerCase();
+  return (
+    <div className="dropdown-selector">
+      <OverlayTrigger placement="bottom" overlay={tooltip}>
+        <label className="dropdown-selector__label"
+          htmlFor="{props.legend}-select"
+          title={props.legend}>{props.legend}</label>
+      </OverlayTrigger>
+      <select id="{props.legend}-select" className="form-control dropdown-selector__select"
+        value={props.currentValue} onChange={handleChange}
+        disabled={props.disabled} title={selectTitle}>
+        {options}
+      </select>
+    </div>
+  )
 }
