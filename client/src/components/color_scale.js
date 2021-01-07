@@ -17,7 +17,7 @@ const SolidColorRange = (props) => {
 }
 
 
-export const ColorScale = (props) => {
+export default function(props) {
   // -type: ScaleRangeType.STEP
   // -color [r,g,b]
   // -start
