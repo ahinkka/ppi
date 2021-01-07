@@ -153,6 +153,44 @@ const renderTooltip = (time) => {
 }
 
 
+const resolveTickItems = (flavorTimes, isTimeLoaded, currentProductTime, tickKey, tickClickCallback) => {
+  const result = []
+
+  const minTime = resolveMinAnimationTime(flavorTimes)
+  const maxTime = resolveMaxAnimationTime(flavorTimes)
+  const spanMillis = maxTime - minTime
+  for (let i=0; i<flavorTimes.length; i++) {
+    const t = flavorTimes[i]
+    const time = Date.parse(t.time)
+    const fromStartMillis = time - minTime
+    const proportion = fromStartMillis / spanMillis
+
+    let character = '▏'
+    let color = '#e0e0e0'
+
+    if (time === currentProductTime) {
+      color = '#000000'
+      character = '▎'
+    } else {
+      if (isTimeLoaded(time)) {
+        color = '#808080'
+      }
+    }
+
+    result.push({
+      key: tickKey(t.time),
+      position: proportion,
+      color: color,
+      character: character,
+      tooltip: renderTooltip(t.time),
+      clicked: () => tickClickCallback(time)
+    })
+  }
+
+  return result
+}
+
+
 export class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
@@ -248,12 +286,19 @@ export class ObserverApp extends React.Component {
       this.setState({animationTime: new Date(time)})
     }
 
-    let tickItems = []
     const flavorTimes = state.selection.flavor.times
+    const tickItems = resolveTickItems(
+      flavorTimes,
+      (time) =>
+	((this.props.productUrlResolver(state.selection.flavor, time)) in state.loadedProducts),
+      state.animation.currentProductTime,
+      (t) => [state.selection.site.display, state.selection.product.display, state.selection.flavor.display, t].join('|'),
+      tickClickCallback
+    )
+
     const minTime = resolveMinAnimationTime(flavorTimes)
     const maxTime = resolveMaxAnimationTime(flavorTimes)
     const spanMillis = maxTime - minTime
-
     tickItems.push({
       key: this.state.animationTime,
       position: (this.state.animationTime - minTime) / spanMillis,
@@ -262,35 +307,6 @@ export class ObserverApp extends React.Component {
       tooltip: renderTooltip(this.state.animationTime),
       clicked: () => {}
     })
-
-    for (let i=0; i<flavorTimes.length; i++) {
-      const t = flavorTimes[i]
-      const time = Date.parse(t.time)
-      const fromStartMillis = time - minTime
-      const proportion = fromStartMillis / spanMillis
-
-      let character = '▏'
-      let color = '#e0e0e0'
-
-      if (time === state.animation.currentProductTime) {
-        color = '#000000'
-        character = '▎'
-      } else {
-        const url = this.props.productUrlResolver(state.selection.flavor, time)
-        if (url in state.loadedProducts) {
-          color = '#808080'
-        }
-      }
-
-      tickItems.push({
-        key: [state.selection.site, state.selection.product, state.selection.flavor, t.time].join('|'),
-        position: proportion,
-        color: color,
-        character: character,
-        tooltip: renderTooltip(t.time),
-        clicked: () => tickClickCallback(time)
-      })
-    }
 
     let productUrl = this.props.productUrlResolver(state.selection.flavor, state.animation.currentProductTime)
 
