@@ -21,8 +21,13 @@ export const animationRunningL = L.compose(animationL, 'running')
 
 const mapL = L.prop('map')
 const mapCurrentL = L.compose(L.prop('map'), 'current')
-export const currentLonL = L.compose(mapCurrentL, 'lon')
-export const currentLatL = L.compose(mapCurrentL, 'lat')
+export const currentLonL = L.compose(mapCurrentL, 'centerLon')
+export const currentLatL = L.compose(mapCurrentL, 'centerLat')
+const mapIntendedL = L.compose(L.prop('map'), 'intended')
+export const intendedLonL = L.compose(mapIntendedL, 'centerLon')
+export const intendedLatL = L.compose(mapIntendedL, 'centerLat')
+
+export const loadedProductsL = L.prop('loadedProducts')
 
 
 const selectSite = (previousSiteId, catalog) => {
@@ -123,10 +128,21 @@ export const reduceValidAnimationTime = (state) => {
 }
 
 
+const reduceIntendedInitialMapCenter = (state) => {
+  if (R.all((lens) => !L.get(lens, state),
+            [currentLonL, currentLatL, intendedLonL, intendedLatL])) {
+    return makeCurrentSiteIntendedReducer(state)
+  } else {
+    return state
+  }
+}
+
+
 const catalogUpdatedReducer = (state, action) =>
   R.pipe(L.set(catalogL, action.payload),
     reduceValidSelection,
-    reduceValidAnimationTime)(state)
+    reduceValidAnimationTime,
+    reduceIntendedInitialMapCenter)(state)
 
 
 const siteSelectedReducer = (state, action) => {

@@ -44,7 +44,7 @@ class UrlStateAdapter extends Component {
       }, 0)
     }
 
-    if (L.get(catalogL, this.props)) {
+    if (L.get(currentLonL, this.props) && L.get(currentLatL, this.props)) {
       this.updateHash(this.props)
     }
 
@@ -65,12 +65,11 @@ class UrlStateAdapter extends Component {
 	this.updates.push({type: ObserverActions.TOGGLE_ANIMATION})
       }
 
-      if (parsed.lon !== undefined && parsed.lat !== undefined &&
-          parsed.lon !== 'NaN' && parsed.lat !== 'NaN') {
-	const lon = parseFloat(parsed.lon)
-	const lat = parseFloat(parsed.lat)
+      const [lon, lat] = [parseFloat(parsed.lon), parseFloat(parsed.lat)]
+      if (!isNaN(lon) && !isNaN(lat)) {
 	this.updates.push({type: ObserverActions.MAP_CENTER_CHANGED, payload: {lon: lon, lat: lat}})
       } else {
+	console.log('current intended')
 	this.updates.push({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
       }
     }

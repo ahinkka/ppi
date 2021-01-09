@@ -37,7 +37,7 @@ class CatalogProvider extends Component {
     }
     
     this.intervalId = setInterval(update, 30000)
-    update()
+    setTimeout(update, 0)
   }
 
   componentWillUnmount() {

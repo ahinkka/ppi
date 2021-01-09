@@ -1,5 +1,24 @@
 import React from 'react'
 import moment from 'moment';
+import { connect } from 'react-redux'
+
+import * as L from 'partial.lenses'
+import {
+  catalogL,
+  selectedSiteIdL,
+  selectedProductIdL,
+  selectedFlavorIdL,
+  selectedSiteL,
+  selectedProductL,
+  selectedFlavorL,
+  animationRunningL,
+  currentLonL,
+  currentLatL,
+  intendedLonL,
+  intendedLatL,
+  loadedProductsL,
+  currentProductTimeL
+} from '../state_reduction'
 
 import {ObserverActions} from '../constants'
 
@@ -9,7 +28,6 @@ import ToggleButton from './toggle_button'
 import ProductSlider from './product_slider'
 import ColorScale from './color_scale'
 import {NOAAScaleToScaleDescription} from './coloring'
-import {loadProducts} from '../product_loading'
 
 const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
@@ -75,37 +93,6 @@ const TimeDisplay = (props) => {
   return (
     <div title={title} className="h5" id="product-time">{display}</div>
   );
-}
-
-
-const _loadProducts = (dispatch, store, productUrlResolver, loadedProducts, loadingProducts) => {
-  const state = store.getState()
-  const flavor = state.selection.flavor
-
-  if (dispatch == null ||
-      state.selection.siteId == null ||
-      state.selection.productId == null ||
-      state.selection.flavorId == null) {
-    return
-  }
-
-  const moreProducts = loadProducts(
-    dispatch,
-    productUrlResolver,
-    loadedProducts,
-    loadingProducts,
-    flavor
-  )
-
-  if (moreProducts) {
-    setTimeout(() => _loadProducts(
-      dispatch,
-      store,
-      productUrlResolver,
-      loadedProducts,
-      loadingProducts
-    ), 500)
-  }
 }
 
 
@@ -190,80 +177,61 @@ const resolveTickItems = (flavorTimes, isTimeLoaded, currentProductTime, tickKey
 }
 
 
-export class ObserverApp extends React.Component {
+class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
-
-    this.__loadingProducts = {}
-    this.__loadedProducts = {}
   }
 
   componentDidMount() {
-    this._dispatch = this.props.store.dispatch.bind(this);
-
-    this._storeChanged = () => this.setState(this.props.store.getState())
-    this._unsubscribe = this.props.store.subscribe(this._storeChanged).bind(this)
-
     this._animationTick = () =>
-      this.props.store.getState().animation.running ? this._dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
+      L.get(animationRunningL, this.props) ? this.props.dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
 
     setTimeout(this._animationTick, 500)
     this.animationTimerToken = setInterval(this._animationTick, 1500)
 
-    this._onKeyPress = (event) => handleKeyPress(this._dispatch, event)
-    this._onKeyDown = (event) => handleKeyDown(this._dispatch, event)
+    this._onKeyPress = (event) => handleKeyPress(this.props.dispatch, event)
+    this._onKeyDown = (event) => handleKeyDown(this.props.dispatch, event)
     document.addEventListener('keypress', this._onKeyPress)
     document.addEventListener('keydown', this._onKeyDown)
   }
 
   componentWillUnmount() {
-    this._unsubscribe()
-
     document.removeEventListener('keypress', this._onKeyPress)
     document.removeEventListener('keydown', this._onKeyDown)
   }
 
   render() {
-    const store = this.props.store;
-    const state = store.getState();
+    const props = this.props
 
-    if (state.selection.siteId == null ||
-        state.selection.productId == null ||
-        state.selection.flavorId == null) {
+    if (L.get(selectedSiteIdL, props) == null ||
+      L.get(selectedProductIdL, props) == null ||
+      L.get(selectedFlavorIdL, props) == null) {
       return (<div></div>)
     }
 
-    _loadProducts(
-      this._dispatch,
-      store,
-      this.props.productUrlResolver,
-      this.__loadedProducts,
-      this.__loadingProducts
-    )
-
     const tickClickCallback = (time) => {
-      this._dispatch({
+      props.dispatch({
         type: ObserverActions.TICK_CLICKED,
         payload: time
       })
       this.setState({animationTime: new Date(time)})
     }
 
-    const flavorTimes = state.selection.flavor.times
+    const flavorTimes = props.selection.flavor.times
     const tickItems = resolveTickItems(
       flavorTimes,
       (time) =>
-	((this.props.productUrlResolver(state.selection.flavor, time)) in state.loadedProducts),
-      state.animation.currentProductTime,
-      (t) => [state.selection.site.display, state.selection.product.display, state.selection.flavor.display, t].join('|'),
+	(props.productUrlResolver(props.selection.flavor, time) in props.loadedProducts),
+      props.animation.currentProductTime,
+      (t) => [props.selection.site.display, props.selection.product.display, props.selection.flavor.display, t].join('|'),
       tickClickCallback
     )
 
-    const productUrl = this.props.productUrlResolver(state.selection.flavor, state.animation.currentProductTime)
+    const productUrl = props.productUrlResolver(props.selection.flavor, props.animation.currentProductTime)
 
     let product = null
-    if (productUrl in state.loadedProducts) {
-      product = this.__loadedProducts[productUrl]
+    if (productUrl in props.loadedProducts) {
+      product = props.getProductByUrl(productUrl)
     }
 
     return (
@@ -271,45 +239,71 @@ export class ObserverApp extends React.Component {
         <div id="header-row">
           <div id="header-row__selector-container">
             <DropdownSelector className="header-row__site-selector"
-              currentValue={state.selection.siteId}
+              currentValue={props.selection.siteId}
               legend="Site"
-              items={siteSelections(state.catalog)}
+              items={siteSelections(props.catalog)}
               tooltip="Press S to cycle sites"
               action={ObserverActions.SITE_SELECTED}
-              dispatch={store.dispatch} />
+              dispatch={props.dispatch} />
             <DropdownSelector className="header-row__product-selector"
-              currentValue={state.selection.productId}
+              currentValue={props.selection.productId}
               legend="Product"
-              items={productSelections(state.selection.site)}
+              items={productSelections(props.selection.site)}
               tooltip="Press P to cycle products"
               action={ObserverActions.PRODUCT_SELECTED}
-              dispatch={store.dispatch} />
+              dispatch={props.dispatch} />
             <DropdownSelector className="header-row__flavor-selector"
-              currentValue={state.selection.flavorId}
+              currentValue={props.selection.flavorId}
               legend="Flavor"
-              items={flavorSelections(state.selection.product)}
+              items={flavorSelections(props.selection.product)}
               tooltip="Press F to cycle flavors"
               action={ObserverActions.FLAVOR_SELECTED}
-              dispatch={store.dispatch} />
+              dispatch={props.dispatch} />
           </div>
           <div id="play-controls">
-            <ToggleButton toggleStatus={state.animation.running} dispatch={store.dispatch}
+            <ToggleButton toggleStatus={props.animation.running} dispatch={props.dispatch}
               onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
               action={ObserverActions.TOGGLE_ANIMATION}
               tooltip="Press SPACE to toggle animation" />
-            <ProductSlider ticks={tickItems} dispatch={store.dispatch} />
+            <ProductSlider ticks={tickItems} dispatch={props.dispatch} />
           </div>
-          <TimeDisplay currentValue={state.animation.currentProductTime} />
+          <TimeDisplay currentValue={props.animation.currentProductTime} />
         </div>
         <Map headerElementId="header-row"
-          intendedCenter={[state.map.intended.centerLon, state.map.intended.centerLat]}
-          dispatch={store.dispatch}
+          intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
+          dispatch={props.dispatch}
           product={product}
-          productTime={state.animation.currentProductTime}
-          productSelection={[state.selection.siteId, state.selection.productId, state.selection.flavorId]} />
+          productTime={props.animation.currentProductTime}
+          productSelection={[props.selection.siteId, props.selection.productId, props.selection.flavorId]} />
         <ColorScale name={'NOAA Reflectivity Scale'} unit={'dBZ'} type={'Reflectivity'}
           ranges={_NOAAReflectivityColorScale} />
       </div>
     )
   }
 }
+
+
+const mapStateToProps = (state) => {
+  const result = [
+    catalogL,
+    selectedSiteIdL,
+    selectedProductIdL,
+    selectedFlavorIdL,
+    selectedSiteL,
+    selectedProductL,
+    selectedFlavorL,
+    animationRunningL,
+    currentLonL,
+    currentLatL,
+    intendedLonL,
+    intendedLatL,
+    loadedProductsL,
+    currentProductTimeL
+  ].reduce(
+    (acc, lens) => L.set(lens, L.get(lens, state), acc),
+    {}
+  )
+
+  return result
+}
+export default connect(mapStateToProps)(ObserverApp)

@@ -119,8 +119,6 @@ export class Map extends React.Component {
     this.canvas = document.createElement('canvas')
     this.canvas.width = Math.floor(size[0])
     this.canvas.height = Math.floor(size[1])
-    console.log(this.canvas.width)
-    console.log(this.canvas.height)
 
     if (this.props.product == null || this.props.product == undefined) {
       console.warn('__canvasFunction not rendering because of null currentProduct')
