@@ -4,20 +4,25 @@ import * as R from 'ramda'
 import {ObserverActions} from './constants'
 
 // Lenses into state
-const catalogL = L.prop('catalog')
-const selectionL = L.prop('selection')
+export const catalogL = L.prop('catalog')
+export const selectionL = L.prop('selection')
 
-const selectedSiteIdL = L.compose(selectionL, 'siteId')
-const selectedProductIdL = L.compose(selectionL, 'productId')
-const selectedFlavorIdL = L.compose(selectionL, 'flavorId')
+export const selectedSiteIdL = L.compose(selectionL, 'siteId')
+export const selectedProductIdL = L.compose(selectionL, 'productId')
+export const selectedFlavorIdL = L.compose(selectionL, 'flavorId')
 
-const selectedSiteL = L.compose(selectionL, 'site')
-const selectedProductL = L.compose(selectionL, 'product')
-const selectedFlavorL = L.compose(selectionL, 'flavor')
+export const selectedSiteL = L.compose(selectionL, 'site')
+export const selectedProductL = L.compose(selectionL, 'product')
+export const selectedFlavorL = L.compose(selectionL, 'flavor')
 
 const animationL = L.prop('animation')
-const currentProductTimeL = L.compose(animationL, 'currentProductTime')
-const animationRunningL = L.compose(animationL, 'running')
+export const currentProductTimeL = L.compose(animationL, 'currentProductTime')
+export const animationRunningL = L.compose(animationL, 'running')
+
+const mapL = L.prop('map')
+const mapCurrentL = L.compose(L.prop('map'), 'current')
+export const currentLonL = L.compose(mapCurrentL, 'lon')
+export const currentLatL = L.compose(mapCurrentL, 'lat')
 
 
 const selectSite = (previousSiteId, catalog) => {

@@ -116,9 +116,11 @@ export class Map extends React.Component {
   __canvasFunction(extent, resolution, pixelRatio, size, projection) { // eslint-disable-line no-unused-vars
     let startRender = new Date().getTime();
 
-    this.canvas = document.createElement('canvas');
+    this.canvas = document.createElement('canvas')
     this.canvas.width = Math.floor(size[0])
     this.canvas.height = Math.floor(size[1])
+    console.log(this.canvas.width)
+    console.log(this.canvas.height)
 
     if (this.props.product == null || this.props.product == undefined) {
       console.warn('__canvasFunction not rendering because of null currentProduct')

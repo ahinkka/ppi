@@ -3,7 +3,6 @@ import moment from 'moment';
 
 import {ObserverActions} from '../constants'
 
-import {makeHashFromState} from '../state_hash'
 import DropdownSelector from './dropdown_selector'
 import {Map} from './map.js'
 import ToggleButton from './toggle_button'
@@ -241,15 +240,6 @@ export class ObserverApp extends React.Component {
       this.__loadedProducts,
       this.__loadingProducts
     )
-
-    const hash = makeHashFromState(state)
-    if (hash != window.location.hash) {
-      let hashLess = window.location.href
-      if (window.location.href.includes('#')) {
-        hashLess = window.location.href.split('#')[0]
-      }
-      window.history.pushState(null, null, hashLess + hash)
-    }
 
     const tickClickCallback = (time) => {
       this._dispatch({
