@@ -1,3 +1,6 @@
+import {DataValueType, integerToDataValue} from './datavalue'
+
+
 // Global not scanned color
 export const NOT_SCANNED_COLOR = [211, 211, 211, 76]
 // Global no echo color (transparent black)
@@ -91,4 +94,28 @@ export const NOAAScaleToScaleDescription = () => {
   }
 
   return result
+}
+
+
+export const resolveColorForReflectivity = (dataScale, value) => {
+  const [valueType, dataValue] = integerToDataValue(dataScale, value)
+  if (valueType == DataValueType.NOT_SCANNED) {
+    return NOT_SCANNED_COLOR
+  } else if (valueType == DataValueType.NO_ECHO) {
+    return NO_ECHO_COLOR
+  } else if (valueType == DataValueType.VALUE) {
+    const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
+    return [r, g, b, 255]
+  } else {
+    throw new Error('Unknown DataValueType: ' + valueType)
+  }
+}
+
+
+export const resolveColorGeneric = (dataScale, value) => {
+  if (value == dataScale.notScanned) {
+    return NOT_SCANNED_COLOR
+  } else {
+    return [0, 0, 255, Math.floor((value / 150) * 255)]
+  }
 }

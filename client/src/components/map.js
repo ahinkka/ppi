@@ -14,8 +14,10 @@ import {computeExtent, toMapCoordsExtent, canvasPxToProductPx} from '../coordina
 
 import {ObserverActions} from '../constants'
 
-import {DataValueType, integerToDataValue} from './datavalue'
-import {NOT_SCANNED_COLOR, NO_ECHO_COLOR, reflectivityValueToNOAAColor} from './coloring'
+import {
+  resolveColorForReflectivity,
+  resolveColorGeneric
+} from './coloring'
 
 
 export class Map extends React.Component {
@@ -149,32 +151,14 @@ export class Map extends React.Component {
 
     let _resolveColor = null
     if (metadata.productInfo.dataType == 'REFLECTIVITY') {
-      _resolveColor = (value) => {
-        const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
-        if (valueType == DataValueType.NOT_SCANNED) {
-          return NOT_SCANNED_COLOR
-        } else if (valueType == DataValueType.NO_ECHO) {
-          return NO_ECHO_COLOR
-        } else if (valueType == DataValueType.VALUE) {
-          const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
-          return [r, g, b, 255]
-        } else {
-          throw new Error('Unknown DataValueType: ' + valueType)
-        }
-      }
+      _resolveColor = resolveColorForReflectivity
     } else {
-      _resolveColor = (value) => {
-        if (value == metadata.productInfo.dataScale.notScanned) {
-          return NOT_SCANNED_COLOR
-        } else {
-          return [0, 0, 255, Math.floor((value / 150) * 255)]
-        }
-      }
+      _resolveColor = resolveColorGeneric
     }
     const colorCache = {}
     const resolveColor = (value) => {
       if (!(value in colorCache)) {
-        colorCache[value] = _resolveColor(value)
+        colorCache[value] = _resolveColor(metadata.productInfo.dataScale, value)
       }
       return colorCache[value]
     }
