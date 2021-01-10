@@ -147,6 +147,32 @@ export class Map extends React.Component {
     const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
     const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
 
+    let resolveColor = null
+
+    if (metadata.productInfo.dataType == 'REFLECTIVITY') {
+      resolveColor = (value) => {
+        const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
+        if (valueType == DataValueType.NOT_SCANNED) {
+          return NOT_SCANNED_COLOR
+        } else if (valueType == DataValueType.NO_ECHO) {
+          return NO_ECHO_COLOR
+        } else if (valueType == DataValueType.VALUE) {
+          const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
+          return [r, g, b, 255]
+        } else {
+          throw new Error('Unknown DataValueType: ' + valueType)
+        }
+      }
+    } else {
+      resolveColor = (value) => {
+        if (value == metadata.productInfo.dataScale.notScanned) {
+          return NOT_SCANNED_COLOR
+        } else {
+          return [0, 0, 255, Math.floor((value / 150) * 255)]
+        }
+      }
+    }
+
     // Normal rendering
     const imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
     const iData = imageData.data
@@ -166,27 +192,7 @@ export class Map extends React.Component {
         if (dataPxXY[0] != -1) {
           value = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
         }
-
-        let color = null
-        if (metadata.productInfo.dataType == 'REFLECTIVITY') {
-          const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
-          if (valueType == DataValueType.NOT_SCANNED) {
-            color = NOT_SCANNED_COLOR
-          } else if (valueType == DataValueType.NO_ECHO) {
-            color = NO_ECHO_COLOR
-          } else if (valueType == DataValueType.VALUE) {
-            const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
-            color = [r, g, b, 255]
-          } else {
-            throw new Error('Unknown DataValueType: ' + valueType)
-          }
-        } else {
-          if (value == metadata.productInfo.dataScale.notScanned) {
-            color = NOT_SCANNED_COLOR
-          } else {
-            color = [0, 0, 255, Math.floor((value / 150) * 255)]
-          }
-        }
+        const color = resolveColor(value)
 
         const redIndex = (y * imageData.width * 4) + (x * 4);
         iData[redIndex] = color[0]
