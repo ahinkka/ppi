@@ -16,6 +16,7 @@ import {
 } from '../state_reduction'
 import { makeHashFromState, parseHash } from '../state_hash'
 import { ObserverActions } from '../constants'
+import { lensesToProps } from '../utils'
 
 
 class UrlStateAdapter extends Component {
@@ -87,21 +88,8 @@ class UrlStateAdapter extends Component {
   }
 }
 
-const mapStateToProps = (state) => {
-  const result = [
-    catalogL,
-    selectedSiteIdL,
-    selectedProductIdL,
-    selectedFlavorIdL,
-    animationRunningL,
-    currentLonL,
-    currentLatL
-  ].reduce(
-    (acc, lens) => L.set(lens, L.get(lens, state), acc),
-    {}
-  )
-
-  // console.log(result)
-  return result
-}
+const mapStateToProps = lensesToProps([
+  catalogL, selectedSiteIdL, selectedProductIdL, selectedFlavorIdL,
+  animationRunningL, currentLonL, currentLatL
+])
 export default connect(mapStateToProps)(UrlStateAdapter)

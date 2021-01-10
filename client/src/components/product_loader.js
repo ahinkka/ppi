@@ -5,12 +5,9 @@ import * as L from 'partial.lenses'
 import { Component } from 'react'
 import { connect } from 'react-redux'
 
-import { httpGetPromise, twoDtoUint8Array } from '../utils'
+import { httpGetPromise, twoDtoUint8Array, lensesToProps } from '../utils'
 
 import {
-  selectedSiteIdL,
-  selectedProductIdL,
-  selectedFlavorIdL,
   selectedFlavorL,
   loadedProductsL
 } from '../state_reduction'
@@ -115,13 +112,6 @@ class ProductLoader extends Component {
     this.props.setProductRepositoryObject(this.loadedProducts)
   }
 
-  shouldComponentUpdate(nextProps) {
-    const lenses = [selectedSiteIdL, selectedProductIdL, selectedFlavorIdL, loadedProductsL]
-    const current = R.map((lens) => L.get(lens, this.props), lenses)
-    const next = R.map((lens) => L.get(lens, nextProps), lenses)
-    return !R.equals(current, next)
-  }
-
   render() {
     const props = this.props
     const flavor =  L.get(selectedFlavorL, props)
@@ -146,18 +136,5 @@ class ProductLoader extends Component {
 }
 
 
-const mapStateToProps = (state) => {
-  const result = [
-    selectedSiteIdL,
-    selectedProductIdL,
-    selectedFlavorIdL,
-    selectedFlavorL,
-    loadedProductsL
-  ].reduce(
-    (acc, lens) => L.set(lens, L.get(lens, state), acc),
-    {}
-  )
-
-  return result
-}
+const mapStateToProps = lensesToProps([selectedFlavorL, loadedProductsL])
 export default connect(mapStateToProps)(ProductLoader)
