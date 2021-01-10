@@ -44,7 +44,7 @@ build: bundle style ## Build distribution into directory 'build'
 
 .PHONY: dev-bundle
 dev-bundle:
-	node_modules/.bin/webpack --mode development
+	node_modules/.bin/webpack --mode development --config webpack.dev.config.js
 
 .PHONY: dev-build
 dev-build: ## Watch for filesystem changes and build on change
