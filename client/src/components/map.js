@@ -125,20 +125,7 @@ export class Map extends React.Component {
     this.canvas.width = Math.floor(size[0])
     this.canvas.height = Math.floor(size[1])
 
-    if (this.props.product == null || this.props.product == undefined) {
-      console.warn('__canvasFunction not rendering because of null currentProduct')
-      return this.canvas
-    }
-
-
-    const data = this.props.product.data
-    const dataView = new Uint8Array(data)
-    const dataRows = this.props.product._rows
-    const metadata = this.props.product.metadata
-
-    const ctx = this.canvas.getContext('2d')
-
-    // Cached rendering
+    // Short-circuit for cached rendering
     const cacheKey = stringify([this.props.productSelection, this.props.productTime,
       extent, this.canvas.width, this.canvas.height])
     const cached = this.__renderedProducts.get(cacheKey)
@@ -147,11 +134,17 @@ export class Map extends React.Component {
       return this.canvas
     }
 
-    const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
-    const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
-    const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
-    const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
+    if (!this.props.product) {
+      console.warn('__canvasFunction not rendering because of null currentProduct')
+      return this.canvas
+    }
 
+    const data = this.props.product.data
+    const dataView = new Uint8Array(data)
+    const dataRows = this.props.product._rows
+    const metadata = this.props.product.metadata
+
+    // Coloring
     let _resolveColor = null
     if (metadata.productInfo.dataType == 'REFLECTIVITY') {
       _resolveColor = resolveColorForReflectivity
@@ -159,7 +152,7 @@ export class Map extends React.Component {
       _resolveColor = resolveColorGeneric
     }
 
-    // Use the same color cache between products
+    // Use the same color cache between calls
     const colorCacheKey = stringify(metadata.productInfo.dataType, metadata.productInfo.dataScale)
     if (!(colorCacheKey in this.__colorCaches)) {
       this.__colorCaches[colorCacheKey] = {}
@@ -171,12 +164,19 @@ export class Map extends React.Component {
       }
       return colorCache[value]
     }
+    // End of coloring
 
-    // Normal rendering
+    const ctx = this.canvas.getContext('2d')
     const imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
+    const itemsInARow = imageData.width * 4
     const iData = imageData.data
 
-    // Fill efficiently with NOT_SCANNED_COLOR
+    const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
+    const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
+    const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
+    const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
+
+    // Fill efficiently with NOT_SCANNED_COLOR to reduce array manipulation
     fillWithNotScanned(iData)
 
     for (let x=0; x<this.canvas.width; x++) {
@@ -198,7 +198,7 @@ export class Map extends React.Component {
         const color = resolveColor(value)
 
         if (color != NOT_SCANNED_COLOR) {
-          const redIndex = (y * imageData.width * 4) + (x * 4);
+          const redIndex = (y * itemsInARow) + (x * 4);
           iData[redIndex] = color[0]
           iData[redIndex + 1] = color[1]
           iData[redIndex + 2] = color[2]
