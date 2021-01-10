@@ -126,9 +126,7 @@ class ProductLoader extends Component {
         this.loadedProducts, this.loadingProducts,
         L.get(selectedFlavorL, props)
       )
-
     setTimeout(l, 0)
-    setTimeout(l, 100)
 
     return null
   }
