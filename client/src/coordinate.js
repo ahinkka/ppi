@@ -20,10 +20,10 @@ const _mapCoordsToProductPx = (
       y < productMapCoordsExtent[1] || y > productMapCoordsExtent[3]) {
     return [-1, -1]
   }
-  let propX = (x - productMapCoordsExtent[0]) / productMapCoordsWidth
-  let propY = 1 - (y - productMapCoordsExtent[1]) / productMapCoordsHeight
-  let pxX = Math.floor(propX * productPixWidth)
-  let pxY = Math.floor(propY * productPixHeight)
+  const propX = (x - productMapCoordsExtent[0]) / productMapCoordsWidth
+  const propY = 1 - (y - productMapCoordsExtent[1]) / productMapCoordsHeight
+  const pxX = Math.floor(propX * productPixWidth)
+  const pxY = Math.floor(propY * productPixHeight)
   return [pxX, pxY]
 }
 
@@ -40,8 +40,8 @@ export const computeExtent = (affineTransform, width, height) => {
   // Xgeo = GT(0) + Xpixel*GT(1) + Yline*GT(2)
   // Ygeo = GT(3) + Xpixel*GT(4) + Yline*GT(5)
 
-  let origin = [affineTransform[0], affineTransform[3]]
-  let extreme = [
+  const origin = [affineTransform[0], affineTransform[3]]
+  const extreme = [
     origin[0] + affineTransform[1] * width,
     origin[1] + affineTransform[5] * height
   ]
@@ -56,11 +56,11 @@ export const computeExtent = (affineTransform, width, height) => {
 
 
 export const toMapCoordsExtent = (fromLonLat, wgs84Extent) => {
-  let minLonLat = [wgs84Extent[0], wgs84Extent[1]]
-  let maxLonLat = [wgs84Extent[2], wgs84Extent[3]]
-  let min = fromLonLat(minLonLat)
-  let max = fromLonLat(maxLonLat)
-  return  [min[0], min[1], max[0], max[1]]
+  const minLonLat = [wgs84Extent[0], wgs84Extent[1]]
+  const maxLonLat = [wgs84Extent[2], wgs84Extent[3]]
+  const min = fromLonLat(minLonLat)
+  const max = fromLonLat(maxLonLat)
+  return [min[0], min[1], max[0], max[1]]
 }
 
 
@@ -70,13 +70,13 @@ export const canvasPxToProductPx = (
   canvasExtent, canvasWidth, canvasHeight,
   x, y
 ) => {
-  let mapCoordsXY = _canvasPxToMapCoords(
+  const mapCoordsXY = _canvasPxToMapCoords(
     canvasWidth, canvasHeight,
     canvasExtent[0], canvasExtent[2],
     canvasExtent[1], canvasExtent[3],
     x, y
   )
-  let dataPxXY = _mapCoordsToProductPx(
+  const dataPxXY = _mapCoordsToProductPx(
     productExtent,
     mapCoordsWidth, mapCoordsHeight,
     productWidth, productHeight,
