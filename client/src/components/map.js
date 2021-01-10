@@ -147,10 +147,9 @@ export class Map extends React.Component {
     const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
     const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
 
-    let resolveColor = null
-
+    let _resolveColor = null
     if (metadata.productInfo.dataType == 'REFLECTIVITY') {
-      resolveColor = (value) => {
+      _resolveColor = (value) => {
         const [valueType, dataValue] = integerToDataValue(metadata.productInfo.dataScale, value)
         if (valueType == DataValueType.NOT_SCANNED) {
           return NOT_SCANNED_COLOR
@@ -164,13 +163,20 @@ export class Map extends React.Component {
         }
       }
     } else {
-      resolveColor = (value) => {
+      _resolveColor = (value) => {
         if (value == metadata.productInfo.dataScale.notScanned) {
           return NOT_SCANNED_COLOR
         } else {
           return [0, 0, 255, Math.floor((value / 150) * 255)]
         }
       }
+    }
+    const colorCache = {}
+    const resolveColor = (value) => {
+      if (!(value in colorCache)) {
+        colorCache[value] = _resolveColor(value)
+      }
+      return colorCache[value]
     }
 
     // Normal rendering
