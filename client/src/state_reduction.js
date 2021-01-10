@@ -19,7 +19,6 @@ const animationL = L.prop('animation')
 export const currentProductTimeL = L.compose(animationL, 'currentProductTime')
 export const animationRunningL = L.compose(animationL, 'running')
 
-const mapL = L.prop('map')
 const mapCurrentL = L.compose(L.prop('map'), 'current')
 export const currentLonL = L.compose(mapCurrentL, 'centerLon')
 export const currentLatL = L.compose(mapCurrentL, 'centerLat')
@@ -130,7 +129,7 @@ export const reduceValidAnimationTime = (state) => {
 
 const reduceIntendedInitialMapCenter = (state) => {
   if (R.all((lens) => !L.get(lens, state),
-            [currentLonL, currentLatL, intendedLonL, intendedLatL])) {
+    [currentLonL, currentLatL, intendedLonL, intendedLatL])) {
     return makeCurrentSiteIntendedReducer(state)
   } else {
     return state

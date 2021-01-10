@@ -40,7 +40,7 @@ const parseProduct = async (resp) => new Promise((resolve, reject) => {
     resolve(parsed)
   } catch (e) {
     if (e instanceof SyntaxError) {
-      console.error('Error parsing ' + url + ': ' + e + ' with input ' +
+      console.error('Error parsing: ' + e + ' with input ' +
                     inflated.substring(0, 20) +
                     ' ... ' +
                     inflated.substring(inflated.length - 20, inflated.length - 1))
@@ -88,11 +88,11 @@ const loadOneProduct = (dispatch, productUrlResolver, loadedProducts, loadingPro
     .then((parsed) => {
       loadedProducts[urlToLoad] = parsed // eslint-disable-line require-atomic-updates
       dispatch({
-	type: ObserverActions.PRODUCT_LOAD_UPDATE,
-	payload: {
+        type: ObserverActions.PRODUCT_LOAD_UPDATE,
+        payload: {
           loaded: [urlToLoad],
           unloaded: Array.from(removedUrls)
-	}
+        }
       })
     })
     .catch((e) => {
@@ -131,12 +131,12 @@ class ProductLoader extends Component {
     }
 
     const l = () =>
-	  loadOneProduct(
-	    props.dispatch,
-	    props.productUrlResolver,
-	    this.loadedProducts, this.loadingProducts,
-	    L.get(selectedFlavorL, props)
-	  )
+      loadOneProduct(
+        props.dispatch,
+        props.productUrlResolver,
+        this.loadedProducts, this.loadingProducts,
+        L.get(selectedFlavorL, props)
+      )
 
     setTimeout(l, 0)
     setTimeout(l, 100)

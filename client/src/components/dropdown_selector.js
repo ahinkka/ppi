@@ -15,7 +15,7 @@ export default function(props) {
     (item) => (<DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>)
   )
 
-  const tooltipId = `{props.legend}-tooltip`
+  const tooltipId = '{props.legend}-tooltip'
   const tooltip = (
     <Tooltip id={tooltipId}>{props.tooltip}</Tooltip>
   )

@@ -221,7 +221,7 @@ class ObserverApp extends React.Component {
     const tickItems = resolveTickItems(
       flavorTimes,
       (time) =>
-	(props.productUrlResolver(props.selection.flavor, time) in props.loadedProducts),
+        (props.productUrlResolver(props.selection.flavor, time) in props.loadedProducts),
       props.animation.currentProductTime,
       (t) => [props.selection.site.display, props.selection.product.display, props.selection.flavor.display, t].join('|'),
       tickClickCallback

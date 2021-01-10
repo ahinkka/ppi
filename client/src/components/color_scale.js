@@ -9,9 +9,9 @@ const SolidColorRange = (props) => {
   return (
     <div style={{display: 'flex', flexDirection: 'row'}}>
       <div style={{width: '5em', fontSize: '0.8em', textAlign: 'center',
-                   rightPadding: '0.2em'}}>{props.start.value} &ndash; {props.end.value}</div>
+        rightPadding: '0.2em'}}>{props.start.value} &ndash; {props.end.value}</div>
       <div style={{width: '2em',
-                   backgroundColor: 'rgb(' + props.color.join(', ') + ')'}}></div>
+        backgroundColor: 'rgb(' + props.color.join(', ') + ')'}}></div>
     </div>
   )
 }
@@ -36,9 +36,9 @@ export default function(props) {
 
     return (
       <SolidColorRange key={'range-' + item.start.value}
-                       color={item.color}
-                       start={item.start}
-                       end={item.end} />
+        color={item.color}
+        start={item.start}
+        end={item.end} />
     )
   })
 
@@ -47,7 +47,7 @@ export default function(props) {
   return (
     <Draggable grid={[25, 25]}>
       <div style={{backgroundColor: '#c0c0c0', padding: '10px',
-                   'zIndex': 100, position: 'absolute', top: 150, left: 25}}>
+        'zIndex': 100, position: 'absolute', top: 150, left: 25}}>
         <div style={{width: '7em', fontSize: '0.9em'}}>{props.type}, {props.unit}</div>
         <div style={{display: 'flex', flexDirection: 'column'}}>
           {ranges}

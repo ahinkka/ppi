@@ -8,7 +8,6 @@ import ObserverApp from './components/app'
 import ProductLoader from './components/product_loader.js'
 import UrlStateAdapter from './components/url_state_adapter.js'
 import {ObserverActions} from './constants'
-import {parseHash} from './state_hash'
 import {reducer} from './state_reduction'
 
 const debugRedux = false
@@ -56,19 +55,20 @@ const [getProductByUrl, setProductRepositoryObject] = (() => {
 
 
 const url = 'data/catalog.json'
-const renderApp = () =>
+const renderApp = () => {
   ReactDOM.render(
     [
-     <CatalogProvider key='cp' dispatch={store.dispatch} url={url} />,
-     <Provider key='p' store={store}>
-       <ProductLoader key='pl' productUrlResolver={productUrlResolver}
-                      setProductRepositoryObject={setProductRepositoryObject} />
-       <UrlStateAdapter key='usa' />
-       <ObserverApp key='oa' productUrlResolver={productUrlResolver}
-                    getProductByUrl={getProductByUrl} />
-     </Provider>
+      <CatalogProvider key='cp' dispatch={store.dispatch} url={url} />,
+      <Provider key='p' store={store}>
+        <ProductLoader key='pl' productUrlResolver={productUrlResolver}
+          setProductRepositoryObject={setProductRepositoryObject} />
+        <UrlStateAdapter key='usa' />
+        <ObserverApp key='oa' productUrlResolver={productUrlResolver}
+          getProductByUrl={getProductByUrl} />
+      </Provider>
     ],
     document.getElementById('observer')
   )
+}
 
 renderApp()
