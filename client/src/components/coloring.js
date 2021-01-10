@@ -1,7 +1,7 @@
 import {DataValueType, integerToDataValue} from './datavalue'
 
 
-// Global not scanned color
+// Global not scanned color; see fillWithNotScanned before changing this
 export const NOT_SCANNED_COLOR = [211, 211, 211, 76]
 // Global no echo color (transparent black)
 export const NO_ECHO_COLOR = [0, 0, 0, 0]
@@ -117,5 +117,14 @@ export const resolveColorGeneric = (dataScale, value) => {
     return NOT_SCANNED_COLOR
   } else {
     return [0, 0, 255, Math.floor((value / 150) * 255)]
+  }
+}
+
+
+export const fillWithNotScanned = (dataArray) => {
+  dataArray.fill(NOT_SCANNED_COLOR[0])
+
+  for (let i=3; i<dataArray.length; i = i + 4) {
+    dataArray[i] = NOT_SCANNED_COLOR[3]
   }
 }

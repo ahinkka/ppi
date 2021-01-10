@@ -15,6 +15,8 @@ import {computeExtent, toMapCoordsExtent, canvasPxToProductPx} from '../coordina
 import {ObserverActions} from '../constants'
 
 import {
+  fillWithNotScanned,
+  NOT_SCANNED_COLOR,
   resolveColorForReflectivity,
   resolveColorGeneric
 } from './coloring'
@@ -166,6 +168,10 @@ export class Map extends React.Component {
     // Normal rendering
     const imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
     const iData = imageData.data
+
+    // Fill efficiently with NOT_SCANNED_COLOR
+    fillWithNotScanned(iData)
+
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
         const dataPxXY = canvasPxToProductPx(
@@ -178,21 +184,23 @@ export class Map extends React.Component {
           x, y
         )
 
-        let value = metadata.productInfo.dataScale.notScanned
-        if (dataPxXY[0] != -1) {
-          value = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
+        if (dataPxXY[0] == -1) { // out of product bounds
+          continue
         }
+        const value = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
         const color = resolveColor(value)
 
-        const redIndex = (y * imageData.width * 4) + (x * 4);
-        iData[redIndex] = color[0]
-        iData[redIndex + 1] = color[1]
-        iData[redIndex + 2] = color[2]
-        iData[redIndex + 3] = color[3]
+        if (color != NOT_SCANNED_COLOR) {
+          const redIndex = (y * imageData.width * 4) + (x * 4);
+          iData[redIndex] = color[0]
+          iData[redIndex + 1] = color[1]
+          iData[redIndex + 2] = color[2]
+          iData[redIndex + 3] = color[3]
 
-        // This will likely get faster in the future but for now it's slow:
-        //  https://bugs.chromium.org/p/v8/issues/detail?id=3590&desc=2
-        // iData.set(color, redIndex)
+          // This will likely get faster in the future but for now it's slow:
+          //  https://bugs.chromium.org/p/v8/issues/detail?id=3590&desc=2
+          // iData.set(color, redIndex)
+        }
       }
     }
     ctx.putImageData(imageData, 0, 0);
