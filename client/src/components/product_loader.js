@@ -1,19 +1,107 @@
+import pako from 'pako';
 import * as R from 'ramda'
 import * as L from 'partial.lenses'
 
 import { Component } from 'react'
 import { connect } from 'react-redux'
 
-import { httpGetPromise } from '../utils'
+import { httpGetPromise, twoDtoUint8Array } from '../utils'
 
 import {
   selectedSiteIdL,
   selectedProductIdL,
   selectedFlavorIdL,
-  selectedFlavorL
+  selectedFlavorL,
+  loadedProductsL
 } from '../state_reduction'
 import { ObserverActions } from '../constants'
-import { loadProducts } from '../product_loading'
+
+import { orderForLoading } from '../product_time_loading_order'
+
+
+function inflate(stream) {
+  try {
+    return pako.inflate(stream, { to: 'string' })
+  } catch (err) {
+    console.error('Error while decompressing product file:', err);
+  }
+}
+
+
+const parseProduct = async (resp) => new Promise((resolve, reject) => {
+  let inflated = null
+  try {
+    inflated = inflate(resp)
+    const parsed = JSON.parse(inflated)
+    const [cols, rows, buffer] = twoDtoUint8Array(parsed.data)
+    parsed._cols = cols
+    parsed._rows = rows
+    parsed.data = buffer
+    resolve(parsed)
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      console.error('Error parsing ' + url + ': ' + e + ' with input ' +
+                    inflated.substring(0, 20) +
+                    ' ... ' +
+                    inflated.substring(inflated.length - 20, inflated.length - 1))
+    } else {
+      console.warn('Unhandled exception during product load', e)
+    }
+
+    reject(e)
+  }
+})
+
+
+const loadOneProduct = (dispatch, productUrlResolver, loadedProducts, loadingProducts, flavor) => {
+  const removedUrls = new Set()
+  const loadingOrderedTimes = orderForLoading(flavor.times.map((t) => Date.parse(t.time)))
+  const intendedUrls = loadingOrderedTimes.map((t) => productUrlResolver(flavor, t))
+
+  const currentlyLoaded = new Set(Object.keys(loadedProducts))
+  for (const url of currentlyLoaded) {
+    if (!intendedUrls.includes(url)) {
+      delete loadedProducts[url];
+      removedUrls.add(url)
+    }
+  }
+
+  let urlToLoad = null
+  // Then start loading actual products
+  for (const url of intendedUrls) {
+    if ((url in loadedProducts) || (url in loadingProducts)) {
+      continue
+    }
+
+    urlToLoad = url
+    break
+  }
+
+  if (!urlToLoad) {
+    return
+  }
+
+  loadingProducts[urlToLoad] = new Date()
+
+  httpGetPromise(urlToLoad, true)
+    .then(parseProduct)
+    .then((parsed) => {
+      loadedProducts[urlToLoad] = parsed // eslint-disable-line require-atomic-updates
+      dispatch({
+	type: ObserverActions.PRODUCT_LOAD_UPDATE,
+	payload: {
+          loaded: [urlToLoad],
+          unloaded: Array.from(removedUrls)
+	}
+      })
+    })
+    .catch((e) => {
+      console.error('Failed to load product', e)
+    })
+    .finally(() => {
+      delete loadingProducts[urlToLoad]
+    })
+}
 
 
 class ProductLoader extends Component {
@@ -21,8 +109,6 @@ class ProductLoader extends Component {
     super()
     this.loadedProducts = {}
     this.loadingProducts = {}
-
-    this.siteProductFlavorKey = [null, null, null]
   }
 
   componentDidMount() {
@@ -30,48 +116,30 @@ class ProductLoader extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    const lenses = [selectedSiteIdL, selectedProductIdL, selectedFlavorIdL]
+    const lenses = [selectedSiteIdL, selectedProductIdL, selectedFlavorIdL, loadedProductsL]
     const current = R.map((lens) => L.get(lens, this.props), lenses)
     const next = R.map((lens) => L.get(lens, nextProps), lenses)
     return !R.equals(current, next)
   }
 
   render() {
-    const load = (dispatch, state, productUrlResolver, loadedProducts, loadingProducts) => {
-      if (dispatch == null ||
-	  L.get(selectedSiteIdL, state) == null ||
-	  L.get(selectedProductIdL, state) == null ||
-	  L.get(selectedFlavorIdL, state) == null) {
-	return
-      }
+    const props = this.props
+    const flavor =  L.get(selectedFlavorL, props)
 
-      loadProducts(
-	dispatch,
-	productUrlResolver,
-	loadedProducts,
-	loadingProducts,
-	L.get(selectedFlavorL, state)
-      ).then((shouldLoadMoreProducts) => {
-	if (shouldLoadMoreProducts) {
-	  setTimeout(() => load(
-	    dispatch,
-	    state,
-	    productUrlResolver,
-	    loadedProducts,
-	    loadingProducts
-	  ), 500)
-	}
-      })
+    if (!flavor) {
+      return null
     }
 
-    const props = this.props
-    load(
-      props.dispatch,
-      props,
-      props.productUrlResolver,
-      this.loadedProducts,
-      this.loadingProducts
-    )
+    const l = () =>
+	  loadOneProduct(
+	    props.dispatch,
+	    props.productUrlResolver,
+	    this.loadedProducts, this.loadingProducts,
+	    L.get(selectedFlavorL, props)
+	  )
+
+    setTimeout(l, 0)
+    setTimeout(l, 100)
 
     return null
   }
@@ -84,6 +152,7 @@ const mapStateToProps = (state) => {
     selectedProductIdL,
     selectedFlavorIdL,
     selectedFlavorL,
+    loadedProductsL
   ].reduce(
     (acc, lens) => L.set(lens, L.get(lens, state), acc),
     {}
