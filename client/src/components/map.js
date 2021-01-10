@@ -30,7 +30,7 @@ export class Map extends React.Component {
 
     this.__previousIntendedCenter = [0, 0]
 
-    let cacheOpts = {
+    const cacheOpts = {
       max: 50, // maximum number of items
       maxAge: 1000 * 60 * 15, // items considered over 15 minutes are stale
       stale: false,
@@ -39,9 +39,9 @@ export class Map extends React.Component {
   }
 
   __onResize() {
-    let elem = document.getElementById(this.props.headerElementId)
-    let desiredHeight = window.innerHeight - elem.offsetHeight
-    let style = '' + desiredHeight + 'px'
+    const elem = document.getElementById(this.props.headerElementId)
+    const desiredHeight = window.innerHeight - elem.offsetHeight
+    const style = '' + desiredHeight + 'px'
     document.getElementById('map-element').style.height = style
     this.map.updateSize()
   }
@@ -52,7 +52,7 @@ export class Map extends React.Component {
     }
     if (this.__previousIntendedCenter[0] != this.props.intendedCenter[0] ||
         this.__previousIntendedCenter[1] != this.props.intendedCenter[1]) {
-      let mapProjection = this.map.getView().getProjection()
+      const mapProjection = this.map.getView().getProjection()
       this.map.getView().setCenter(fromLonLat(this.props.intendedCenter, mapProjection))
     }
     this.__previousIntendedCenter = this.props.intendedCenter
@@ -97,12 +97,12 @@ export class Map extends React.Component {
     this.imageLayer = new Image({ source: this.imageCanvas })
     this.map.getLayers().insertAt(1, this.imageLayer);
 
-    let dispatch = this.props.dispatch;
+    const dispatch = this.props.dispatch
     this.map.on('moveend', function(event) {
-      let view = event.map.getView()
-      let center = view.getCenter()
-      let projection = view.getProjection()
-      let lonLatCenter = toLonLat(center, projection)
+      const view = event.map.getView()
+      const center = view.getCenter()
+      const projection = view.getProjection()
+      const lonLatCenter = toLonLat(center, projection)
 
       dispatch({type: ObserverActions.MAP_MOVED,
         payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
@@ -114,7 +114,7 @@ export class Map extends React.Component {
   }
 
   __canvasFunction(extent, resolution, pixelRatio, size, projection) { // eslint-disable-line no-unused-vars
-    let startRender = new Date().getTime();
+    const startRender = new Date().getTime();
 
     this.canvas = document.createElement('canvas')
     this.canvas.width = Math.floor(size[0])
@@ -126,12 +126,12 @@ export class Map extends React.Component {
     }
 
 
-    let data = this.props.product.data
-    let dataView = new Uint8Array(data)
-    let dataRows = this.props.product._rows
-    let metadata = this.props.product.metadata
+    const data = this.props.product.data
+    const dataView = new Uint8Array(data)
+    const dataRows = this.props.product._rows
+    const metadata = this.props.product.metadata
 
-    let ctx = this.canvas.getContext('2d')
+    const ctx = this.canvas.getContext('2d')
 
     // Cached rendering
     const cacheKey = stringify([this.props.productSelection, this.props.productTime,
@@ -142,17 +142,17 @@ export class Map extends React.Component {
       return this.canvas
     }
 
-    let productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
-    let mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
-    let mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
-    let mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
+    const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
+    const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
+    const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
+    const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
 
     // Normal rendering
-    let imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
-    let iData = imageData.data
+    const imageData = ctx.createImageData(this.canvas.width, this.canvas.height)
+    const iData = imageData.data
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
-        let dataPxXY = canvasPxToProductPx(
+        const dataPxXY = canvasPxToProductPx(
           metadata.affineTransform,
           metadata.width, metadata.height,
           mapCoordsExtent,
@@ -188,7 +188,7 @@ export class Map extends React.Component {
           }
         }
 
-        let redIndex = (y * imageData.width * 4) + (x * 4);
+        const redIndex = (y * imageData.width * 4) + (x * 4);
         iData[redIndex] = color[0]
         iData[redIndex + 1] = color[1]
         iData[redIndex + 2] = color[2]
@@ -203,8 +203,8 @@ export class Map extends React.Component {
 
     this.__renderedProducts.set(cacheKey, this.canvas)
 
-    let elapsedMs = new Date().getTime() - startRender;
-    let pixelCount = this.canvas.width * this.canvas.height
+    const elapsedMs = new Date().getTime() - startRender;
+    const pixelCount = this.canvas.width * this.canvas.height
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
     return this.canvas
