@@ -40,6 +40,7 @@ export class Map extends React.Component {
       stale: false,
     }
     this.__renderedProducts = new LRU(cacheOpts)
+    this.__colorCaches = {}
   }
 
   __onResize() {
@@ -157,7 +158,13 @@ export class Map extends React.Component {
     } else {
       _resolveColor = resolveColorGeneric
     }
-    const colorCache = {}
+
+    // Use the same color cache between products
+    const colorCacheKey = stringify(metadata.productInfo.dataType, metadata.productInfo.dataScale)
+    if (!(colorCacheKey in this.__colorCaches)) {
+      this.__colorCaches[colorCacheKey] = {}
+    }
+    const colorCache = this.__colorCaches[colorCacheKey]
     const resolveColor = (value) => {
       if (!(value in colorCache)) {
         colorCache[value] = _resolveColor(metadata.productInfo.dataScale, value)
