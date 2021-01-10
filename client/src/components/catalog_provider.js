@@ -1,8 +1,6 @@
 import { Component } from 'react'
 import PropTypes from 'prop-types'
 
-import { connect } from 'react-redux'
-
 import { httpGetPromise } from '../utils'
 import { ObserverActions } from '../constants'
 
@@ -25,15 +23,10 @@ class CatalogProvider extends Component {
 
     const update = () => {
       httpGetPromise(url)
-	.then(JSON.parse)
-	.then((obj) => {
-	  dispatch({type: ObserverActions.CATALOG_UPDATED, payload: obj})
-
-	  // TODO XXX:
-	  // if (!loadHashState()) {
-	  //   store.dispatch({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
-	  // }	
-	})
+        .then(JSON.parse)
+        .then((obj) => {
+          dispatch({type: ObserverActions.CATALOG_UPDATED, payload: obj})
+        })
     }
     
     this.intervalId = setInterval(update, 30000)

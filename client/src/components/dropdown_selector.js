@@ -3,14 +3,14 @@ import React from 'react'
 import {OverlayTrigger, Tooltip} from 'react-bootstrap'
 
 
-const DropdownSelectorOption = (props) => {
+function DropdownSelectorOption(props) {
   return (
     <option key={props.id} value={props.id}>{props.display}</option>
   )
 }
 
 
-export default function(props) {
+function DropdownSelector(props) {
   const options = props.items.map(
     (item) => (<DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>)
   )
@@ -38,3 +38,6 @@ export default function(props) {
     </div>
   )
 }
+
+
+export default DropdownSelector

@@ -3,7 +3,7 @@ import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 import {ObserverActions} from '../constants'
 
 
-const Tick = (props) => {
+function Tick(props) {
   const tooltip = (
     <Tooltip id={'tick-' + props.position + '-tooltip'}>{props.tooltip}</Tooltip>
   )
@@ -18,7 +18,7 @@ const Tick = (props) => {
 }
 
 
-export default function(props) {
+function ProductSlider(props) {
   const ticks = props.ticks.map(
     (item) =>
       (<Tick key={item.key} position={item.position} color={item.color}
@@ -44,3 +44,6 @@ export default function(props) {
     </div>
   )
 }
+
+
+export default ProductSlider

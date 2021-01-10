@@ -40,8 +40,8 @@ class UrlStateAdapter extends Component {
       const dispatch = this.props.dispatch
       const updates = this.updates
       setTimeout(() => {
-	batch(() => updates.forEach(dispatch))
-	this.updates = null
+        batch(() => updates.forEach(dispatch))
+        this.updates = null
       }, 0)
     }
 
@@ -63,15 +63,14 @@ class UrlStateAdapter extends Component {
 
       const animationRunning = parsed.animationRunning == 'true' ? true : false
       if (this.props.animation.running != animationRunning) {
-	this.updates.push({type: ObserverActions.TOGGLE_ANIMATION})
+        this.updates.push({type: ObserverActions.TOGGLE_ANIMATION})
       }
 
       const [lon, lat] = [parseFloat(parsed.lon), parseFloat(parsed.lat)]
       if (!isNaN(lon) && !isNaN(lat)) {
-	this.updates.push({type: ObserverActions.MAP_CENTER_CHANGED, payload: {lon: lon, lat: lat}})
+        this.updates.push({type: ObserverActions.MAP_CENTER_CHANGED, payload: {lon: lon, lat: lat}})
       } else {
-	console.log('current intended')
-	this.updates.push({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
+        this.updates.push({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
       }
     }
   }

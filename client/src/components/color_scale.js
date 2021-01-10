@@ -4,7 +4,7 @@ import Draggable from 'react-draggable'
 import {ScaleRangeType} from './coloring'
 
 
-const SolidColorRange = (props) => {
+function SolidColorRange(props) {
   // TODO: handle open ranges
   return (
     <div style={{display: 'flex', flexDirection: 'row'}}>
@@ -17,7 +17,7 @@ const SolidColorRange = (props) => {
 }
 
 
-export default function(props) {
+function ColorScale(props) {
   // -type: ScaleRangeType.STEP
   // -color [r,g,b]
   // -start
@@ -56,3 +56,6 @@ export default function(props) {
     </Draggable>
   )
 }
+
+
+export default ColorScale
