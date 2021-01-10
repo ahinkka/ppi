@@ -38,7 +38,7 @@ const NOAALowRedGreenBlue = [
   [75,  248, 246, 247]]
 
 
-export const reflectivityValueToNOAAColor = (reflectivityValue) => {
+const _reflectivityValueToNOAAColor = (reflectivityValue) => {
   for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
     const [low, red, green, blue] = NOAALowRedGreenBlue[index]
     if (index == NOAALowRedGreenBlue.length - 1) {
@@ -52,6 +52,16 @@ export const reflectivityValueToNOAAColor = (reflectivityValue) => {
   }
 
   return [null, null, null]
+}
+
+
+const _reflectivityValueToNOAAColorCache = {}
+export const reflectivityValueToNOAAColor = (reflectivityValue) => {
+  if (!(reflectivityValue in _reflectivityValueToNOAAColorCache)) {
+    _reflectivityValueToNOAAColorCache[reflectivityValue] =
+      _reflectivityValueToNOAAColor(reflectivityValue)
+  }
+  return _reflectivityValueToNOAAColorCache[reflectivityValue]
 }
 
 
