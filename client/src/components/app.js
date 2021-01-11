@@ -2,6 +2,7 @@ import React from 'react'
 import moment from 'moment';
 import { connect } from 'react-redux'
 
+import * as R from 'ramda'
 import * as L from 'partial.lenses'
 import {
   catalogL,
@@ -96,87 +97,6 @@ const TimeDisplay = (props) => {
 }
 
 
-const resolveMinAnimationTime = (times) => {
-  if (times.length == 0) {
-    return null
-  }
-
-  // Only time - 5 minutes
-  if (times.length == 1) {
-    return new Date(Date.parse(times[0].time) - 5 * 60 * 1000)
-  }
-
-  // Use the product interval from the first two products
-  const firstTime = Date.parse(times[0].time)
-  const secondTime = Date.parse(times[1].time)
-  return new Date(firstTime - (secondTime - firstTime))
-}
-
-
-const resolveMaxAnimationTime = (times) => {
-  if (times.length == 0) {
-    return null
-  }
-
-  // Only time + 5 minutes
-  if (times.length == 1) {
-    return new Date(Date.parse(times[0]) + 5 * 60 * 1000)
-  }
-
-  // Use the product interval from the last two products
-  const secondToLastTime = Date.parse(times[times.length - 2].time)
-  const lastTime = Date.parse(times[times.length - 1].time)
-  return new Date(lastTime + (lastTime - secondToLastTime) / 1000)
-}
-
-
-const renderTooltip = (time) => {
-  const utcTime = moment.utc(time)
-  const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
-  const displayHours = Math.floor(minutes / 60)
-  const displayMinutes = Math.floor(minutes - displayHours * 60)
-  return utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
-}
-
-
-const resolveTickItems = (flavorTimes, isTimeLoaded, currentProductTime, tickKey, tickClickCallback) => {
-  const result = []
-
-  const minTime = resolveMinAnimationTime(flavorTimes)
-  const maxTime = resolveMaxAnimationTime(flavorTimes)
-  const spanMillis = maxTime - minTime
-  for (let i=0; i<flavorTimes.length; i++) {
-    const t = flavorTimes[i]
-    const time = Date.parse(t.time)
-    const fromStartMillis = time - minTime
-    const proportion = fromStartMillis / spanMillis
-
-    let character = '▏'
-    let color = '#e0e0e0'
-
-    if (time === currentProductTime) {
-      color = '#000000'
-      character = '▎'
-    } else {
-      if (isTimeLoaded(time)) {
-        color = '#808080'
-      }
-    }
-
-    result.push({
-      key: tickKey(t.time),
-      position: proportion,
-      color: color,
-      character: character,
-      tooltip: renderTooltip(t.time),
-      clicked: () => tickClickCallback(time)
-    })
-  }
-
-  return result
-}
-
-
 class ObserverApp extends React.Component {
   constructor(props) {
     super(props);
@@ -202,32 +122,33 @@ class ObserverApp extends React.Component {
 
   render() {
     const props = this.props
+    const [siteId, productId, flavorId] = [
+      L.get(selectedSiteIdL, props),
+      L.get(selectedProductIdL, props),
+      L.get(selectedFlavorIdL, props)
+    ]
 
-    if (L.get(selectedSiteIdL, props) == null ||
-      L.get(selectedProductIdL, props) == null ||
-      L.get(selectedFlavorIdL, props) == null) {
+    if (!siteId || !productId || !flavorId) {
       return (<div></div>)
     }
 
+    const flavor = L.get(selectedFlavorL, props)
+    const currentProductTime = L.get(currentProductTimeL, props)
+    const productUrl = props.productUrlResolver(flavor, currentProductTime)
+
     const tickClickCallback = (time) => {
-      props.dispatch({
-        type: ObserverActions.TICK_CLICKED,
-        payload: time
-      })
-      this.setState({animationTime: new Date(time)})
+      return () =>  props.dispatch({ type: ObserverActions.TICK_CLICKED, payload: time })
     }
 
-    const flavorTimes = props.selection.flavor.times
-    const tickItems = resolveTickItems(
-      flavorTimes,
-      (time) =>
-        (props.productUrlResolver(props.selection.flavor, time) in props.loadedProducts),
-      props.animation.currentProductTime,
-      (t) => [props.selection.site.display, props.selection.product.display, props.selection.flavor.display, t].join('|'),
-      tickClickCallback
-    )
-
-    const productUrl = props.productUrlResolver(props.selection.flavor, props.animation.currentProductTime)
+    const keyBase = [siteId, productId, flavorId]
+    const tickItems = flavor.times.map((flavorTime) => {
+      const time = Date.parse(flavorTime.time)
+      const callback = tickClickCallback(time)
+      const isCurrent = time === currentProductTime
+      const isLoaded = !R.isNil(props.productUrlResolver(props.selection.flavor, time))
+      const key = [...keyBase, flavorTime.time]
+      return { time, callback, isCurrent, isLoaded, key }
+    })
 
     let product = null
     if (productUrl in props.loadedProducts) {
@@ -265,7 +186,7 @@ class ObserverApp extends React.Component {
               onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
               action={ObserverActions.TOGGLE_ANIMATION}
               tooltip="Press SPACE to toggle animation" />
-            <ProductSlider ticks={tickItems} dispatch={props.dispatch} />
+            <ProductSlider ticks={tickItems} />
           </div>
           <TimeDisplay currentValue={props.animation.currentProductTime} />
         </div>
