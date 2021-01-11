@@ -17,14 +17,7 @@ function SolidColorRange(props) {
 }
 
 
-class ColorScale extends React.Component {
-  shouldComponentUpdate(nextProps) {
-    return (this.props.ranges !== nextProps.ranges ||
-            this.props.type !== nextProps.type ||
-            this.props.unit !== nextProps.unit ||
-            this.props.name !== nextProps.name)
-  }
-
+class ColorScale extends React.PureComponent {
   render() {
     const props = this.props
     // -type: ScaleRangeType.STEP
