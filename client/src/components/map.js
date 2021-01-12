@@ -179,17 +179,34 @@ export class Map extends React.Component {
     // Fill efficiently with NOT_SCANNED_COLOR to reduce array manipulation
     fillWithNotScanned(iData)
 
+    // This cache is a hack that only works with EPSG:3426 products and a
+    // EPSG:3857 map.
+    const productPxYCache = new Float32Array(this.canvas.height)
     for (let x=0; x<this.canvas.width; x++) {
+      let productXComputed = null
       for (let y=0; y<this.canvas.height; y++) {
-        const dataPxXY = canvasPxToProductPx(
-          metadata.affineTransform,
-          metadata.width, metadata.height,
-          mapCoordsExtent,
-          mapCoordsWidth, mapCoordsHeight,
-          extent,
-          this.canvas.width, this.canvas.height,
-          x, y
-        )
+        let dataPxXY = null
+
+        if (x == 0 || y == 0 || productXComputed == -1 || productPxYCache[y] == -1) {
+          dataPxXY = canvasPxToProductPx(
+            metadata.affineTransform,
+            metadata.width, metadata.height,
+            mapCoordsExtent,
+            mapCoordsWidth, mapCoordsHeight,
+            extent,
+            this.canvas.width, this.canvas.height,
+            x, y
+          )
+
+          if (y == 0 || productXComputed == -1) {
+            productXComputed = dataPxXY[0]
+          }
+
+          if (x == 0 || productPxYCache[y] == -1) {
+            productPxYCache[y] = dataPxXY[1]
+          }
+        }
+        dataPxXY = [productXComputed, productPxYCache[y]]
 
         if (dataPxXY[0] == -1) { // out of product bounds
           continue
