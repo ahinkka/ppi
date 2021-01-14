@@ -75,3 +75,8 @@ make
      ```
  - Smoothing where every value around is some data value and the value in the
    point is not scanned or no echo.
+
+
+## Licensing
+
+[GPLv3](LICENSE)
