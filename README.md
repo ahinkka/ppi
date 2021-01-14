@@ -3,6 +3,8 @@
 This is a proper weather radar product display, in the browser. (This also
 needs a snazzier name.)
 
+![Screenshot](basic-screenshot.webp)
+
 There's a deployment running at https://radar.a3h.net/ that displays
 [FMI](https://www.fmi.fi/)'s PPI reflectivity products for individual radars.
 
