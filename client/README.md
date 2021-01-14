@@ -1,4 +1,4 @@
-# Client (browser) side code for observer
+# Client (browser) side code for radar-display
 
 ## Development
 
