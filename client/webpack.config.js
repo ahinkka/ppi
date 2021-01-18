@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
   entry: './src/main.js',
   output: {
-    filename: 'observer.js',
+    filename: 'ppi.js',
     path: path.resolve(__dirname, 'build/js')
   },
   module: {

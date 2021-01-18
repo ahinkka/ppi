@@ -67,7 +67,7 @@ const renderApp = () => {
           getProductByUrl={getProductByUrl} />
       </Provider>
     ],
-    document.getElementById('observer')
+    document.getElementById('ppi')
   )
 }
 

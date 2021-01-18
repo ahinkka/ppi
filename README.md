@@ -1,7 +1,10 @@
-# radar-display
+# PPI
 
-This is a proper weather radar product display, in the browser. (This also
-needs a snazzier name.)
+PPI is a weather radar product display running in the browser. Despite it's
+name referring to a very specific product,
+[PPI](https://en.wikipedia.org/wiki/Plan_position_indicator), it can
+(theoretically) be used to visualize any raster products in Cartesian
+coordinates.
 
 ![Screenshot](basic-screenshot.webp)
 

@@ -26,7 +26,7 @@ style:
 	mkdir -p ./build/css
 	node_modules/.bin/node-sass \
 		--include-path=node_modules/bootstrap/scss \
-		css/observer.sass > build/css/observer.css
+		css/ppi.sass > build/css/ppi.css
 
 .PHONY: bundle
 bundle: lint

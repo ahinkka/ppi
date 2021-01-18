@@ -1,4 +1,4 @@
-# Client (browser) side code for radar-display
+# Client (browser) side code for PPI
 
 ## Development
 
