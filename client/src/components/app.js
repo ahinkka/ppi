@@ -145,7 +145,7 @@ class ObserverApp extends React.Component {
       const time = Date.parse(flavorTime.time)
       const callback = tickClickCallback(time)
       const isCurrent = time === currentProductTime
-      const isLoaded = !R.isNil(props.productUrlResolver(props.selection.flavor, time))
+      const isLoaded = !R.isNil(props.getProductByUrl(props.productUrlResolver(props.selection.flavor, time)))
       const key = [...keyBase, flavorTime.time]
       return { time, callback, isCurrent, isLoaded, key }
     })
