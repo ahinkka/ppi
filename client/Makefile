@@ -30,7 +30,13 @@ style:
 
 .PHONY: bundle
 bundle: lint
-	node_modules/.bin/webpack --mode production
+	node_modules/.bin/esbuild \
+		src/main.js \
+		--bundle \
+		--outfile=build/js/ppi.js \
+		--loader:.js=jsx \
+		--define:process.env.NODE_ENV=\"production\" \
+		--minify
 
 .PHONY: build
 build: bundle style ## Build distribution into directory 'build'
@@ -44,7 +50,13 @@ build: bundle style ## Build distribution into directory 'build'
 
 .PHONY: dev-bundle
 dev-bundle:
-	node_modules/.bin/webpack --mode development --config webpack.dev.config.js
+	node_modules/.bin/esbuild \
+		src/main.js \
+		--bundle \
+		--outfile=build/js/ppi.js \
+		--loader:.js=jsx \
+		--define:process.env.NODE_ENV=\"production\" \
+		--sourcemap
 
 .PHONY: dev-build
 dev-build: ## Watch for filesystem changes and build on change

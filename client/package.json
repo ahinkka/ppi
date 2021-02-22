@@ -4,18 +4,16 @@
   "devDependencies": {
     "@babel/core": "^7.12.10",
     "@babel/eslint-parser": "^7.12.1",
-    "@babel/plugin-transform-runtime": "^7.7.6",
-    "@babel/preset-env": "^7.12.11",
-    "@babel/preset-react": "^7.12.10",
+    "@babel/plugin-transform-runtime": "^7.12.17",
+    "@babel/preset-env": "^7.12.17",
+    "@babel/preset-react": "^7.12.13",
+    "esbuild": "^0.8.50",
     "babel-jest": "^24.9.0",
-    "babel-loader": "^8.2.2",
     "babelify": "^10.0.0",
     "eslint": "^6.7.2",
     "eslint-plugin-react": "^7.22.0",
     "jest": "^24.9.0",
-    "node-sass": "^5.0.0",
-    "webpack": "^5.12.2",
-    "webpack-cli": "^4.3.1"
+    "node-sass": "^5.0.0"
   },
   "dependencies": {
     "bootstrap": "^4.4.1",
