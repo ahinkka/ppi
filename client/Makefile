@@ -55,7 +55,7 @@ dev-bundle:
 		--bundle \
 		--outfile=build/js/ppi.js \
 		--loader:.js=jsx \
-		--define:process.env.NODE_ENV=\"production\" \
+		--define:process.env.NODE_ENV=\"test\" \
 		--sourcemap
 
 .PHONY: dev-build
