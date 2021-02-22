@@ -74,7 +74,24 @@ const selectFlavor = (previousFlavor, product) => {
 }
 
 
-export const selectFlavorTime = (flavor, currentTime, chooseNext) => {
+const findFlavorTimeIndex = (flavorTimes, time) => {
+  let currentIndex = null
+
+  // We start looking from the end because the mechanism breaks if there are
+  // multiple identical times.
+  for (let i=flavorTimes.length-1; i>-1; i--) {
+    let parsedTime = Date.parse(flavorTimes[i].time)
+    if (parsedTime === time) {
+      currentIndex = i
+      break
+    }
+  }
+
+  return currentIndex
+}
+
+
+export const selectFlavorTime = (flavor, currentTime, chooseNext, isCatalogUpdateAndPreviousTimeWasLast) => {
   if (flavor == null) {
     console.warn('selectFlavorTime, flavor is null')
     return null
@@ -83,23 +100,22 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext) => {
     return null
   }
 
-  // We start looking from the end because the mechanism breaks if there are
-  // multiple identical times.
-  let currentIndex = null
-  for (let i=flavor.times.length-1; i>-1; i--) {
-    let time = Date.parse(flavor.times[i].time)
-    if (time === currentTime) {
-      currentIndex = i
-      break
-    }
-  }
+  const currentIndex = findFlavorTimeIndex(flavor.times, currentTime)
 
   // TODO: if no exact match is found, choose the next one chronologically.
   if (currentIndex != null) {
     let resultIndex = chooseNext ? currentIndex + 1 : currentIndex
-    if (resultIndex == flavor.times.length) {
+
+    // Paused, currently on second last - this was triggered by catalog
+    // update, and we should stay on last. Probably buggy when changing
+    // products and we happen to be on second last product, but it's a less of
+    // a critical bug right now.
+    if (isCatalogUpdateAndPreviousTimeWasLast && currentIndex == flavor.times.length - 2) {
+      resultIndex = flavor.times.length - 1
+    } else if (resultIndex == flavor.times.length) {
       resultIndex = 0
     }
+
     return Date.parse(flavor.times[resultIndex].time)
   }
 
@@ -121,8 +137,8 @@ const reduceValidSelection = (state) => {
 }
 
 
-export const reduceValidAnimationTime = (state) => {
-  const currentTime = selectFlavorTime(state.selection.flavor, L.get(currentProductTimeL, state), false)
+export const reduceValidAnimationTime = (state, isCatalogUpdateAndPreviousTimeWasLast) => {
+  const currentTime = selectFlavorTime(state.selection.flavor, L.get(currentProductTimeL, state), false, isCatalogUpdateAndPreviousTimeWasLast)
   return L.set(currentProductTimeL, currentTime)(state)
 }
 
@@ -137,11 +153,20 @@ const reduceIntendedInitialMapCenter = (state) => {
 }
 
 
-const catalogUpdatedReducer = (state, action) =>
-  R.pipe(L.set(catalogL, action.payload),
+export const catalogUpdatedReducer = (state, action) => {
+  const flavorTimes = state.selection.flavor ? state.selection.flavor.times : []
+  const previousTimeIndex = findFlavorTimeIndex(
+    flavorTimes,
+    L.get(currentProductTimeL, state)
+  )
+  const isCatalogUpdateAndPreviousTimeWasLast = previousTimeIndex == flavorTimes.length - 1
+
+  return R.pipe(
+    L.set(catalogL, action.payload),
     reduceValidSelection,
-    reduceValidAnimationTime,
+    (s) => reduceValidAnimationTime(s, isCatalogUpdateAndPreviousTimeWasLast),
     reduceIntendedInitialMapCenter)(state)
+}
 
 
 const siteSelectedReducer = (state, action) => {
