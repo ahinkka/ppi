@@ -26,6 +26,8 @@ const mapIntendedL = L.compose(L.prop('map'), 'intended')
 export const intendedLonL = L.compose(mapIntendedL, 'centerLon')
 export const intendedLatL = L.compose(mapIntendedL, 'centerLat')
 
+export const currentPointerLocationL = L.compose(mapCurrentL, 'pointerLocation')
+
 export const loadedProductsL = L.prop('loadedProducts')
 
 
@@ -246,6 +248,10 @@ const makeCurrentSiteIntendedReducer = (state) => {
 }
 
 
+const pointerLocationReducer = (state, newLocation) =>
+  L.set(currentPointerLocationL, newLocation)(state)
+
+
 const cycleSiteReducer = (state) => {
   let options = Object.keys(state.catalog)
   options.sort()
@@ -414,6 +420,10 @@ export const reducer = (state, action) => {
     return mapMovedReducer(state, action)
   } else if (action.type === ObserverActions.MAKE_CURRENT_SITE_INTENDED) {
     return makeCurrentSiteIntendedReducer(state)
+  } else if (action.type === ObserverActions.POINTER_MOVED) {
+    return pointerLocationReducer(state, action.payload)
+  } else if (action.type === ObserverActions.POINTER_LEFT_MAP) {
+    return pointerLocationReducer(state, null)
   } else if (action.type === ObserverActions.ANIMATION_TICK) {
     return animationTickReducer(state);
   } else if (action.type === ObserverActions.TICK_CLICKED) {

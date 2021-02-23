@@ -113,6 +113,20 @@ export class Map extends React.Component {
         payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
     })
 
+
+    // https://openlayers.org/en/latest/apidoc/module-ol_MapBrowserEvent-MapBrowserEvent.html
+    this.map.on('pointermove', (evt) => {
+      if (evt.dragging) {
+        return
+      }
+      dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
+      // const pixel = this.map.getEventPixel(evt.originalEvent)
+      // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
+    })
+    document.getElementById('map-element').addEventListener('mouseleave', (evt) => {
+      dispatch({type: ObserverActions.POINTER_LEFT_MAP})
+    })
+
     setTimeout(this.__onResize, 200)
     window.addEventListener('resize', this.__onResize)
     this.__updateMap()

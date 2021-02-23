@@ -14,6 +14,9 @@ export const ObserverActions = {
   MAP_MOVED: 'map moved',
   MAKE_CURRENT_SITE_INTENDED: 'make current site intended',
 
+  POINTER_MOVED: 'pointer moved',
+  POINTER_LEFT_MAP: 'pointer left map',
+
   PRODUCT_TIME_CHANGED: 'product time changed',
 
   ANIMATION_TICK: 'animation tick',
