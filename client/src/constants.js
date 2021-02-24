@@ -17,8 +17,6 @@ export const ObserverActions = {
   POINTER_MOVED: 'pointer moved',
   POINTER_LEFT_MAP: 'pointer left map',
 
-  PRODUCT_TIME_CHANGED: 'product time changed',
-
   ANIMATION_TICK: 'animation tick',
   TOGGLE_ANIMATION: 'toggle animation',
   TICK_CLICKED: 'tick clicked',

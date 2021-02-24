@@ -18,6 +18,7 @@ export const selectedFlavorL = L.compose(selectionL, 'flavor')
 const animationL = L.prop('animation')
 export const currentProductTimeL = L.compose(animationL, 'currentProductTime')
 export const animationRunningL = L.compose(animationL, 'running')
+export const stayOnLastTimeL = L.compose(animationL, 'stayOnLastTime')
 
 const mapCurrentL = L.compose(L.prop('map'), 'current')
 export const currentLonL = L.compose(mapCurrentL, 'centerLon')
@@ -93,7 +94,7 @@ const findFlavorTimeIndex = (flavorTimes, time) => {
 }
 
 
-export const selectFlavorTime = (flavor, currentTime, chooseNext, isCatalogUpdateAndPreviousTimeWasLast) => {
+export const selectFlavorTime = (flavor, currentTime, chooseNext, stayOnLastTime) => {
   if (flavor == null) {
     console.warn('selectFlavorTime, flavor is null')
     return null
@@ -102,28 +103,26 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext, isCatalogUpdat
     return null
   }
 
-  const currentIndex = findFlavorTimeIndex(flavor.times, currentTime)
+  if (stayOnLastTime) {
+    return Date.parse(flavor.times[flavor.times.length - 1].time)
+  } else {
+    const currentIndex = findFlavorTimeIndex(flavor.times, currentTime)
 
-  // TODO: if no exact match is found, choose the next one chronologically.
-  if (currentIndex != null) {
-    let resultIndex = chooseNext ? currentIndex + 1 : currentIndex
+    // TODO: if no exact match is found, choose the next one chronologically.
+    if (currentIndex != null) {
+      let resultIndex = chooseNext ? currentIndex + 1 : currentIndex
 
-    // Paused, currently on second last - this was triggered by catalog
-    // update, and we should stay on last. Probably buggy when changing
-    // products and we happen to be on second last product, but it's a less of
-    // a critical bug right now.
-    if (isCatalogUpdateAndPreviousTimeWasLast && currentIndex == flavor.times.length - 2) {
-      resultIndex = flavor.times.length - 1
-    } else if (resultIndex == flavor.times.length) {
-      resultIndex = 0
+      if (resultIndex == flavor.times.length) {
+        resultIndex = 0
+      }
+
+      return Date.parse(flavor.times[resultIndex].time)
     }
 
-    return Date.parse(flavor.times[resultIndex].time)
+    return chooseNext ?
+      Date.parse(flavor.times[0].time) :
+      Date.parse(flavor.times[flavor.times.length - 1].time)
   }
-
-  return chooseNext ?
-    Date.parse(flavor.times[0].time) :
-    Date.parse(flavor.times[flavor.times.length - 1].time)
 }
 
 
@@ -135,12 +134,23 @@ const reduceValidSelection = (state) => {
   const withValidProduct = R.compose(L.set(selectedProductIdL, productId), L.set(selectedProductL, product))(withValidSite)
 
   const [flavorId, flavor] = selectFlavor(L.get(selectedFlavorIdL, withValidProduct), L.get(selectedProductL, withValidProduct))
-  return R.compose(L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor))(withValidProduct)
+
+  return R.compose(
+    L.set(selectedFlavorIdL, flavorId),
+    L.set(selectedFlavorL, flavor),
+    reduceStayOnLastTime,
+  )(withValidProduct)
 }
 
 
-export const reduceValidAnimationTime = (state, isCatalogUpdateAndPreviousTimeWasLast) => {
-  const currentTime = selectFlavorTime(state.selection.flavor, L.get(currentProductTimeL, state), false, isCatalogUpdateAndPreviousTimeWasLast)
+export const reduceValidAnimationTime = (state) => {
+  const currentTime = selectFlavorTime(
+    state.selection.flavor,
+    L.get(currentProductTimeL, state),
+    false,
+    L.get(stayOnLastTimeL, state)
+  )
+
   return L.set(currentProductTimeL, currentTime)(state)
 }
 
@@ -155,20 +165,13 @@ const reduceIntendedInitialMapCenter = (state) => {
 }
 
 
-export const catalogUpdatedReducer = (state, action) => {
-  const flavorTimes = state.selection.flavor ? state.selection.flavor.times : []
-  const previousTimeIndex = findFlavorTimeIndex(
-    flavorTimes,
-    L.get(currentProductTimeL, state)
-  )
-  const isCatalogUpdateAndPreviousTimeWasLast = previousTimeIndex == flavorTimes.length - 1
-
-  return R.pipe(
+export const catalogUpdatedReducer = (state, action) =>
+  R.pipe(
     L.set(catalogL, action.payload),
     reduceValidSelection,
-    (s) => reduceValidAnimationTime(s, isCatalogUpdateAndPreviousTimeWasLast),
-    reduceIntendedInitialMapCenter)(state)
-}
+    reduceValidAnimationTime,
+    reduceIntendedInitialMapCenter
+  )(state)
 
 
 const siteSelectedReducer = (state, action) => {
@@ -305,11 +308,26 @@ const cycleFlavorReducer = (state) => {
 
 export const animationTickReducer = (state) =>
   L.set(currentProductTimeL,
-    selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true),
+    selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true, false),
     state)
 
 
-const tickClickedReducer = (state, action) => L.set(currentProductTimeL, action.payload, state)
+const reduceStayOnLastTime = (state) => {
+  const flavorTimes = state.selection.flavor ? state.selection.flavor.times : []
+  const intendedIndex = findFlavorTimeIndex(flavorTimes, L.get(currentProductTimeL, state))
+
+  return L.set(
+    stayOnLastTimeL,
+    !L.get(animationRunningL)(state) && intendedIndex == flavorTimes.length - 1
+  )(state)
+}
+
+
+const tickClickedReducer = (state, action) =>
+  R.pipe(
+    L.set(currentProductTimeL, action.payload),
+    reduceStayOnLastTime
+  )(state)
 
 
 const forwardBackwardReducer = (state, forward) => {
@@ -343,16 +361,20 @@ const forwardBackwardReducer = (state, forward) => {
   }
   newTime = Date.parse(times[nextIndex].time)
 
-  return L.set(currentProductTimeL, newTime, state)
+  return R.pipe(
+    L.set(currentProductTimeL, newTime),
+    reduceStayOnLastTime
+  )(state)
 }
 const tickForwardReducer = (state) => forwardBackwardReducer(state, true)
 const tickBackwardReducer = (state) => forwardBackwardReducer(state, false)
 
 
-const productTimeReducer = (state, action) => L.set(currentProductTimeL, action.payload, state)
-
-
-const toggleAnimationReducer = (state) => L.set(animationRunningL, !L.get(animationRunningL, state), state)
+const toggleAnimationReducer = (state) =>
+  R.pipe(
+    (s) => L.set(animationRunningL, !L.get(animationRunningL, s))(s),
+    reduceStayOnLastTime
+  )(state)
 
 
 const productLoadUpdateReducer = (state, action) => {
@@ -397,7 +419,8 @@ export const reducer = (state, action) => {
       },
       animation: {
         currentProductTime: null, // the product time we are currently showing
-        running: false
+        running: false,
+        stayOnLastTime: true
       }
     }
   } else if (action.type === ObserverActions.CATALOG_UPDATED) {
@@ -432,8 +455,6 @@ export const reducer = (state, action) => {
     return tickForwardReducer(state);
   } else if (action.type === ObserverActions.TICK_BACKWARD) {
     return tickBackwardReducer(state);
-  } else if (action.type === ObserverActions.PRODUCT_TIME_CHANGED) {
-    return productTimeReducer(state, action);
   } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {
     return toggleAnimationReducer(state, action);
   } else if (action.type === ObserverActions.PRODUCT_LOAD_UPDATE) {
