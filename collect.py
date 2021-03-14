@@ -173,6 +173,33 @@ def collect_radar_rasters(input_products):
     return result, sources_dests_infos
 
 
+def collect_points_of_interest(input_products):
+    """Collects points of interests from the list of all products.
+
+    Args:
+        List of product dicts. Each dict contains the field 'type'. This
+        function works with dicts with type 'POINT OF INTEREST'. Discards
+        everything else.
+
+    Returns:
+        A dict with keys "towns" and "cities". These contain lists of dicts
+        with keys "lon", "lat" and "name".  Coordinates are in WGS84.
+    """
+    pois = [product
+            for product in input_products
+            if product['type'] == 'POINT OF INTEREST']
+
+    result = {'towns': [], 'cities': []}
+    sources_dests_infos = []
+    for product in pois:
+        for town in result['towns']:
+            result['towns'].append(town)
+        for city in result['cities']:
+            result['cities'].append(city)
+
+    return result
+
+
 def iload_json(buff, decoder=None, _w=json.decoder.WHITESPACE.match):
     """Generate a sequence of top-level JSON values declared in the
     buffer.
@@ -182,11 +209,9 @@ def iload_json(buff, decoder=None, _w=json.decoder.WHITESPACE.match):
     >>> list(iload_json('[1, 2] "a" { "c": 3 }'))
     [[1, 2], u'a', {u'c': 3}]
     """
-
     decoder = decoder or json._default_decoder
     idx = _w(buff, 0).end()
     end = len(buff)
-
     try:
         while idx != end:
             (val, idx) = decoder.raw_decode(buff, idx=idx)
@@ -204,17 +229,16 @@ def collect(infile, exporter, directory):
     for line in infile:
         lines.append(line)
     input_data = "".join(lines)
-
-    input_products = []
-    for item in iload_json(input_data):
-        for i in item:
-            input_products.append(i)
-
+    input_products = list(iload_json(input_data))
 
     sites, sources_dests_infos = collect_radar_rasters(input_products)
+    points_of_interest = collect_points_of_interest(input_products)
 
     with open(os.path.join(directory, "catalog.json"), "w") as f:
-        catalog = copy.deepcopy(sites)
+        catalog = {
+            'radarProducts': copy.deepcopy(sites),
+            'pointsOfInterest': copy.deepcopy(points_of_interest)
+        }
         json.dump(catalog, f)
 
     skipped_count = 0

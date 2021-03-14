@@ -25,7 +25,7 @@ class CatalogProvider extends Component {
       httpGetPromise(url)
         .then(JSON.parse)
         .then((obj) => {
-          dispatch({type: ObserverActions.CATALOG_UPDATED, payload: obj})
+          dispatch({type: ObserverActions.CATALOG_UPDATED, payload: obj.radarProducts})
         })
     }
     

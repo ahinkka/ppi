@@ -109,4 +109,5 @@ if __name__ == '__main__':
     parser.add_argument("directory",
                         help="product directory shared with fmi_product_download")
     args = parser.parse_args()
-    pr(json.dumps(collect(args.directory)))
+    for product in collect(args.directory):
+        pr(json.dumps(product))
