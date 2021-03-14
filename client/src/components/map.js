@@ -1,5 +1,6 @@
 // -*- indent-tabs-mode: nil; -*-
 import React from 'react'
+import $ from 'jquery'
 import LRU from 'lru-cache'
 
 import stringify from 'json-stable-stringify'
@@ -8,18 +9,102 @@ import {ImageCanvas} from 'ol/source'
 import {Image} from 'ol/layer'
 import {Map as OlMap, View} from 'ol'
 import {OSM} from 'ol/source'
+import Overlay from 'ol/Overlay';
 import {Tile} from 'ol/layer'
 import {fromLonLat, toLonLat} from 'ol/proj'
-import {computeExtent, toMapCoordsExtent, canvasPxToProductPx} from '../coordinate'
+import {
+  canvasPxToProductPx,
+  computeExtent,
+  mapCoordsToProductPx,
+  toMapCoordsExtent,
+} from '../coordinate'
 
 import {ObserverActions} from '../constants'
 
+import {DataValueType, integerToDataValue} from './datavalue'
 import {
   fillWithNotScanned,
   NOT_SCANNED_COLOR,
   resolveColorForReflectivity,
   resolveColorGeneric
 } from './coloring'
+
+
+// https://24ways.org/2010/calculating-color-contrast
+const yiqColorContrast = (r, g, b) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
+
+
+const formatCursorToolContents = (value, dataScale, color) => {
+  const [valueType, dataValue] = integerToDataValue(dataScale, value)
+  let displayValue = null
+  if (valueType == DataValueType.NOT_SCANNED) {
+    displayValue = 'NOT SCANNED'
+  } else if (valueType == DataValueType.NO_ECHO) {
+    displayValue = 'NO ECHO'
+  } else if (valueType == DataValueType.VALUE) {
+    displayValue = dataValue
+  }
+
+  setTimeout(() => {
+    const e = $('#cursor-tool-content')
+    e.css('background-color', `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255.0})`)
+
+    if (valueType === DataValueType.VALUE && !yiqColorContrast(color[0], color[1], color[2]))
+      e.css('color', 'white')
+  }, 10)
+  return `<div id="cursor-tool-content">${displayValue}</div>`
+}
+
+
+const resolveCursorToolContent = (product, coords) => {
+  const data = product.data
+  const dataView = new Uint8Array(data)
+  const dataRows = product._rows
+  const metadata = product.metadata
+  if (!metadata) return '<div/>'
+
+  const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
+  const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
+  const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
+  const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
+
+  const dataPxXY = mapCoordsToProductPx(
+    mapCoordsExtent,
+    mapCoordsWidth, mapCoordsHeight,
+    metadata.width, metadata.height,
+    coords[0], coords[1]
+  )
+
+  let effectiveValue = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
+  if (effectiveValue === undefined) effectiveValue = metadata.productInfo.dataScale.notScanned
+
+  const color = metadata.productInfo.dataType == 'REFLECTIVITY' ?
+    resolveColorForReflectivity(metadata.productInfo.dataScale, effectiveValue) :
+    resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
+
+  return formatCursorToolContents(effectiveValue, metadata.productInfo.dataScale, color)
+}
+
+
+// https://openlayers.org/en/latest/examples/overlay.html
+const updateCursorTool = (overlay, product, newPosition, resolveContent) => {
+  const element = overlay.getElement()
+  $(element).popover('dispose')
+
+  const effectivePosition = newPosition ? newPosition : overlay.getPosition()
+  if (newPosition) overlay.setPosition(effectivePosition)
+  const content = resolveContent(product, effectivePosition)
+
+  $(element).popover({
+    container: element,
+    placement: 'auto',
+    offset: '2vh, 2vw',
+    animation: false,
+    html: true,
+    content: content,
+  })
+  $(element).popover('show')
+}
 
 
 export class Map extends React.Component {
@@ -41,6 +126,8 @@ export class Map extends React.Component {
     }
     this.__renderedProducts = new LRU(cacheOpts)
     this.__colorCaches = {}
+
+    this.cursorToolVisible = false
   }
 
   __onResize() {
@@ -113,18 +200,29 @@ export class Map extends React.Component {
         payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
     })
 
+    // https://openlayers.org/en/latest/examples/overlay.html
+    const cursorToolElement = document.getElementById('cursor-tool-overlay')
+    const cursorToolOverlay = new Overlay({ element: cursorToolElement })
+    this.cursorToolOverlay = cursorToolOverlay
+    this.map.addOverlay(cursorToolOverlay)
 
     // https://openlayers.org/en/latest/apidoc/module-ol_MapBrowserEvent-MapBrowserEvent.html
     this.map.on('pointermove', (evt) => {
       if (evt.dragging) {
         return
       }
+
+      updateCursorTool(cursorToolOverlay, this.props.product, evt.coordinate, resolveCursorToolContent)
+      this.cursorToolVisible = true
+
       dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
       // const pixel = this.map.getEventPixel(evt.originalEvent)
       // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
     })
-    document.getElementById('map-element').addEventListener('mouseleave', (evt) => {
+    document.getElementById('map-element').addEventListener('mouseleave', () => {
       dispatch({type: ObserverActions.POINTER_LEFT_MAP})
+      $(cursorToolElement).popover('dispose');
+      this.cursorToolVisible = false
     })
 
     setTimeout(this.__onResize, 200)
@@ -145,6 +243,8 @@ export class Map extends React.Component {
     const cached = this.__renderedProducts.get(cacheKey)
     if (cached !== undefined) {
       this.canvas = cached
+      if (this.cursorToolVisible)
+        updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContent)
       return this.canvas
     }
 
@@ -249,6 +349,8 @@ export class Map extends React.Component {
     const pixelCount = this.canvas.width * this.canvas.height
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
+    if (this.cursorToolVisible)
+      updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContent)
     return this.canvas
   }
 
@@ -267,7 +369,10 @@ export class Map extends React.Component {
     this.__updateMap()
 
     return (
-      <div id="map-element"></div>
+      <React.Fragment>
+        <div id="map-element"></div>
+        <div id="cursor-tool-overlay"></div>
+      </React.Fragment>
     )
   }
 }

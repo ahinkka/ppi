@@ -1,3 +1,7 @@
+// Force the loading order for jQuery and Bootstrap
+import 'jquery'
+import 'bootstrap'
+
 import React from 'react'
 import ReactDOM from 'react-dom'
 import {createStore} from 'redux'
