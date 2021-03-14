@@ -2,7 +2,7 @@
 exit 1 # needs to be configured
 
 set -euo pipefail
-# CODE_ROOT="$HOME/Projects/observer"
+# CODE_ROOT="$HOME/Projects/ppi"
 
 # First download
 pushd "$CODE_ROOT/fmi/downloader" > /dev/null
