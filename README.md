@@ -17,22 +17,21 @@ Features
 - product animation
 - decent base map
 - keyboard shortcuts (SPACE, LEFT, RIGHT, S, P, F)
+- rudimentary cursor tool (show value under cursor)
 
 Future plans
-- rudimentary cursor tool (show value under cursor)
-- product metadata display (PRF etc)
-- rendering optimizations
+- show distance to points of interest, e.g. to closest localities / max reflectivity
 - range rings
 - more products (or moments, e.g. radial velocity)
 - more color scales
+- product metadata display (PRF etc)
+- rendering optimizations
 - different animation speeds
 - time rather than product based animation
 - atmospheric pressure data overlay
 - other than FMI data (NEXRAD?)
 
 Known issues
-- doesn't switch to latest product when new one arrives automatically when
-  stopped on the last visible time step
 - animation state doesn't currently survive page refresh
 - does unnecessary product loads at initialization
 
