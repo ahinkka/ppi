@@ -34,15 +34,16 @@ import {
 const yiqColorContrast = (r, g, b) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
 
 
-const formatCursorToolContents = (value, dataScale, color) => {
+const formatCursorToolContents = (value, dataScale, dataUnit, color) => {
   const [valueType, dataValue] = integerToDataValue(dataScale, value)
-  let displayValue = null
+  let textContent = null
+
   if (valueType == DataValueType.NOT_SCANNED) {
-    displayValue = 'NOT SCANNED'
+    textContent = 'NOT SCANNED'
   } else if (valueType == DataValueType.NO_ECHO) {
-    displayValue = 'NO ECHO'
+    textContent = 'NO ECHO'
   } else if (valueType == DataValueType.VALUE) {
-    displayValue = dataValue
+    textContent = `${dataValue} ${dataUnit}`
   }
 
   setTimeout(() => {
@@ -52,7 +53,7 @@ const formatCursorToolContents = (value, dataScale, color) => {
     if (valueType === DataValueType.VALUE && !yiqColorContrast(color[0], color[1], color[2]))
       e.css('color', 'white')
   }, 10)
-  return `<div id="cursor-tool-content">${displayValue}</div>`
+  return `<div id="cursor-tool-content">${textContent}</div>`
 }
 
 
@@ -82,7 +83,12 @@ const resolveCursorToolContent = (product, coords) => {
     resolveColorForReflectivity(metadata.productInfo.dataScale, effectiveValue) :
     resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
 
-  return formatCursorToolContents(effectiveValue, metadata.productInfo.dataScale, color)
+  return formatCursorToolContents(
+    effectiveValue,
+    metadata.productInfo.dataScale,
+    metadata.productInfo.dataUnit,
+    color
+  )
 }
 
 
