@@ -42,8 +42,10 @@ const renderCursorToolContentAndColors = (value, dataScale, dataUnit, color) => 
   let textColor = 'black'
   if (valueType == DataValueType.NOT_SCANNED) {
     textContent = 'NOT SCANNED'
+    bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.75)`
   } else if (valueType == DataValueType.NO_ECHO) {
     textContent = 'NO ECHO'
+    bgColor = 'rgba(255, 255, 255, 0.75)'
   } else if (valueType == DataValueType.VALUE) {
     textContent = `${dataValue} <small>${dataUnit}</small>`
     bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255.0})`
