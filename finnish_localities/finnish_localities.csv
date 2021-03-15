@@ -1,4 +1,12 @@
-# Obtained using Overpass Turbo at http://overpass-turbo.eu/ with the
+# This data extract is under the copyright of OpenStreetMap contributors, see
+# https://www.openstreetmap.org/copyright.
+#
+# This data set is made available under the Open Database License:
+# http://opendatacommons.org/licenses/odbl/1.0/. Any rights in individual
+# contents of the database are licensed under the Database Contents License:
+# http://opendatacommons.org/licenses/dbcl/1.0/
+#
+# This was obtained using Overpass Turbo at http://overpass-turbo.eu/ with the
 # following query on 2021-03-14:
 #  [out:csv(::lat,::lon,place,name)];
 #  area["name:en"="Finland"];
