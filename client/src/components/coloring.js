@@ -49,7 +49,7 @@ const _reflectivityValueToNOAAColor = (reflectivityValue) => {
     }
 
     const nextLow = NOAALowRedGreenBlue[index + 1][0]
-    if (reflectivityValue > low && reflectivityValue < nextLow) {
+    if (reflectivityValue >= low && reflectivityValue < nextLow) {
       return [red, green, blue]
     }
   }
