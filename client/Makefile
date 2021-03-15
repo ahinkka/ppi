@@ -42,7 +42,6 @@ bundle: lint
 build: bundle style ## Build distribution into directory 'build'
 	mkdir -p ./build/js
 	mkdir -p ./build/css
-	cp node_modules/jquery/dist/jquery.min.js build/js/
 
 	cp node_modules/ol/ol.css build/css/
 	cp node_modules/bootstrap/dist/css/bootstrap.min.css build/css/
