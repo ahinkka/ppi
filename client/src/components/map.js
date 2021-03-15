@@ -34,35 +34,32 @@ import {
 const yiqColorContrast = (r, g, b) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
 
 
-const formatCursorToolContents = (value, dataScale, dataUnit, color) => {
+const renderCursorToolContentAndColors = (value, dataScale, dataUnit, color) => {
   const [valueType, dataValue] = integerToDataValue(dataScale, value)
-  let textContent = null
 
+  let textContent = null
+  let bgColor = 'white'
+  let textColor = 'black'
   if (valueType == DataValueType.NOT_SCANNED) {
     textContent = 'NOT SCANNED'
   } else if (valueType == DataValueType.NO_ECHO) {
     textContent = 'NO ECHO'
   } else if (valueType == DataValueType.VALUE) {
-    textContent = `${dataValue} ${dataUnit}`
+    textContent = `${dataValue} <small>${dataUnit}</small>`
+    bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255.0})`
+    textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
   }
 
-  setTimeout(() => {
-    const e = $('#cursor-tool-content')
-    e.css('background-color', `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255.0})`)
-
-    if (valueType === DataValueType.VALUE && !yiqColorContrast(color[0], color[1], color[2]))
-      e.css('color', 'white')
-  }, 10)
-  return `<div id="cursor-tool-content">${textContent}</div>`
+  return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
 }
 
 
-const resolveCursorToolContent = (product, coords) => {
+const resolveCursorToolContentAndColors = (product, coords) => {
   const data = product.data
   const dataView = new Uint8Array(data)
   const dataRows = product._rows
   const metadata = product.metadata
-  if (!metadata) return '<div/>'
+  if (!metadata) return ['', 'white', 'black']
 
   const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
   const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
@@ -83,7 +80,7 @@ const resolveCursorToolContent = (product, coords) => {
     resolveColorForReflectivity(metadata.productInfo.dataScale, effectiveValue) :
     resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
 
-  return formatCursorToolContents(
+  return renderCursorToolContentAndColors(
     effectiveValue,
     metadata.productInfo.dataScale,
     metadata.productInfo.dataUnit,
@@ -93,22 +90,32 @@ const resolveCursorToolContent = (product, coords) => {
 
 
 // https://openlayers.org/en/latest/examples/overlay.html
-const updateCursorTool = (overlay, product, newPosition, resolveContent) => {
+const updateCursorTool = (overlay, product, newPosition, resolveTemplateAndColors) => {
   const element = overlay.getElement()
   $(element).popover('dispose')
 
   const effectivePosition = newPosition ? newPosition : overlay.getPosition()
   if (newPosition) overlay.setPosition(effectivePosition)
-  const content = resolveContent(product, effectivePosition)
+  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, effectivePosition)
 
   $(element).popover({
     container: element,
     placement: 'auto',
-    offset: '2vh, 2vw',
+    offset: '0.5vh, 2vw',
     animation: false,
     html: true,
     content: content,
   })
+
+  $(element)
+    .on('inserted.bs.popover', () => {
+      $('#cursor-tool-overlay .popover')
+        .css('background-color', backgroundColor)
+
+      $('#cursor-tool-overlay .popover *')
+        .css('color', textColor)
+    })
+
   $(element).popover('show')
 }
 
@@ -218,7 +225,7 @@ export class Map extends React.Component {
         return
       }
 
-      updateCursorTool(cursorToolOverlay, this.props.product, evt.coordinate, resolveCursorToolContent)
+      updateCursorTool(cursorToolOverlay, this.props.product, evt.coordinate, resolveCursorToolContentAndColors)
       this.cursorToolVisible = true
 
       dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
@@ -250,7 +257,7 @@ export class Map extends React.Component {
     if (cached !== undefined) {
       this.canvas = cached
       if (this.cursorToolVisible)
-        updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContent)
+        updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContentAndColors)
       return this.canvas
     }
 
@@ -356,7 +363,7 @@ export class Map extends React.Component {
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
     if (this.cursorToolVisible)
-      updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContent)
+      updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContentAndColors)
     return this.canvas
   }
 
