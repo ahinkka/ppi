@@ -9,9 +9,10 @@ import {ImageCanvas} from 'ol/source'
 import {Image} from 'ol/layer'
 import {Map as OlMap, View} from 'ol'
 import {OSM} from 'ol/source'
-import Overlay from 'ol/Overlay';
+import Overlay from 'ol/Overlay'
 import {Tile} from 'ol/layer'
 import {fromLonLat, toLonLat} from 'ol/proj'
+import {getDistance} from 'ol/sphere'
 import {
   canvasPxToProductPx,
   computeExtent,
@@ -34,7 +35,11 @@ import {
 const yiqColorContrast = (r, g, b) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
 
 
-const renderCursorToolContentAndColors = (value, dataScale, dataUnit, color) => {
+const renderCursorToolContentAndColors = (
+  value, dataScale, dataUnit, color,
+  nearestCityName, distanceToNearestCity,
+  nearestTownName, distanceToNearestTown
+) => {
   const [valueType, dataValue] = integerToDataValue(dataScale, value)
 
   let textContent = null
@@ -52,16 +57,42 @@ const renderCursorToolContentAndColors = (value, dataScale, dataUnit, color) => 
     textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
   }
 
-  return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
+  if (nearestCityName && distanceToNearestCity &&
+      nearestTownName && distanceToNearestTown) {
+    return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km<br>${nearestTownName} ${distanceToNearestTown} km</small></div>`, bgColor, textColor]
+  } else {
+    return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
+  }
 }
 
 
-const resolveCursorToolContentAndColors = (product, coords) => {
+const findNearestPoi = (pois, coords) => {
+  const [cursorX, cursorY] = coords
+
+  const poisAndDistances = pois.map((poi) => {
+    const [poiX, poiY] = fromLonLat([poi.lon, poi.lat])
+    return [poi, Math.sqrt(Math.pow(poiX - cursorX, 2) + Math.pow(poiY - cursorY, 2))]
+  }).sort((a, b) => a[1] - b[1])
+
+  return poisAndDistances[0][0]
+}
+
+
+const resolveCursorToolContentAndColors = (product, pois, coords) => {
   const data = product.data
   const dataView = new Uint8Array(data)
   const dataRows = product._rows
   const metadata = product.metadata
   if (!metadata) return ['', 'white', 'black']
+
+  let [nearestCity, distanceToNearestCity, nearestTown, distanceToNearestTown] = [undefined, undefined, undefined, undefined]
+  if (pois.cities.length > 0 && pois.towns.length > 0) {
+    nearestCity = findNearestPoi(pois.cities, coords)
+    distanceToNearestCity = Math.round(getDistance([nearestCity.lon, nearestCity.lat], toLonLat(coords)) / 1000)
+
+    nearestTown = findNearestPoi(pois.towns, coords)
+    distanceToNearestTown = Math.round(getDistance([nearestTown.lon, nearestTown.lat], toLonLat(coords)) / 1000)
+  }
 
   const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
   const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
@@ -86,19 +117,23 @@ const resolveCursorToolContentAndColors = (product, coords) => {
     effectiveValue,
     metadata.productInfo.dataScale,
     metadata.productInfo.dataUnit,
-    color
+    color,
+    nearestCity ? nearestCity.name : undefined,
+    distanceToNearestCity,
+    nearestTown ? nearestTown.name : undefined,
+    distanceToNearestTown,
   )
 }
 
 
 // https://openlayers.org/en/latest/examples/overlay.html
-const updateCursorTool = (overlay, product, newPosition, resolveTemplateAndColors) => {
+const updateCursorTool = (overlay, product, pois, newPosition, resolveTemplateAndColors) => {
   const element = overlay.getElement()
   $(element).popover('dispose')
 
   const effectivePosition = newPosition ? newPosition : overlay.getPosition()
   if (newPosition) overlay.setPosition(effectivePosition)
-  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, effectivePosition)
+  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, pois, effectivePosition)
 
   $(element).popover({
     container: element,
@@ -227,7 +262,7 @@ export class Map extends React.Component {
         return
       }
 
-      updateCursorTool(cursorToolOverlay, this.props.product, evt.coordinate, resolveCursorToolContentAndColors)
+      updateCursorTool(cursorToolOverlay, this.props.product, this.props.pois, evt.coordinate, resolveCursorToolContentAndColors)
       this.cursorToolVisible = true
 
       dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
@@ -259,7 +294,7 @@ export class Map extends React.Component {
     if (cached !== undefined) {
       this.canvas = cached
       if (this.cursorToolVisible)
-        updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContentAndColors)
+        updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.pois, undefined, resolveCursorToolContentAndColors)
       return this.canvas
     }
 
@@ -365,7 +400,7 @@ export class Map extends React.Component {
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
     if (this.cursorToolVisible)
-      updateCursorTool(this.cursorToolOverlay, this.props.product, undefined, resolveCursorToolContentAndColors)
+      updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.pois, undefined, resolveCursorToolContentAndColors)
     return this.canvas
   }
 
