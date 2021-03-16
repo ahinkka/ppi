@@ -13,28 +13,28 @@ def pr(*args, **kwargs):
 
 
 def collect(infile):
-    towns = []
-    cities = []
     for line in infile:
         if line.startswith('#') or line.startswith('@'):
             continue
         lat, lon, place, name = line.replace('\n', '').split('\t')
         if place == 'town':
-            towns.append({
+            yield {
                 'lat': lat,
                 'lon': lon,
                 'name': name,
-            })
+                'type': 'POINT OF INTEREST',
+                'locality_type': 'town',
+            }
         elif place == 'city':
-            cities.append({
+            yield {
                 'lat': lat,
                 'lon': lon,
                 'name': name,
-            })
+                'type': 'POINT OF INTEREST',
+                'locality_type': 'city',
+            }
         else:
             raise Exception(f'unknown place type: {place}')
-
-    return {'type': 'POINT OF INTEREST', 'towns': towns, 'cities': cities}
 
 
 if __name__ == '__main__':
@@ -45,4 +45,5 @@ if __name__ == '__main__':
                         default=sys.stdin,
                         help="CSV input file")
     args = parser.parse_args()
-    pr(json.dumps(collect(args.infile)))
+    for d in collect(args.infile):
+        pr(json.dumps(d))

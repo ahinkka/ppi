@@ -192,10 +192,18 @@ def collect_points_of_interest(input_products):
     result = {'towns': [], 'cities': []}
     sources_dests_infos = []
     for product in pois:
-        for town in result['towns']:
-            result['towns'].append(town)
-        for city in result['cities']:
-            result['cities'].append(city)
+        if product['locality_type'] == 'town':
+            result['towns'].append({
+                'lon': product['lon'],
+                'lat': product['lat'],
+                'name': product['name']
+            })
+        elif product['locality_type'] == 'city':
+            result['cities'].append({
+                'lon': product['lon'],
+                'lat': product['lat'],
+                'name': product['name']
+            })
 
     return result
 
