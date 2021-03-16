@@ -6,6 +6,8 @@ import * as R from 'ramda'
 import * as L from 'partial.lenses'
 import {
   catalogL,
+  radarProductsL,
+  poisL,
   selectedSiteIdL,
   selectedProductIdL,
   selectedFlavorIdL,
@@ -33,10 +35,10 @@ import {NOAAScaleToScaleDescription} from './coloring'
 const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
 
-const siteSelections = (catalog) => {
+const siteSelections = (radarProducts) => {
   const result = []
-  for (const siteId in catalog) {
-    result.push({id: siteId, display: catalog[siteId].display})
+  for (const siteId in radarProducts) {
+    result.push({id: siteId, display: radarProducts[siteId].display})
   }
   result.sort((a, b) => a.id.localeCompare(b.id))
   return result
@@ -162,7 +164,7 @@ class ObserverApp extends React.Component {
             <DropdownSelector className="header-row__site-selector"
               currentValue={props.selection.siteId}
               legend="Site"
-              items={siteSelections(props.catalog)}
+              items={siteSelections(L.get(radarProductsL, props))}
               tooltip="Press S to cycle sites"
               action={ObserverActions.SITE_SELECTED}
               dispatch={props.dispatch} />
@@ -192,6 +194,7 @@ class ObserverApp extends React.Component {
         </div>
         <Map headerElementId="header-row"
           intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
+          pois={L.get(poisL, props)}
           dispatch={props.dispatch}
           product={product}
           productTime={props.animation.currentProductTime}

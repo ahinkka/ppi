@@ -5,8 +5,10 @@ import {ObserverActions} from './constants'
 
 // Lenses into state
 export const catalogL = L.prop('catalog')
-export const selectionL = L.prop('selection')
+export const radarProductsL = L.compose(catalogL, 'radarProducts')
+export const poisL = L.compose(catalogL, 'pointsOfInterest')
 
+export const selectionL = L.prop('selection')
 export const selectedSiteIdL = L.compose(selectionL, 'siteId')
 export const selectedProductIdL = L.compose(selectionL, 'productId')
 export const selectedFlavorIdL = L.compose(selectionL, 'flavorId')
@@ -32,17 +34,17 @@ export const currentPointerLocationL = L.compose(mapCurrentL, 'pointerLocation')
 export const loadedProductsL = L.prop('loadedProducts')
 
 
-const selectSite = (previousSiteId, catalog) => {
+const selectSite = (previousSiteId, radarProducts) => {
   if (previousSiteId != null) {
-    for (const siteId in catalog) {
+    for (const siteId in radarProducts) {
       if (siteId == previousSiteId) {
-        return [siteId, catalog[siteId]]
+        return [siteId, radarProducts[siteId]]
       }
     }
   } else {
-    let options = Object.keys(catalog)
+    let options = Object.keys(radarProducts)
     options.sort()
-    return options.length > 0 ? [options[0], catalog[options[0]]] : [null, null];
+    return options.length > 0 ? [options[0], radarProducts[options[0]]] : [null, null];
   }
 }
 
@@ -127,7 +129,7 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext, stayOnLastTime
 
 
 const reduceValidSelection = (state) => {
-  const [siteId, site] = selectSite(L.get(selectedSiteIdL, state), L.get(catalogL, state))
+  const [siteId, site] = selectSite(L.get(selectedSiteIdL, state), L.get(radarProductsL, state))
   const withValidSite = R.compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
 
   const [productId, product] = selectProduct(L.get(selectedProductIdL, withValidSite), L.get(selectedSiteL, withValidSite))
@@ -175,9 +177,9 @@ export const catalogUpdatedReducer = (state, action) =>
 
 
 const siteSelectedReducer = (state, action) => {
-  let [siteId, site] = [action.payload, state.catalog[action.payload]]
+  let [siteId, site] = [action.payload, L.get(radarProductsL, state)[action.payload]]
   if (site == undefined) {
-    [siteId, site] = selectSite(state.selection.siteId, state.catalog)
+    [siteId, site] = selectSite(state.selection.siteId, L.get(radarProductsL, state))
   }
   let siteChanged = state.selection.siteId != siteId
 
@@ -256,14 +258,14 @@ const pointerLocationReducer = (state, newLocation) =>
 
 
 const cycleSiteReducer = (state) => {
-  let options = Object.keys(state.catalog)
+  let options = Object.keys(L.get(radarProductsL, state))
   options.sort()
 
   // returns -1 if not found, which is handy as we just select the first then
   const current = options.indexOf(state.selection.siteId)
   let newIndex = current + 1 == options.length ? 0 : current + 1
 
-  let [newSiteId, newSite] = [options[newIndex], state.catalog[options[newIndex]]]
+  let [newSiteId, newSite] = [options[newIndex], L.get(radarProductsL, state)[options[newIndex]]]
   let siteChanged = state.selection.siteId != newSiteId
 
   state = R.compose(L.set(selectedSiteIdL, newSiteId), L.set(selectedSiteL, newSite))(state)
@@ -405,7 +407,10 @@ export const reducer = (state, action) => {
         flavorId: null,
         flavor: null
       },
-      catalog: {},
+      catalog: {
+        radarProducts: {},
+        pointsOfInterest: {},
+      },
       loadedProducts: {}, // urls as keys, null values
       map: {
         current: { // the map element controls this
