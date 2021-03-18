@@ -59,10 +59,12 @@ const [getProductByUrl, setProductRepositoryObject] = (() => {
 
 
 const url = 'data/catalog.json'
+const geoInterestsUrl = 'data/geointerests.geojson'
 const renderApp = () => {
   ReactDOM.render(
     [
       <CatalogProvider key='cp' dispatch={store.dispatch} url={url} />,
+      <GeoInterestsProvider key='gip' dispatch={store.dispatch} url={geoInterestsUrl} />,
       <Provider key='p' store={store}>
         <ProductLoader key='pl' productUrlResolver={productUrlResolver}
           setProductRepositoryObject={setProductRepositoryObject} />

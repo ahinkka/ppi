@@ -6,7 +6,7 @@ import {ObserverActions} from './constants'
 // Lenses into state
 export const catalogL = L.prop('catalog')
 export const radarProductsL = L.compose(catalogL, 'radarProducts')
-export const poisL = L.compose(catalogL, 'pointsOfInterest')
+export const geoInterestsL = L.prop('geoInterests')
 
 export const selectionL = L.prop('selection')
 export const selectedSiteIdL = L.compose(selectionL, 'siteId')
@@ -408,9 +408,9 @@ export const reducer = (state, action) => {
         flavor: null
       },
       catalog: {
-        radarProducts: {},
-        pointsOfInterest: {},
+        radarProducts: {}
       },
+      geoInterests: {},
       loadedProducts: {}, // urls as keys, null values
       map: {
         current: { // the map element controls this
@@ -430,6 +430,8 @@ export const reducer = (state, action) => {
     }
   } else if (action.type === ObserverActions.CATALOG_UPDATED) {
     return catalogUpdatedReducer(state, action);
+  } else if (action.type === ObserverActions.GEOINTERESTS_UPDATED) {
+    return L.set(geoInterestsL, action.payload)(state)
   } else if (action.type === ObserverActions.SITE_SELECTED) {
     return siteSelectedReducer(state, action);
   } else if (action.type === ObserverActions.CYCLE_SITE) {

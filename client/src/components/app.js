@@ -7,7 +7,7 @@ import * as L from 'partial.lenses'
 import {
   catalogL,
   radarProductsL,
-  poisL,
+  geoInterestsL,
   selectedSiteIdL,
   selectedProductIdL,
   selectedFlavorIdL,
@@ -194,7 +194,7 @@ class ObserverApp extends React.Component {
         </div>
         <Map headerElementId="header-row"
           intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
-          pois={L.get(poisL, props)}
+          geoInterests={L.get(geoInterestsL, props)}
           dispatch={props.dispatch}
           product={product}
           productTime={props.animation.currentProductTime}
@@ -210,6 +210,7 @@ class ObserverApp extends React.Component {
 const mapStateToProps = (state) => {
   const result = [
     catalogL,
+    geoInterestsL,
     selectedSiteIdL,
     selectedProductIdL,
     selectedFlavorIdL,

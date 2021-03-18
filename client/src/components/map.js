@@ -57,8 +57,8 @@ const renderCursorToolContentAndColors = (
     textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
   }
 
-  if (nearestCityName && distanceToNearestCity &&
-      nearestTownName && distanceToNearestTown) {
+  if (nearestCityName && distanceToNearestCity !== undefined &&
+      nearestTownName && distanceToNearestTown  !== undefined) {
     return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km<br>${nearestTownName} ${distanceToNearestTown} km</small></div>`, bgColor, textColor]
   } else {
     return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
@@ -66,19 +66,22 @@ const renderCursorToolContentAndColors = (
 }
 
 
-const findNearestPoi = (pois, coords) => {
+const findNearestPoint = (features, coords) => {
   const [cursorX, cursorY] = coords
 
-  const poisAndDistances = pois.map((poi) => {
-    const [poiX, poiY] = fromLonLat([poi.lon, poi.lat])
-    return [poi, Math.sqrt(Math.pow(poiX - cursorX, 2) + Math.pow(poiY - cursorY, 2))]
-  }).sort((a, b) => a[1] - b[1])
+  const pointsAndDistances = features
+    .filter((feature) => feature.geometry.type === 'Point')
+    .map((point) => {
+      const [pointX, pointY] = fromLonLat(point.geometry.coordinates)
+      return [point, Math.sqrt(Math.pow(pointX - cursorX, 2) + Math.pow(pointY - cursorY, 2))]
+    })
+    .sort((a, b) => a[1] - b[1])
 
-  return poisAndDistances[0][0]
+  return pointsAndDistances[0][0]
 }
 
 
-const resolveCursorToolContentAndColors = (product, pois, coords) => {
+const resolveCursorToolContentAndColors = (product, featureCollection, coords) => {
   const data = product.data
   const dataView = new Uint8Array(data)
   const dataRows = product._rows
@@ -86,12 +89,14 @@ const resolveCursorToolContentAndColors = (product, pois, coords) => {
   if (!metadata) return ['', 'white', 'black']
 
   let [nearestCity, distanceToNearestCity, nearestTown, distanceToNearestTown] = [undefined, undefined, undefined, undefined]
-  if (pois.cities.length > 0 && pois.towns.length > 0) {
-    nearestCity = findNearestPoi(pois.cities, coords)
-    distanceToNearestCity = Math.round(getDistance([nearestCity.lon, nearestCity.lat], toLonLat(coords)) / 1000)
+  if (featureCollection && featureCollection.features && featureCollection.features.length > 0) {
+    const cities = featureCollection.features.filter((f) => f.properties.osmPlace === 'city')
+    nearestCity = findNearestPoint(cities, coords)
+    distanceToNearestCity = Math.round(getDistance(nearestCity.geometry.coordinates, toLonLat(coords)) / 1000)
 
-    nearestTown = findNearestPoi(pois.towns, coords)
-    distanceToNearestTown = Math.round(getDistance([nearestTown.lon, nearestTown.lat], toLonLat(coords)) / 1000)
+    const towns = featureCollection.features.filter((f) => f.properties.osmPlace === 'town')
+    nearestTown = findNearestPoint(towns, coords)
+    distanceToNearestTown = Math.round(getDistance(nearestTown.geometry.coordinates, toLonLat(coords)) / 1000)
   }
 
   const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
@@ -118,9 +123,9 @@ const resolveCursorToolContentAndColors = (product, pois, coords) => {
     metadata.productInfo.dataScale,
     metadata.productInfo.dataUnit,
     color,
-    nearestCity ? nearestCity.name : undefined,
+    nearestCity ? nearestCity.properties.name : undefined,
     distanceToNearestCity,
-    nearestTown ? nearestTown.name : undefined,
+    nearestTown ? nearestTown.properties.name : undefined,
     distanceToNearestTown,
   )
 }
@@ -225,7 +230,7 @@ export class Map extends React.Component {
             url: 'https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
             opaque: false
           })
-        })
+        }),
       ],
       target: 'map-element',
     })
@@ -262,7 +267,7 @@ export class Map extends React.Component {
         return
       }
 
-      updateCursorTool(cursorToolOverlay, this.props.product, this.props.pois, evt.coordinate, resolveCursorToolContentAndColors)
+      updateCursorTool(cursorToolOverlay, this.props.product, this.props.geoInterests, evt.coordinate, resolveCursorToolContentAndColors)
       this.cursorToolVisible = true
 
       dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
@@ -294,7 +299,7 @@ export class Map extends React.Component {
     if (cached !== undefined) {
       this.canvas = cached
       if (this.cursorToolVisible)
-        updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.pois, undefined, resolveCursorToolContentAndColors)
+        updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.geoInterests, undefined, resolveCursorToolContentAndColors)
       return this.canvas
     }
 
@@ -400,7 +405,7 @@ export class Map extends React.Component {
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
     if (this.cursorToolVisible)
-      updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.pois, undefined, resolveCursorToolContentAndColors)
+      updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.geoInterests, undefined, resolveCursorToolContentAndColors)
     return this.canvas
   }
 

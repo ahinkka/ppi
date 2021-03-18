@@ -6,9 +6,9 @@ set -euo pipefail
 # WWW_ROOT="/dev/null"
 
 # Create an updated distribution
-(python3 fmi/dist_builder/collect_radar_products.py fmi/downloader/data ;
- python3 finnish_localities/collect_localities.py finnish_localities/finnish_localities.tsv) | \
-	python3 collect.py fmi/dist_builder/raster_to_json/target/release/raster_to_json dist
+python3 fmi/dist_builder/collect_radar_products.py fmi/downloader/data | \
+    python3 collect.py fmi/dist_builder/raster_to_json/target/release/raster_to_json dist
+python3 finnish_localities/localities_to_geojson.py finnish_localities/finnish_localities.tsv > dist/geointerests.geojson
 
 # Remove old files
 find dist -mmin +1440 -delete

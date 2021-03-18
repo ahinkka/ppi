@@ -1,6 +1,7 @@
 export const ObserverActions = {
   PRIME: 'prime',
   CATALOG_UPDATED: 'catalog updated',
+  GEOINTERESTS_UPDATED: 'geointerests updated',
 
   SITE_SELECTED: 'site selected',
   PRODUCT_SELECTED: 'product selected',
