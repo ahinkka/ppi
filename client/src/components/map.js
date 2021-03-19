@@ -8,11 +8,13 @@ import stringify from 'json-stable-stringify'
 import {ImageCanvas} from 'ol/source'
 import {Image} from 'ol/layer'
 import {Map as OlMap, View} from 'ol'
-import {OSM} from 'ol/source'
+import {OSM, Vector as VectorSource} from 'ol/source'
 import Overlay from 'ol/Overlay'
-import {Tile} from 'ol/layer'
+import {Tile, Vector as VectorLayer} from 'ol/layer'
 import {fromLonLat, toLonLat} from 'ol/proj'
 import {getDistance} from 'ol/sphere'
+import GeoJSON from 'ol/format/GeoJSON'
+import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style'
 import {
   canvasPxToProductPx,
   computeExtent,
@@ -66,22 +68,7 @@ const renderCursorToolContentAndColors = (
 }
 
 
-const findNearestPoint = (features, coords) => {
-  const [cursorX, cursorY] = coords
-
-  const pointsAndDistances = features
-    .filter((feature) => feature.geometry.type === 'Point')
-    .map((point) => {
-      const [pointX, pointY] = fromLonLat(point.geometry.coordinates)
-      return [point, Math.sqrt(Math.pow(pointX - cursorX, 2) + Math.pow(pointY - cursorY, 2))]
-    })
-    .sort((a, b) => a[1] - b[1])
-
-  return pointsAndDistances[0][0]
-}
-
-
-const resolveCursorToolContentAndColors = (product, featureCollection, coords) => {
+const resolveCursorToolContentAndColors = (product, vectorSource, coords) => {
   const data = product.data
   const dataView = new Uint8Array(data)
   const dataRows = product._rows
@@ -89,14 +76,12 @@ const resolveCursorToolContentAndColors = (product, featureCollection, coords) =
   if (!metadata) return ['', 'white', 'black']
 
   let [nearestCity, distanceToNearestCity, nearestTown, distanceToNearestTown] = [undefined, undefined, undefined, undefined]
-  if (featureCollection && featureCollection.features && featureCollection.features.length > 0) {
-    const cities = featureCollection.features.filter((f) => f.properties.osmPlace === 'city')
-    nearestCity = findNearestPoint(cities, coords)
-    distanceToNearestCity = Math.round(getDistance(nearestCity.geometry.coordinates, toLonLat(coords)) / 1000)
+  if (vectorSource && vectorSource.getFeatures().length > 0) {
+    nearestCity = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'city')
+    distanceToNearestCity = Math.round(getDistance(toLonLat(nearestCity.getGeometry().getCoordinates()), toLonLat(coords)) / 1000)
 
-    const towns = featureCollection.features.filter((f) => f.properties.osmPlace === 'town')
-    nearestTown = findNearestPoint(towns, coords)
-    distanceToNearestTown = Math.round(getDistance(nearestTown.geometry.coordinates, toLonLat(coords)) / 1000)
+    nearestTown = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'town')
+    distanceToNearestTown = Math.round(getDistance(toLonLat(nearestTown.getGeometry().getCoordinates()), toLonLat(coords)) / 1000)
   }
 
   const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
@@ -123,22 +108,22 @@ const resolveCursorToolContentAndColors = (product, featureCollection, coords) =
     metadata.productInfo.dataScale,
     metadata.productInfo.dataUnit,
     color,
-    nearestCity ? nearestCity.properties.name : undefined,
+    nearestCity ? nearestCity.get('name') : undefined,
     distanceToNearestCity,
-    nearestTown ? nearestTown.properties.name : undefined,
+    nearestTown ? nearestTown.get('name') : undefined,
     distanceToNearestTown,
   )
 }
 
 
 // https://openlayers.org/en/latest/examples/overlay.html
-const updateCursorTool = (overlay, product, pois, newPosition, resolveTemplateAndColors) => {
+const updateCursorTool = (overlay, product, vectorSource, newPosition, resolveTemplateAndColors) => {
   const element = overlay.getElement()
   $(element).popover('dispose')
 
   const effectivePosition = newPosition ? newPosition : overlay.getPosition()
   if (newPosition) overlay.setPosition(effectivePosition)
-  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, pois, effectivePosition)
+  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, vectorSource, effectivePosition)
 
   $(element).popover({
     container: element,
@@ -183,6 +168,39 @@ export class Map extends React.Component {
     this.__colorCaches = {}
 
     this.cursorToolVisible = false
+
+    this.__vectorSource = new VectorSource({})
+
+    const cityStyle = new Style({
+      image: new CircleStyle({
+        radius: 3,
+        fill: new Fill({
+          color: 'rgba(0,0,0,0.2)',
+        }),
+        stroke: new Stroke({color: 'black', width: 1}),
+      })
+    })
+
+    const townStyle = new Style({
+      image: new CircleStyle({
+        radius: 1,
+        stroke: new Stroke({color: 'black', width: 1}),
+      })
+    })
+
+    this.__vectorLayer = new VectorLayer({
+      source: this.__vectorSource,
+      style: (feature) => {
+        const osmPlace = feature.get('osmPlace')
+        if (osmPlace === 'city') {
+          return cityStyle
+        } else if (osmPlace === 'town') {
+          return townStyle
+        } else {
+          throw new Error(`unknown osmPlace '${osmPlace}'`)
+        }
+      },
+    })
   }
 
   __onResize() {
@@ -231,6 +249,8 @@ export class Map extends React.Component {
             opaque: false
           })
         }),
+
+        this.__vectorLayer,
       ],
       target: 'map-element',
     })
@@ -267,7 +287,7 @@ export class Map extends React.Component {
         return
       }
 
-      updateCursorTool(cursorToolOverlay, this.props.product, this.props.geoInterests, evt.coordinate, resolveCursorToolContentAndColors)
+      updateCursorTool(cursorToolOverlay, this.props.product, this.__vectorSource, evt.coordinate, resolveCursorToolContentAndColors)
       this.cursorToolVisible = true
 
       dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
@@ -299,7 +319,7 @@ export class Map extends React.Component {
     if (cached !== undefined) {
       this.canvas = cached
       if (this.cursorToolVisible)
-        updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.geoInterests, undefined, resolveCursorToolContentAndColors)
+        updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors)
       return this.canvas
     }
 
@@ -405,7 +425,7 @@ export class Map extends React.Component {
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
     if (this.cursorToolVisible)
-      updateCursorTool(this.cursorToolOverlay, this.props.product, this.props.geoInterests, undefined, resolveCursorToolContentAndColors)
+      updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors)
     return this.canvas
   }
 
@@ -414,6 +434,12 @@ export class Map extends React.Component {
   }
 
   render() {
+    if (this.props.geoInterests && this.__vectorSource.getFeatures().length == 0) {
+      const features = new GeoJSON({ featureProjection: 'EPSG:3857' })
+        .readFeatures(this.props.geoInterests)
+      this.__vectorSource.addFeatures(features)
+    }
+
     if (this.__previousProduct == null || this.previousProduct != this.props.product) {
       this.__previousProduct == this.props.product
       if (this.imageCanvas !== undefined) {

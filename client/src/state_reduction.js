@@ -57,7 +57,10 @@ const selectProduct = (previousProductSelection, site) => {
       }
     }
   } else {
-    let options = Object.keys(site.products)
+    let options = []
+    if (site && site.products) {
+      options = Object.keys(site.products)
+    }
     options.sort()
     return options.length > 0 ? [options[0], site.products[options[0]]] : [null, null];
   }
@@ -73,7 +76,10 @@ const selectFlavor = (previousFlavor, product) => {
     }
   }
 
-  let options = Object.keys(product.flavors)
+  let options = []
+  if (product && product.flavors) {
+    options = Object.keys(product.flavors)
+  }
   options.sort()
   return options.length > 0 ? [options[0], product.flavors[options[0]]] : [null, null];
 }

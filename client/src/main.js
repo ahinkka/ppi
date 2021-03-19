@@ -8,6 +8,7 @@ import {createStore} from 'redux'
 import { Provider } from 'react-redux'
 
 import CatalogProvider from './components/catalog_provider.js'
+import GeoInterestsProvider from './components/geointerests_provider.js'
 import ObserverApp from './components/app'
 import ProductLoader from './components/product_loader.js'
 import UrlStateAdapter from './components/url_state_adapter.js'
