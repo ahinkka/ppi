@@ -200,7 +200,11 @@ const siteSelectedReducer = (state, action) => {
 
 
 const productSelectedReducer = (state, action) => {
-  let [productId, product] = [action.payload, state.selection.site.products[action.payload]]
+  let [productId, product] = [
+    action.payload,
+    R.defaultTo({})(L.get(L.compose(selectedSiteL, 'products'), state))[action.payload]
+  ]
+
   if (product == undefined) {
     [productId, product] = selectProduct(state.selection.productId, state.selection.site);
   }
@@ -212,7 +216,11 @@ const productSelectedReducer = (state, action) => {
 
 
 const flavorSelectedReducer = (state, action) => {
-  let [flavorId, flavor] = [action.payload, state.selection.product.flavors[action.payload]]
+  let [flavorId, flavor] = [
+    action.payload,
+    R.defaultTo({})(L.get(L.compose(selectedProductL, 'flavors')))[action.payload]
+  ]
+
   if (flavor == undefined) {
     [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product);
   }
