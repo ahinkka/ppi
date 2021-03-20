@@ -37,10 +37,33 @@ import {
 const yiqColorContrast = (r, g, b) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
 
 
+const bearingToCompassRoseReading = (bearing) => {
+  const cardinals = [
+    ['N', 0],   ['NNE', 22.5],  ['NE',  45], ['ENE', 67.5],
+    ['E', 90],  ['ESE', 112.5], ['SE', 135], ['SSE', 157.5],
+    ['S', 180], ['SSW', 202.5], ['SW', 225], ['WSW', 247.5],
+    ['W', 270], ['WNW', 292.5], ['NW', 315], ['NNW', 337.5],
+  ]
+
+  let currentClosest = ['X', 360]
+  for (let i=0; i<cardinals.length; i++) {
+    const [name, angle] = cardinals[i]
+    const difference = Math.abs(bearing - angle)
+
+    if (difference < currentClosest[1]) {
+      currentClosest = [name, difference]
+    } else if (difference > currentClosest[1])
+      break
+  }
+
+  return currentClosest[0]
+}
+
+
 const renderCursorToolContentAndColors = (
   value, dataScale, dataUnit, color,
-  nearestCityName, distanceToNearestCity,
-  nearestTownName, distanceToNearestTown
+  nearestCityName, distanceToNearestCity, bearingToNearestCity,
+  nearestTownName, distanceToNearestTown, bearingToNearestTown
 ) => {
   const [valueType, dataValue] = integerToDataValue(dataScale, value)
 
@@ -59,12 +82,25 @@ const renderCursorToolContentAndColors = (
     textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
   }
 
-  if (nearestCityName && distanceToNearestCity !== undefined &&
-      nearestTownName && distanceToNearestTown  !== undefined) {
-    return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km<br>${nearestTownName} ${distanceToNearestTown} km</small></div>`, bgColor, textColor]
+  if (nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined &&
+      nearestTownName && distanceToNearestTown  !== undefined && bearingToNearestTown !== undefined) {
+    return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km ${bearingToCompassRoseReading(bearingToNearestCity)}<br>${nearestTownName} ${distanceToNearestTown} km ${bearingToCompassRoseReading(bearingToNearestTown)}</small></div>`, bgColor, textColor]
   } else {
     return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
   }
+}
+
+
+// Source: https://www.movable-type.co.uk/scripts/latlong.html
+const bearingBetweenCoordinates = (fromLonLat, toLonLat) => {
+  const [fromLon, fromLat] = fromLonLat
+  const [toLon, toLat] = toLonLat
+
+  const y = Math.sin(toLon-fromLon) * Math.cos(toLat)
+  const x = Math.cos(fromLat) * Math.sin(toLat)
+        - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(toLon - fromLon)
+  const o = Math.atan2(y, x)
+  return (o * 180/Math.PI + 360) % 360
 }
 
 
@@ -75,13 +111,21 @@ const resolveCursorToolContentAndColors = (product, vectorSource, coords) => {
   const metadata = product.metadata
   if (!metadata) return ['', 'white', 'black']
 
-  let [nearestCity, distanceToNearestCity, nearestTown, distanceToNearestTown] = [undefined, undefined, undefined, undefined]
+  let [nearestCity, distanceToNearestCity, bearingToNearestCity, nearestTown, distanceToNearestTown, bearingToNearestTown] =
+    [undefined, undefined, undefined, undefined, undefined, undefined]
   if (vectorSource && vectorSource.getFeatures().length > 0) {
     nearestCity = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'city')
-    distanceToNearestCity = Math.round(getDistance(toLonLat(nearestCity.getGeometry().getCoordinates()), toLonLat(coords)) / 1000)
+
+    const coordsLonLat = toLonLat(coords)
+
+    const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates())
+    distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
+    bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
 
     nearestTown = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'town')
-    distanceToNearestTown = Math.round(getDistance(toLonLat(nearestTown.getGeometry().getCoordinates()), toLonLat(coords)) / 1000)
+    const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates())
+    distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
+    bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
   }
 
   const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
@@ -110,8 +154,10 @@ const resolveCursorToolContentAndColors = (product, vectorSource, coords) => {
     color,
     nearestCity ? nearestCity.get('name') : undefined,
     distanceToNearestCity,
+    bearingToNearestCity,
     nearestTown ? nearestTown.get('name') : undefined,
     distanceToNearestTown,
+    bearingToNearestTown,
   )
 }
 
