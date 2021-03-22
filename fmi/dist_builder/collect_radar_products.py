@@ -40,6 +40,7 @@ def read_product(path):
     result["site_name"] = radars[result["site_id"]]["name"]
     result["site_location"] = {"lon": radars[result["site_id"]]["lon"],
                                "lat": radars[result["site_id"]]["lat"]}
+    result['composite'] = radars[result['site_id']].get('compositeSite', False)
 
     for key in ["elevation", "time"]:
         result[key] = product[key]
@@ -58,6 +59,20 @@ def read_product(path):
     result["product_name"] = product_name
     result["product_id"] = product_name
     if product_name == "dbzh":
+        result["radar_product_info"] = {
+            "product_type": "PPI",
+            "data_type": "REFLECTIVITY",
+            "data_unit": "dBZ",
+            "polarization": "HORIZONTAL",
+            "data_scale": {
+                # (dBZ = step * pixval - offset)
+                "offset": product["linear_transformation_offset"],
+                "step": product["linear_transformation_gain"],
+                "not_scanned": 255,
+                "no_echo": 0
+            }
+        }
+    elif product_name == 'FIN-DBZ-3067-250M':
         result["radar_product_info"] = {
             "product_type": "PPI",
             "data_type": "REFLECTIVITY",

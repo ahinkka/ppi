@@ -54,12 +54,15 @@ _radar_list = [
     {
         "name": "Vimpeli",
         "lat": 63.1048, "lon": 23.8209, "altitude": 200
-    }
+    },
+    {
+        "name": "Finland composite",
+        "lat": 64.180708, "lon": 25.803222, "altitude": 0, "composite": True
+    },
 ]
-
 
 radars = {}
 for radar in _radar_list:
-    id = strip_accents(radar["name"]).lower()
+    id = strip_accents(radar["name"]).lower().replace(' ', '_')
     radar[id] = id
     radars[id] = radar
