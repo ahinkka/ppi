@@ -105,11 +105,12 @@ const bearingBetweenCoordinates = (fromLonLat, toLonLat) => {
 
 
 const resolveCursorToolContentAndColors = (product, vectorSource, coords) => {
+  if (!product || !product.metadata) return ['', 'white', 'black']
+
   const data = product.data
   const dataView = new Uint8Array(data)
   const dataRows = product._rows
   const metadata = product.metadata
-  if (!metadata) return ['', 'white', 'black']
 
   let [nearestCity, distanceToNearestCity, bearingToNearestCity, nearestTown, distanceToNearestTown, bearingToNearestTown] =
     [undefined, undefined, undefined, undefined, undefined, undefined]
@@ -480,7 +481,11 @@ export class Map extends React.Component {
   }
 
   render() {
-    if (this.props.geoInterests && this.__vectorSource.getFeatures().length == 0) {
+    if (
+      this.props.geoInterests &&
+      Object.keys(this.props.geoInterests).length > 0 &&
+      this.__vectorSource.getFeatures().length == 0
+    ) {
       const features = new GeoJSON({ featureProjection: 'EPSG:3857' })
         .readFeatures(this.props.geoInterests)
       this.__vectorSource.addFeatures(features)
