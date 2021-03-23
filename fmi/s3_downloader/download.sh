@@ -5,9 +5,9 @@ set -euo pipefail
 # CODE_ROOT="$HOME/Projects/ppi"
 
 # First download
-pushd "$CODE_ROOT/fmi/downloader" > /dev/null
+pushd "$CODE_ROOT/fmi/s3_downloader" > /dev/null
 
-env/bin/python fmi_product_download.py -c config.ini | \
+env/bin/python fmi_s3_product_download.py -c config.ini | \
 while read f
 do
   echo "Compressing \"$f\"..." >&2
