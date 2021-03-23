@@ -7,4 +7,8 @@ pushd fmi/downloader
 ./download.sh
 popd
 
+pushd fmi/s3_downloader
+./download.sh
+popd
+
 ./build-and-distribute.sh
