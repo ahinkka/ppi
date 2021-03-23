@@ -42,8 +42,11 @@ def read_product(path):
                                "lat": radars[result["site_id"]]["lat"]}
     result['composite'] = radars[result['site_id']].get('compositeSite', False)
 
-    for key in ["elevation", "time"]:
-        result[key] = product[key]
+    result['time'] = product['time']
+    for key in ['elevation', 'height']:
+        value = product.get(key)
+        if value:
+            result[key] = value
 
     without_ext = os.path.splitext(path)[0]
     tiff_gz = without_ext + ".tiff.gz"
@@ -58,12 +61,10 @@ def read_product(path):
     product_name = product["product"]
     result["product_name"] = product_name
     result["product_id"] = product_name
-    if product_name == "dbzh":
+    if product_name == "dbzh" or product_name == 'dbz':
         result["radar_product_info"] = {
-            "product_type": "PPI",
             "data_type": "REFLECTIVITY",
             "data_unit": "dBZ",
-            "polarization": "HORIZONTAL",
             "data_scale": {
                 # (dBZ = step * pixval - offset)
                 "offset": product["linear_transformation_offset"],
@@ -72,20 +73,14 @@ def read_product(path):
                 "no_echo": 0
             }
         }
-    elif product_name == 'FIN-DBZ-3067-250M':
-        result["radar_product_info"] = {
-            "product_type": "PPI",
-            "data_type": "REFLECTIVITY",
-            "data_unit": "dBZ",
-            "polarization": "HORIZONTAL",
-            "data_scale": {
-                # (dBZ = step * pixval - offset)
-                "offset": product["linear_transformation_offset"],
-                "step": product["linear_transformation_gain"],
-                "not_scanned": 255,
-                "no_echo": 0
-            }
-        }
+        if 'elevation' in product:
+            result['product_type'] = 'CAPPI'
+            result['elevation'] = product['elevation']
+        else:
+            result['product_type'] = 'PPI'
+
+        if product_name == 'dbzh':
+            result['polarization'] = 'HORIZONTAL'
     else:
         err("Unhandled product name: {}".format(product_name))
         sys.exit(result["data_file"])

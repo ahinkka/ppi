@@ -45,12 +45,13 @@ output-directory = %s
 
 
 class Product(object):
-    def __init__(self, site, product, time, key, elevation=None,
+    def __init__(self, site, product, time, key, height=None, elevation=None,
                  linear_transformation_gain=None, linear_transformation_offset=None):
         self.site = site
         self.product = product
         self.time = time
         self.key = key
+        self.height = height
         self.elevation = elevation
         self.linear_transformation_gain = linear_transformation_gain
         self.linear_transformation_offset = linear_transformation_offset
@@ -58,27 +59,29 @@ class Product(object):
     def file_name(self):
         if self.elevation:
             return u"{0}--{1}--{2}--{3}".format(self.site, self.product, self.elevation, self.time)
+        elif self.height:
+            return u"{0}--{1}--{2}--{3}".format(self.site, self.product, self.height, self.time)
         else:
             return u"{0}--{1}--{2}".format(self.site, self.product, self.time)
 
     def metadata(self):
-        return {
+        result = {
             'site': self.site,
             'product': self.product,
             'time': self.time,
-            'elevation': self.elevation,
             'linear_transformation_gain': self.linear_transformation_gain,
             'linear_transformation_offset': self.linear_transformation_offset
         }
 
+        if self.elevation:
+            result['elevation'] = self.elevation
+        elif self.height:
+            result['height'] = self.height
+
+        return result
+
 
 def fetch_product_list(sites=DEFAULT_SITES):
-    # Radar reflectivity (dbz) from single radars.
-    # Possible query parameters:
-    #     starttime
-    #     endtime
-    #     bbox
-    #     elevation
     date_prefix = dt.now().strftime('%Y/%m/%d')
     client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
@@ -86,7 +89,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
     for site in sites:
         if 'composite' in site:
             site_suffix = 'FIN-DBZ-3067-250M'
-            product_name = 'FIN-DBZ-3067-250M'
+            product_name = 'dbz'
         else:
             site_suffix = f'{site}'
             raise Exception('not implemented')
@@ -112,11 +115,11 @@ def fetch_product_list(sites=DEFAULT_SITES):
         #  radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
         linear_transformation_gain = 0.5
         linear_transformation_offset = -32
-        elevation = '250m'
+        height = '250m'
         product_time = parse_datetime_from_filename(latest['Key'])
 
         product = Product(site, product_name, product_time, latest['Key'],
-                          elevation=elevation,
+                          height=height,
                           linear_transformation_gain=linear_transformation_gain,
                           linear_transformation_offset=linear_transformation_offset)
         result.append(product)
