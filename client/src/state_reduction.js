@@ -56,14 +56,14 @@ const selectProduct = (previousProductSelection, site) => {
         return [productId, site.products[productId]]
       }
     }
-  } else {
-    let options = []
-    if (site && site.products) {
-      options = Object.keys(site.products)
-    }
-    options.sort()
-    return options.length > 0 ? [options[0], site.products[options[0]]] : [null, null];
   }
+
+  let options = []
+  if (site && site.products) {
+    options = Object.keys(site.products)
+  }
+  options.sort()
+  return options.length > 0 ? [options[0], site.products[options[0]]] : [null, null]
 }
 
 
