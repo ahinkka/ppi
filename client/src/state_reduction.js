@@ -136,12 +136,24 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext, stayOnLastTime
 
 const reduceValidSelection = (state) => {
   const [siteId, site] = selectSite(L.get(selectedSiteIdL, state), L.get(radarProductsL, state))
-  const withValidSite = R.compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
+  const withValidSite = R.compose(
+    L.set(selectedSiteIdL, siteId),
+    L.set(selectedSiteL, site)
+  )(state)
 
-  const [productId, product] = selectProduct(L.get(selectedProductIdL, withValidSite), L.get(selectedSiteL, withValidSite))
-  const withValidProduct = R.compose(L.set(selectedProductIdL, productId), L.set(selectedProductL, product))(withValidSite)
+  const [productId, product] = selectProduct(
+    L.get(selectedProductIdL, withValidSite),
+    L.get(selectedSiteL, withValidSite)
+  )
+  const withValidProduct = R.compose(
+    L.set(selectedProductIdL, productId),
+    L.set(selectedProductL, product)
+  )(withValidSite)
 
-  const [flavorId, flavor] = selectFlavor(L.get(selectedFlavorIdL, withValidProduct), L.get(selectedProductL, withValidProduct))
+  const [flavorId, flavor] = selectFlavor(
+    L.get(selectedFlavorIdL, withValidProduct),
+    L.get(selectedProductL, withValidProduct)
+  )
 
   return R.compose(
     L.set(selectedFlavorIdL, flavorId),
