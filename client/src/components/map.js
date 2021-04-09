@@ -15,9 +15,9 @@ import {fromLonLat, toLonLat} from 'ol/proj'
 import {getDistance} from 'ol/sphere'
 import GeoJSON from 'ol/format/GeoJSON'
 import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style'
+import {productExtent} from '../reprojection'
 import {
   canvasPxToProductPx,
-  computeExtent,
   mapCoordsToProductPx,
   toMapCoordsExtent,
 } from '../coordinate'
@@ -129,7 +129,7 @@ const resolveCursorToolContentAndColors = (product, vectorSource, coords) => {
     bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
   }
 
-  const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
+  const productCoordsExtent = productExtent(metadata.affineTransform, metadata.width, metadata.height)
   const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
   const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
   const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]
@@ -407,7 +407,7 @@ export class Map extends React.Component {
     const itemsInARow = imageData.width * 4
     const iData = imageData.data
 
-    const productCoordsExtent = computeExtent(metadata.affineTransform, metadata.width, metadata.height)
+    const productCoordsExtent = productExtent(metadata.affineTransform, metadata.width, metadata.height)
     const mapCoordsExtent = toMapCoordsExtent(fromLonLat, productCoordsExtent)
     const mapCoordsWidth = mapCoordsExtent[2] - mapCoordsExtent[0]
     const mapCoordsHeight = mapCoordsExtent[3] - mapCoordsExtent[1]

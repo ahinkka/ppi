@@ -1,6 +1,6 @@
-import { productToMap } from '../src/reprojection'
+import { productToMap, productExtent } from '../src/reprojection'
 
-describe('Reprojection', () => {
+describe('Coordinate system conversions', () => {
   test('should project individual coordinates to and from', () => {
     const [pToM, mToP] = productToMap('EPSG:3067', 'EPSG:3857')
     expect(pToM([372150, 7313985])[0]).toBeCloseTo(2692930.1, 1)
@@ -15,5 +15,23 @@ describe('Reprojection', () => {
     const [pToM, mToP] = productToMap(ref, 'EPSG:4326')
     expect(mToP([25, 65])[0]).toBeCloseTo(405698.98, 1)
     expect(mToP([25, 65])[1]).toBeCloseTo(7209946.44, 1)
+  })
+})
+
+describe('Extent computation', () => {
+  test('should produce valid extent from affine transform, width and height', () => {
+    const affineTransform = [
+      19.8869934197,
+      0.009449604183593748,
+      0.0,
+      62.5293188598,
+      0.0,
+      -0.0045287129015625024
+    ]
+
+    expect(productExtent(affineTransform, 200, 200)[0]).toBeCloseTo(19.88, 1)
+    expect(productExtent(affineTransform, 200, 200)[1]).toBeCloseTo(61.62, 1)
+    expect(productExtent(affineTransform, 200, 200)[2]).toBeCloseTo(21.77, 1)
+    expect(productExtent(affineTransform, 200, 200)[3]).toBeCloseTo(62.52, 1)
   })
 })
