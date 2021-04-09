@@ -8,7 +8,7 @@ const _canvasPxToMapCoords = (canvasWidth, canvasHeight, xMin, xMax, yMin, yMax,
 }
 
 
-// Currently we expect the products to be in EPSG:3426 and the map in
+// Currently we expect the products to be in EPSG:4326 and the map in
 // EPSG:3857.  We should support arbitrary input projections. And we also
 // expect to work with positive Web Mercator coordinates...
 export const mapCoordsToProductPx = (
