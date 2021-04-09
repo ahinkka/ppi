@@ -34,13 +34,13 @@ describe('On catalog update', () => {
 
   const flavorBefore = { times: timesBefore.map((t) => { return {time: t} }) }
   const before = {
-    catalog: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorBefore }}}}},
+    catalog: { radarProducts: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorBefore }}}}}},
     selection: { flavor: flavorBefore },
     animation: { currentProductTime: datesBefore[3] }}
 
   const flavorAfter = { times: timesAfter.map((t) => { return {time: t} }) }
   const after = {
-    catalog: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorAfter }}}}},
+    catalog: { radarProducts: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorAfter }}}}}},
     selection: { flavor: flavorAfter }}
 
   test('keep the same time as before', () => {
