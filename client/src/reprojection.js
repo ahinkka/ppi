@@ -49,19 +49,6 @@ function canvasPxToMapCoords(canvasWidth, canvasHeight, xMin, xMax, yMin, yMax, 
   return [mapX, mapY]
 }
 
-function getConversion(reprojectionCache, cacheKey, fromProjection, toProjection) {
-  const forwardKey = cacheKey + '-forward'
-  const inverseKey = cacheKey + '-inverse'
-
-  if (!reprojectionCache.hasOwnProperty(forwardKey)) {
-    const [forward, inverse] = convertCoordinate(fromProjection, toProjection)
-    reprojectionCache[forwardKey] = forward
-    reprojectionCache[inverseKey] = inverse
-  }
-
-  return [reprojectionCache[forwardKey], reprojectionCache[inverseKey]]
-}
-
 function convertExtent(extent, conversionFunction) {
   const origCoordMin = [extent[0], extent[1]]
   const origCoordMax = [extent[2], extent[3]]
@@ -107,11 +94,7 @@ export function findClosestIndex(arr, target) {
 
 const inSortedOrder = (a, b) => [Math.min(a, b), Math.max(a, b)]
 
-export function getLutConversion(reprojectionCache, productExtent, pToWgs84, wgs84ToM, mToP) {
-  if (reprojectionCache.hasOwnProperty('lutConversion')) {
-    return reprojectionCache.lutConversion
-  }
-
+export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP) {
   const wgs84Extent = convertExtent(productExtent, pToWgs84)
   const xDegrees = wgs84Extent[2] - wgs84Extent[0]
   const yDegrees = wgs84Extent[3] - wgs84Extent[1]
@@ -145,20 +128,20 @@ export function getLutConversion(reprojectionCache, productExtent, pToWgs84, wgs
 
       let xyM, xyP
       try {
-	xyM = wgs84ToM(xy)
-	mapXs[i] = xyM[0]
-	mapYs[j] = xyM[1]
-	xyP = mToP(xyM)
-	productXs[i] = xyP[0]
-	productYs[j] = xyP[1]
+        xyM = wgs84ToM(xy)
+        mapXs[i] = xyM[0]
+        mapYs[j] = xyM[1]
+        xyP = mToP(xyM)
+        productXs[i] = xyP[0]
+        productYs[j] = xyP[1]
       } catch (error) {
-	console.log(error)
-	console.log(xy, xyM, xyP)
+        // console.log(error)
+        // console.log(xy, xyM, xyP)
       }
     }
   }
 
-  reprojectionCache.lutConversion = (coord) => {
+  return (coord) => {
     const [x, y] = coord
     const nearestXIdx = findClosestIndex(mapXs, x)
     const nearestYIdx = findClosestIndex(mapYs, y)
@@ -182,68 +165,66 @@ export function getLutConversion(reprojectionCache, productExtent, pToWgs84, wgs
     const [pY0, pY1] = inSortedOrder(productYs[nearestYIdx], productYs[secondNearestYIdx])
     return [lerp(pX0, pX1, propX), lerp(pY0, pY1, propY)]
   }
-
-  return reprojectionCache.lutConversion
 }
 
 export function canvasPxToProductPx(
-  reprojectionCache,
   productProjectionDescription,
   affineTransform,
   productWidth, productHeight,
   canvasProjectionDescription,
   canvasExtent,
   canvasWidth, canvasHeight,
-  x, y
 ) {
-  const productExtent_ = reprojectionCache.productExtent ? reprojectionCache.productExtent :
-    productExtent(affineTransform, productWidth, productHeight)
-  reprojectionCache.productExtent = productExtent_
+  const productExtent_ = productExtent(affineTransform, productWidth, productHeight)
+  const [, mToP] = convertCoordinate(productProjectionDescription, canvasProjectionDescription)
+  const [wgs84ToM,] = convertCoordinate('EPSG:4326', 'EPSG:3857')
+  const [pToWgs84,] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
+  const mToPLut = convertCoordinateWithLut(productExtent_, pToWgs84, wgs84ToM, mToP)
 
-  const [, mToP] = getConversion(reprojectionCache, 'p-m', productProjectionDescription, canvasProjectionDescription)
+  return (x, y) => {
+    const canvasXY = canvasPxToMapCoords(
+      canvasWidth, canvasHeight,
+      canvasExtent[0], canvasExtent[2],
+      canvasExtent[1], canvasExtent[3],
+      x, y
+    )
+    const productXY = mToPLut(canvasXY)
 
-  const [wgs84ToM,] = getConversion(reprojectionCache, 'wgs84-m', 'EPSG:4326', 'EPSG:3857')
-  const [pToWgs84,] = getConversion(reprojectionCache, 'p-wgs84', productProjectionDescription, 'EPSG:4326')
-  const mToPLut = getLutConversion(reprojectionCache, productExtent_, pToWgs84, wgs84ToM, mToP)
+    if (productXY[0] < productExtent_[0] || productXY[1] < productExtent_[1] ||
+        productXY[0] > productExtent_[2] || productXY[1] > productExtent_[3]) {
+      return [-1, -1]
+    }
 
-  const canvasXY = canvasPxToMapCoords(
-    canvasWidth, canvasHeight,
-    canvasExtent[0], canvasExtent[2],
-    canvasExtent[1], canvasExtent[3],
-    x, y
-  )
-  const productXY = mToPLut(canvasXY)
-  // const productXY = mToP(canvasXY)
-
-  if (productXY[0] < productExtent_[0] || productXY[1] < productExtent_[1] ||
-      productXY[0] > productExtent_[2] || productXY[1] > productExtent_[3]) {
-    return [-1, -1]
+    const propX = (productXY[0] - productExtent_[0]) / (productExtent_[2] - productExtent_[0])
+    const propY = 1 - (productXY[1] - productExtent_[1]) / (productExtent_[3] - productExtent_[1])
+    return [Math.floor(propX * productWidth), Math.floor(propY * productHeight)]
   }
-
-  const propX = (productXY[0] - productExtent_[0]) / (productExtent_[2] - productExtent_[0])
-  const propY = 1 - (productXY[1] - productExtent_[1]) / (productExtent_[3] - productExtent_[1])
-  return [Math.floor(propX * productWidth), Math.floor(propY * productHeight)]
 }
 
 export function wgs84ToProductPx(
-  reprojectionCache,
   productProjectionDescription,
   affineTransform,
-  productWidth, productHeight,
-  lon, lat
+  productWidth, productHeight
 ) {
-  const [,wgs84ToP] = getConversion(reprojectionCache, 'p-wgs84', productProjectionDescription, 'EPSG:4326')
-  const productXY = wgs84ToP([lon, lat])
+  const [, wgs84ToP] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
 
-  const productExtent_ = productExtent(affineTransform, productWidth, productHeight)
-  if (productXY[0] < productExtent_[0] || productXY[1] < productExtent_[1] ||
-      productXY[0] > productExtent_[2] || productXY[1] > productExtent_[3]) {
-    return [-1, -1]
+  return (lon, lat) => {
+    const productXY = wgs84ToP([lon, lat])
+
+    const productExtent_ = convertExtent(
+      productExtent(affineTransform, productWidth, productHeight),
+      wgs84ToP
+    )
+
+    if (productXY[0] < productExtent_[0] || productXY[1] < productExtent_[1] ||
+        productXY[0] > productExtent_[2] || productXY[1] > productExtent_[3]) {
+      return [-1, -1]
+    }
+
+    const propX = (productXY[0] - productExtent_[0]) / (productExtent_[2] - productExtent_[0])
+    const propY = 1 - (productXY[1] - productExtent_[1]) / (productExtent_[3] - productExtent_[1])
+    const pxX = Math.floor(propX * productWidth)
+    const pxY = Math.floor(propY * productHeight)
+    return [pxX, pxY]
   }
-
-  const propX = (productXY[0] - productExtent_[0]) / (productExtent_[2] - productExtent_[0])
-  const propY = 1 - (productXY[1] - productExtent_[1]) / (productExtent_[3] - productExtent_[1])
-  const pxX = Math.floor(propX * productWidth)
-  const pxY = Math.floor(propY * productHeight)
-  return [pxX, pxY]
 }

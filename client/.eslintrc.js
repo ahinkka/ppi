@@ -36,7 +36,7 @@ module.exports = {
 	    'error', { allow: ['warn', 'error'] }
 	],
         'react/prop-types': [
-	    'warn'
+	    'off'
 	],
     }
 }

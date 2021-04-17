@@ -99,20 +99,19 @@ const bearingBetweenCoordinates = (fromLonLat, toLonLat) => {
 }
 
 
-const resolveCursorToolContentAndColors = (product, vectorSource, coords, reprojectionCache) => {
+const resolveCursorToolContentAndColors = (product, vectorSource, coords, wgs84ToProductPxFn) => {
   if (!product || !product.metadata) return ['', 'white', 'black']
 
   const data = product.data
   const dataView = new Uint8Array(data)
   const dataRows = product._rows
   const metadata = product.metadata
+  const coordsLonLat = toLonLat(coords)
 
   let [nearestCity, distanceToNearestCity, bearingToNearestCity, nearestTown, distanceToNearestTown, bearingToNearestTown] =
     [undefined, undefined, undefined, undefined, undefined, undefined]
   if (vectorSource && vectorSource.getFeatures().length > 0) {
     nearestCity = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'city')
-
-    const coordsLonLat = toLonLat(coords)
 
     const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates())
     distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
@@ -124,13 +123,7 @@ const resolveCursorToolContentAndColors = (product, vectorSource, coords, reproj
     bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
   }
 
-  const dataPxXY = wgs84ToProductPx(
-    reprojectionCache,
-    metadata.projectionRef,
-    metadata.affineTransform,
-    metadata.width, metadata.height,
-    coords[0], coords[1],
-  )
+  const dataPxXY = wgs84ToProductPxFn(coordsLonLat[0], coordsLonLat[1])
 
   let effectiveValue = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
   if (effectiveValue === undefined) effectiveValue = metadata.productInfo.dataScale.notScanned
@@ -155,13 +148,13 @@ const resolveCursorToolContentAndColors = (product, vectorSource, coords, reproj
 
 
 // https://openlayers.org/en/latest/examples/overlay.html
-const updateCursorTool = (overlay, product, vectorSource, newPosition, resolveTemplateAndColors, reprojectionCache) => {
+const updateCursorTool = (overlay, product, vectorSource, newPosition, resolveTemplateAndColors, conversionFn) => {
   const element = overlay.getElement()
   $(element).popover('dispose')
 
   const effectivePosition = newPosition ? newPosition : overlay.getPosition()
   if (newPosition) overlay.setPosition(effectivePosition)
-  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, vectorSource, effectivePosition, reprojectionCache)
+  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, vectorSource, effectivePosition, conversionFn)
 
   $(element).popover({
     container: element,
@@ -204,8 +197,9 @@ export class Map extends React.Component {
     }
     this.__renderedProducts = new LRU(cacheOpts)
     this.__colorCaches = {}
-    this.reprojectionCache = {}
-    this.reprojectionCacheKey = ''
+    this.mapToProductConversionFn = undefined
+    this.wgs84ToProductConversionFn = undefined
+    this.conversionCacheKey = ''
 
     this.cursorToolVisible = false
 
@@ -327,7 +321,7 @@ export class Map extends React.Component {
         return
       }
 
-      updateCursorTool(cursorToolOverlay, this.props.product, this.__vectorSource, evt.coordinate, resolveCursorToolContentAndColors, this.reprojectionCache)
+      updateCursorTool(cursorToolOverlay, this.props.product, this.__vectorSource, evt.coordinate, resolveCursorToolContentAndColors, this.wgs84ToProductConversionFn)
       this.cursorToolVisible = true
 
       dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
@@ -359,7 +353,7 @@ export class Map extends React.Component {
     if (cached !== undefined) {
       this.canvas = cached
       if (this.cursorToolVisible)
-        updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors, this.reprojectionCache)
+        updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors, this.wgs84ToProductConversionFn)
       return this.canvas
     }
 
@@ -403,34 +397,44 @@ export class Map extends React.Component {
     // Fill efficiently with NOT_SCANNED_COLOR to reduce array manipulation
     fillWithNotScanned(iData)
 
-    const reprojectionCacheKey = stringify({
-      projectionRef: metadata.projectionRef,
-      affineTransform: metadata.affineTransform,
-      width: metadata.width,
-      height: metadata.height,
-      mapProjection: 'EPSG:3857'
-    })
-    if (reprojectionCacheKey != this.reprojectionCacheKey) {
-      this.reprojectionCache = {}
-      this.reprojectionCacheKey = reprojectionCacheKey
+    const conversionCacheKey = stringify([
+      metadata.projectionRef,
+      metadata.affineTransform,
+      metadata.width, metadata.height,
+      'EPSG:3857',
+      extent,
+      this.canvas.width, this.canvas.height,
+    ])
+
+    if (conversionCacheKey != this.conversionCacheKey) {
+      this.mapToProductConversionFn = canvasPxToProductPx(
+        metadata.projectionRef,
+        metadata.affineTransform,
+        metadata.width, metadata.height,
+        'EPSG:3857',
+        extent,
+        this.canvas.width, this.canvas.height,
+      )
+
+      this.wgs84ToProductConversionFn = wgs84ToProductPx(
+        metadata.projectionRef,
+        metadata.affineTransform,
+        metadata.width, metadata.height
+      )
+
+      this.conversionCacheKey = conversionCacheKey
+      console.info('New conversions') // eslint-disable-line no-console
     }
 
+    const fn = this.mapToProductConversionFn
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
-        const dataPxXY = canvasPxToProductPx(
-          this.reprojectionCache,
-          metadata.projectionRef,
-          metadata.affineTransform,
-          metadata.width, metadata.height,
-          'EPSG:3857',
-          extent,
-          this.canvas.width, this.canvas.height,
-          x, y
-        )
+        const dataPxXY = fn(x, y)
 
         if (dataPxXY[0] == -1) { // out of product bounds
           continue
         }
+
         const value = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
         const color = resolveColor(value)
 
@@ -456,7 +460,7 @@ export class Map extends React.Component {
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
     if (this.cursorToolVisible)
-      updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors, this.reprojectionCache)
+      updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors, this.wgs84ToProductConversionFn)
     return this.canvas
   }
 
