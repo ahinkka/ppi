@@ -1,0 +1,1 @@
+gdalwarp -overwrite -ts 150 0 -srcnodata 255 -dstnodata 0 -wo INIT_DEST=255  202104091015_FIN-DBZ-3067-250M.tif 202104091015_FIN-DBZ-3067-250M-150px.tif

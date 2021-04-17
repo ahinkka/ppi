@@ -38,6 +38,20 @@ bundle: lint
 		--define:process.env.NODE_ENV=\"production\" \
 		--minify
 
+build/js/bench.js: src/bench.js
+	node_modules/.bin/esbuild \
+		src/bench.js \
+		--bundle \
+		--platform=node \
+		--outfile=build/js/bench.js \
+		--define:process.env.NODE_ENV=\"production\" \
+		--minify
+
+.PHONY: bench
+bench: build/js/bench.js
+	node $<
+	rm $<
+
 .PHONY: build
 build: bundle style ## Build distribution into directory 'build'
 	mkdir -p ./build/js
