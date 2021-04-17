@@ -1,4 +1,9 @@
-import { convertCoordinate, productExtent } from '../src/reprojection'
+import {
+  findClosestIndex,
+  convertCoordinate,
+  productExtent,
+  getLutConversion
+} from '../src/reprojection'
 
 describe('Coordinate system conversions', () => {
   test('should project individual coordinates to and from', () => {
@@ -33,5 +38,26 @@ describe('Extent computation', () => {
     expect(productExtent(affineTransform, 200, 200)[1]).toBeCloseTo(61.62, 1)
     expect(productExtent(affineTransform, 200, 200)[2]).toBeCloseTo(21.77, 1)
     expect(productExtent(affineTransform, 200, 200)[3]).toBeCloseTo(62.52, 1)
+  })
+})
+
+describe('Closest index', () => {
+  test('should find the closest index item', () => {
+    const xs = [1, 2, 4, 8, 12, 33, 100, 102]
+    expect(findClosestIndex(xs, 12)).toEqual(4)
+    expect(findClosestIndex(xs, 2.5)).toEqual(1)
+    expect(findClosestIndex(xs, 100)).toEqual(6)
+  })
+})
+
+describe('LUT', () => {
+  test('should work', () => {
+    // getLutConversion(reprojectionCache, productExtent, pToWgs84, wgs84ToM, mToP) {
+    const [pToM, mToP] = convertCoordinate('EPSG:4326', 'EPSG:3857')
+    const pToWgs84 = (c) => c
+    const c = getLutConversion({}, [60, 20, 65, 25], pToWgs84, pToM, mToP)
+    const [mapX, mapY] = pToM([62.5, 22.5])
+    expect(c([mapX, mapY])[0]).toBeCloseTo(62.5)
+    expect(c([mapX, mapY])[1]).toBeCloseTo(22.5)
   })
 })

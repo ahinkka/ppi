@@ -205,6 +205,7 @@ export class Map extends React.Component {
     this.__renderedProducts = new LRU(cacheOpts)
     this.__colorCaches = {}
     this.reprojectionCache = {}
+    this.reprojectionCacheKey = ''
 
     this.cursorToolVisible = false
 
@@ -402,7 +403,18 @@ export class Map extends React.Component {
     // Fill efficiently with NOT_SCANNED_COLOR to reduce array manipulation
     fillWithNotScanned(iData)
 
-    this.reprojectionCache = {}
+    const reprojectionCacheKey = stringify({
+      projectionRef: metadata.projectionRef,
+      affineTransform: metadata.affineTransform,
+      width: metadata.width,
+      height: metadata.height,
+      mapProjection: 'EPSG:3857'
+    })
+    if (reprojectionCacheKey != this.reprojectionCacheKey) {
+      this.reprojectionCache = {}
+      this.reprojectionCacheKey = reprojectionCacheKey
+    }
+
     for (let x=0; x<this.canvas.width; x++) {
       for (let y=0; y<this.canvas.height; y++) {
         const dataPxXY = canvasPxToProductPx(
