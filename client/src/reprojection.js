@@ -121,8 +121,6 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
     ySteps[i + 1] = base + (i + 1) * yStepSize
   }
 
-  // console.log({xSteps, ySteps})
-
   const mapXs = new Float32Array(xSteps.length)
   const mapYs = new Float32Array(ySteps.length)
   const productXs = new Float32Array(xSteps.length)
@@ -130,8 +128,8 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
   for (let i=0; i<xSteps.length; i++) {
     for (let j=0; j<ySteps.length; j++) {
       const xy = [xSteps[i], ySteps[j]]
-
       let xyM, xyP
+
       try {
         xyM = wgs84ToM(xy)
         mapXs[i] = xyM[0]
@@ -141,20 +139,14 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
         productYs[j] = xyP[1]
       } catch (error) {
         // console.log(error)
-        // console.log(xy, xyM, xyP)
+        // console.log({xy, xyM, xyP})
       }
     }
   }
 
-  // console.log({mapXs, mapYs, productXs, productYs})
-
+  // Returns NaNs when the pixel isn't inside the LUT (and hence outside the product's extent)
   return (coord) => {
     const [x, y] = coord
-
-    // if (x < mapXs[0]) throw new Error(`x (${x}) lower than LUT min (${mapXs[0]})`)
-    // if (x > mapXs[mapXs.length - 1]) throw new Error(`x (${x}) greater than LUT max (${mapXs[mapXs.length - 1]})`)
-    // if (y < mapYs[0]) throw new Error(`y (${y}) lower than LUT min (${mapYs[0]})`)
-    // if (y > mapYs[mapYs.length - 1]) throw new Error(`y (${y}) greater than LUT max (${mapYs[mapYs.length - 1]})`)
 
     const nearestXIdx = findClosestIndex(mapXs, x)
     const nearestYIdx = findClosestIndex(mapYs, y)
@@ -162,22 +154,15 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
     const secondNearestXIdx = (mapXs[nearestXIdx] < x) ? nearestXIdx + 1 : nearestXIdx - 1
     const secondNearestYIdx = (mapYs[nearestYIdx] < y) ? nearestYIdx + 1 : nearestYIdx - 1
 
-    // console.log({x, y, nearestXIdx, nearestYIdx, secondNearestXIdx, secondNearestYIdx, productXs, productYs, mapXs, mapYs})
-
     const [x0, x1] = inSortedOrder(mapXs[nearestXIdx], mapXs[secondNearestXIdx])
     const [y0, y1] = inSortedOrder(mapYs[nearestYIdx], mapYs[secondNearestYIdx])
-
-    // console.log({x0, x1, y0, y1})
 
     const propX = (x - x0) / (x1 - x0)
     const propY = (y - y0) / (y1 - y0)
 
-    // console.log({propX, propY})
-
     const [pX0, pX1] = inSortedOrder(productXs[nearestXIdx], productXs[secondNearestXIdx])
     const [pY0, pY1] = inSortedOrder(productYs[nearestYIdx], productYs[secondNearestYIdx])
 
-    // console.log({productXs, productYs})
     return [lerp(pX0, pX1, propX), lerp(pY0, pY1, propY)]
   }
 }

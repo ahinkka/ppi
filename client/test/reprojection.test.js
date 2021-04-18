@@ -63,8 +63,6 @@ describe('LUT', () => {
 	const expected = [x, y]
 	const converted = c(mapCoord)
 
-	// console.log({x, y, expected, converted})
-
 	expect(converted[0]).toBeCloseTo(expected[0])
 	expect(converted[1]).toBeCloseTo(expected[1])
       }
