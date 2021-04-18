@@ -177,9 +177,9 @@ export function canvasPxToProductPx(
 ) {
   const productExtent_ = productExtent(affineTransform, productWidth, productHeight)
   const [, mToP] = convertCoordinate(productProjectionDescription, canvasProjectionDescription)
-  const [wgs84ToM,] = convertCoordinate('EPSG:4326', 'EPSG:3857')
-  const [pToWgs84,] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
-  const mToPLut = convertCoordinateWithLut(productExtent_, pToWgs84, wgs84ToM, mToP)
+  // const [wgs84ToM,] = convertCoordinate('EPSG:4326', 'EPSG:3857')
+  // const [pToWgs84,] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
+  // const mToPLut = convertCoordinateWithLut(productExtent_, pToWgs84, wgs84ToM, mToP)
 
   return (x, y) => {
     const canvasXY = canvasPxToMapCoords(
@@ -188,7 +188,8 @@ export function canvasPxToProductPx(
       canvasExtent[1], canvasExtent[3],
       x, y
     )
-    const productXY = mToPLut(canvasXY)
+    // const productXY = mToPLut(canvasXY)
+    const productXY = mToP(canvasXY)
 
     if (productXY[0] < productExtent_[0] || productXY[1] < productExtent_[1] ||
         productXY[0] > productExtent_[2] || productXY[1] > productExtent_[3]) {
