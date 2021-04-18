@@ -1,5 +1,4 @@
 /* eslint no-console: "off" */
-
 import * as fs from 'fs'
 import {
   canvasPxToProductPx,
@@ -12,7 +11,7 @@ const product = JSON.parse(
 )
 const metadata = product.metadata
 
-const [pToM,] = convertCoordinate(metadata.projectionRef, 'EPSG:4326')
+const [pToM,] = convertCoordinate(metadata.projectionRef, 'EPSG:3857')
 const productExtent_ = productExtent(metadata.affineTransform, metadata.width, metadata.height)
 const peMin = pToM([productExtent_[0], productExtent_[1]])
 const peMax = pToM([productExtent_[2], productExtent_[3]])

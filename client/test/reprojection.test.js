@@ -2,7 +2,7 @@ import {
   findClosestIndex,
   convertCoordinate,
   productExtent,
-  getLutConversion
+  convertCoordinateWithLut
 } from '../src/reprojection'
 
 describe('Coordinate system conversions', () => {
@@ -51,13 +51,23 @@ describe('Closest index', () => {
 })
 
 describe('LUT', () => {
-  test('should work', () => {
-    // getLutConversion(reprojectionCache, productExtent, pToWgs84, wgs84ToM, mToP) {
+  test('should work in trivial cases', () => {
     const [pToM, mToP] = convertCoordinate('EPSG:4326', 'EPSG:3857')
-    const pToWgs84 = (c) => c
-    const c = getLutConversion({}, [60, 20, 65, 25], pToWgs84, pToM, mToP)
-    const [mapX, mapY] = pToM([62.5, 22.5])
-    expect(c([mapX, mapY])[0]).toBeCloseTo(62.5)
-    expect(c([mapX, mapY])[1]).toBeCloseTo(22.5)
+    const [pToWgs84, wgs84ToP] = convertCoordinate('EPSG:4326', 'EPSG:4326')
+    const c = convertCoordinateWithLut([60, 20, 65, 25], pToWgs84, pToM, mToP)
+
+    for (let x = 60.0; x < 65.0; x += 0.1) {
+      for (let y = 20.0; y < 25.0; y += 0.1) {
+	const mapCoord = pToM([x, y])
+
+	const expected = [x, y]
+	const converted = c(mapCoord)
+
+	// console.log({x, y, expected, converted})
+
+	expect(converted[0]).toBeCloseTo(expected[0])
+	expect(converted[1]).toBeCloseTo(expected[1])
+      }
+    }
   })
 })

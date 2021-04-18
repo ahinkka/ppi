@@ -99,24 +99,29 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
   const xDegrees = wgs84Extent[2] - wgs84Extent[0]
   const yDegrees = wgs84Extent[3] - wgs84Extent[1]
 
+  // These counts + 2, in reality
   const xStepCount = Math.max(3, Math.floor(xDegrees) / 2)
   const yStepCount = Math.max(3, Math.floor(yDegrees) / 2)
   const xStepSize = xDegrees / xStepCount
   const yStepSize = yDegrees / yStepCount
-  const xSteps = new Float32Array(xStepCount)
-  const ySteps = new Float32Array(yStepCount)
+  const xSteps = new Float32Array(xStepCount + 2)
+  const ySteps = new Float32Array(yStepCount + 2)
 
-  let xi = 0
-  for (let i=wgs84Extent[0]; i <= wgs84Extent[2]; i+=xStepSize) {
-    xSteps[xi] = i
-    xi++
+  xSteps[0] = wgs84Extent[0] - 0.1
+  xSteps[xSteps.length - 1] = wgs84Extent[2] + 0.1
+  for (let i=0; i<xStepCount; i++) {
+    const base = wgs84Extent[0] - xStepSize * 0.5
+    xSteps[i + 1] = base + (i + 1) * xStepSize
   }
 
-  let yi = 0
-  for (let i=wgs84Extent[1]; i <= wgs84Extent[3]; i+=yStepSize) {
-    ySteps[yi] = i
-    yi++
+  ySteps[0] = wgs84Extent[1] - 0.1
+  ySteps[ySteps.length - 1] = wgs84Extent[3] + 0.1
+  for (let i=0; i<yStepCount; i++) {
+    const base = wgs84Extent[1] - yStepSize * 0.5
+    ySteps[i + 1] = base + (i + 1) * yStepSize
   }
+
+  // console.log({xSteps, ySteps})
 
   const mapXs = new Float32Array(xSteps.length)
   const mapYs = new Float32Array(ySteps.length)
@@ -141,8 +146,16 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
     }
   }
 
+  // console.log({mapXs, mapYs, productXs, productYs})
+
   return (coord) => {
     const [x, y] = coord
+
+    // if (x < mapXs[0]) throw new Error(`x (${x}) lower than LUT min (${mapXs[0]})`)
+    // if (x > mapXs[mapXs.length - 1]) throw new Error(`x (${x}) greater than LUT max (${mapXs[mapXs.length - 1]})`)
+    // if (y < mapYs[0]) throw new Error(`y (${y}) lower than LUT min (${mapYs[0]})`)
+    // if (y > mapYs[mapYs.length - 1]) throw new Error(`y (${y}) greater than LUT max (${mapYs[mapYs.length - 1]})`)
+
     const nearestXIdx = findClosestIndex(mapXs, x)
     const nearestYIdx = findClosestIndex(mapYs, y)
 
@@ -163,6 +176,8 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
 
     const [pX0, pX1] = inSortedOrder(productXs[nearestXIdx], productXs[secondNearestXIdx])
     const [pY0, pY1] = inSortedOrder(productYs[nearestYIdx], productYs[secondNearestYIdx])
+
+    // console.log({productXs, productYs})
     return [lerp(pX0, pX1, propX), lerp(pY0, pY1, propY)]
   }
 }
@@ -177,9 +192,9 @@ export function canvasPxToProductPx(
 ) {
   const productExtent_ = productExtent(affineTransform, productWidth, productHeight)
   const [, mToP] = convertCoordinate(productProjectionDescription, canvasProjectionDescription)
-  // const [wgs84ToM,] = convertCoordinate('EPSG:4326', 'EPSG:3857')
-  // const [pToWgs84,] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
-  // const mToPLut = convertCoordinateWithLut(productExtent_, pToWgs84, wgs84ToM, mToP)
+  const [wgs84ToM,] = convertCoordinate('EPSG:4326', 'EPSG:3857')
+  const [pToWgs84,] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
+  const mToPLut = convertCoordinateWithLut(productExtent_, pToWgs84, wgs84ToM, mToP)
 
   return (x, y) => {
     const canvasXY = canvasPxToMapCoords(
@@ -188,10 +203,12 @@ export function canvasPxToProductPx(
       canvasExtent[1], canvasExtent[3],
       x, y
     )
-    // const productXY = mToPLut(canvasXY)
-    const productXY = mToP(canvasXY)
+    // console.log({x, y, canvasXY, canvasExtent})
+    const productXY = mToPLut(canvasXY)
+    // const productXY = mToP(canvasXY)
 
-    if (productXY[0] < productExtent_[0] || productXY[1] < productExtent_[1] ||
+    if (isNaN(productXY[0]) || isNaN(productXY[1]) ||
+	productXY[0] < productExtent_[0] || productXY[1] < productExtent_[1] ||
         productXY[0] > productExtent_[2] || productXY[1] > productExtent_[3]) {
       return [-1, -1]
     }

@@ -38,7 +38,7 @@ bundle: lint
 		--define:process.env.NODE_ENV=\"production\" \
 		--minify
 
-build/js/bench.js: src/bench.js
+build/js/bench.js: src/bench.js src/reprojection.js
 	node_modules/.bin/esbuild \
 		src/bench.js \
 		--bundle \
