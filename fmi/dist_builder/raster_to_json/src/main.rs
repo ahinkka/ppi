@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use gdal::raster::RasterBand;
+use gdal::raster::ResampleAlg;
 use gdal::Dataset;
 use gdal_sys::GDALDataType;
 
@@ -46,8 +47,13 @@ fn populate_data(ds: &Dataset) -> Vec<Vec<u8>> {
         if percentage as u32 % 10 == 0 {
             eprintln!("{:.0}%", percentage);
         }
-        let d: Vec<u8> = band.read_as::<u8>((x as isize, 0), (1, height), (1, height))
-            .unwrap()
+        let d: Vec<u8> = band.read_as::<u8>(
+	    (x as isize, 0),
+	    (1, height),
+	    (1, height),
+	    Some(ResampleAlg::Bilinear)
+	)
+	    .unwrap()
             .data
             .clone();
         rows.push(d);
