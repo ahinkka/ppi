@@ -2,6 +2,7 @@ use std::process;
 use std::env;
 use std::io::{self, Read};
 use std::time::Instant;
+use std::convert::TryInto;
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -12,6 +13,8 @@ use gdal::Dataset;
 use gdal_sys::GDALDataType;
 
 use serde_json::{Value, json};
+
+use indicatif::{ProgressBar, ProgressStyle};
 
 fn populate_metadata(ds: &Dataset, metadata: &mut Value) {
     let (width, height) = ds.raster_size();
@@ -42,11 +45,12 @@ fn populate_data(ds: &Dataset) -> Vec<Vec<u8>> {
 
     let mut rows: Vec<Vec<u8>> = Vec::with_capacity(width);
 
+    let pb = ProgressBar::new(width.try_into().unwrap());
+    pb.set_style(ProgressStyle::default_bar()
+        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] ({pos}/{len}, ETA {eta})"));
+
     for x in 0..width {
-        let percentage = (x as f32 / width as f32) * 100.0;
-        if percentage as u32 % 10 == 0 {
-            eprintln!("{:.0}%", percentage);
-        }
+	pb.set_position(x.try_into().unwrap());
         let d: Vec<u8> = band.read_as::<u8>(
 	    (x as isize, 0),
 	    (1, height),
