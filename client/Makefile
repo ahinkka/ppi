@@ -7,31 +7,32 @@ help:
 
 .PHONY: lint
 lint: ## Run ESLint
+	npx tsc --jsx react-jsxdev --noEmit --esModuleInterop src/main.tsx
 	./node_modules/.bin/eslint src
 
 .PHONY: fix-lint
 fix-lint: ## Fix lint using ESLint
-	./node_modules/.bin/eslint --fix $(find src -type d)
+	npx eslint --fix $(find src -type d)
 
 .PHONY: test
 test: ## Run tests
-	./node_modules/.bin/jest
+	npx jest
 
 .PHONY: dev-test
 dev-test: ## Run tests continuously
-	./node_modules/.bin/jest --watch
+	npx jest --watch
 
 .PHONY: style
 style:
 	mkdir -p ./build/css
-	node_modules/.bin/node-sass \
+	npx node-sass \
 		--include-path=node_modules/bootstrap/scss \
 		css/ppi.sass > build/css/ppi.css
 
 .PHONY: bundle
 bundle: lint
-	node_modules/.bin/esbuild \
-		src/main.js \
+	npx esbuild \
+		src/main.tsx \
 		--bundle \
 		--outfile=build/js/ppi.js \
 		--loader:.js=jsx \
@@ -39,7 +40,7 @@ bundle: lint
 		--minify
 
 build/js/bench.js: src/bench.js src/reprojection.js
-	node_modules/.bin/esbuild \
+	npx esbuild \
 		src/bench.js \
 		--bundle \
 		--platform=node \
@@ -63,8 +64,8 @@ build: bundle style ## Build distribution into directory 'build'
 
 .PHONY: dev-bundle
 dev-bundle:
-	node_modules/.bin/esbuild \
-		src/main.js \
+	npx esbuild \
+		src/main.tsx \
 		--bundle \
 		--outfile=build/js/ppi.js \
 		--loader:.js=jsx \
@@ -75,6 +76,10 @@ dev-bundle:
 dev-build: ## Watch for filesystem changes and build on change
 	make dev-bundle style
 	find Makefile src www -type f | entr make dev-bundle style
+
+.PHONY: dev-typecheck
+dev-typecheck: # Watch for filesystem changes and typecheck
+	npx tsc --jsx react-jsxdev -w --noEmit --esModuleInterop src/main.tsx
 
 .PHONY: clean
 clean: ## Clean build directory
