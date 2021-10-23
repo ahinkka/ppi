@@ -27,7 +27,7 @@ import {ObserverActions} from '../constants'
 
 import DropdownSelector from './dropdown_selector'
 import {Map} from './map.js'
-import ToggleButton from './toggle_button'
+import {ToggleButton} from './toggle_button'
 import ProductSlider from './product_slider'
 import ColorScale from './color_scale'
 import {NOAAScaleToScaleDescription} from './coloring'

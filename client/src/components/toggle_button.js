@@ -2,7 +2,7 @@ import React from 'react'
 import {OverlayTrigger, Tooltip} from 'react-bootstrap';
 
 
-export default function(props) {
+export function ToggleButton(props) {
   const tooltip = (
     <Tooltip id="pause-tooltip">{props.tooltip}</Tooltip>
   )
