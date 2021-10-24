@@ -7,7 +7,7 @@ help:
 
 .PHONY: lint
 lint: ## Run ESLint
-	npx tsc --jsx react-jsxdev --noEmit --esModuleInterop src/main.tsx
+	npx tsc --jsx react-jsxdev --noEmit
 	./node_modules/.bin/eslint src
 
 .PHONY: fix-lint
@@ -79,7 +79,7 @@ dev-build: ## Watch for filesystem changes and build on change
 
 .PHONY: dev-typecheck
 dev-typecheck: # Watch for filesystem changes and typecheck
-	npx tsc --jsx react-jsxdev -w --noEmit --esModuleInterop src/main.tsx
+	npx tsc --jsx react-jsxdev -w --noEmit
 
 .PHONY: clean
 clean: ## Clean build directory
