@@ -20,6 +20,7 @@
   "dependencies": {
     "@babel/preset-typescript": "^7.16.0",
     "bootstrap": "^4.6.0",
+    "fp-ts": "^2.11.5",
     "jquery": "^3.6.0",
     "json-stable-stringify": "^1.0.1",
     "lru-cache": "^6.0.0",
