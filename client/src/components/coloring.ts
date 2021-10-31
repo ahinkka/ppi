@@ -1,16 +1,13 @@
-import {DataValueType, integerToDataValue} from './datavalue'
-
+import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 
 // Global not scanned color; see fillWithNotScanned before changing this
 export const NOT_SCANNED_COLOR = [211, 211, 211, 76]
 // Global no echo color (transparent black)
 export const NO_ECHO_COLOR = [0, 0, 0, 0]
 
-
 export const ScaleRangeType = {
   STEP: 'step',
 }
-
 
 // TODO: the actual colors might not be completely correct. This is the scale
 //       as described in Wikipedia.  This is a discrete scale for reflectivity
@@ -40,8 +37,7 @@ const NOAALowRedGreenBlue = [
   [70,  154, 86,  195],
   [75,  248, 246, 247]]
 
-
-const _reflectivityValueToNOAAColor = (reflectivityValue) => {
+const _reflectivityValueToNOAAColor = (reflectivityValue: number) => {
   for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
     const [low, red, green, blue] = NOAALowRedGreenBlue[index]
     if (index == NOAALowRedGreenBlue.length - 1) {
@@ -57,9 +53,8 @@ const _reflectivityValueToNOAAColor = (reflectivityValue) => {
   return [null, null, null]
 }
 
-
 const _reflectivityValueToNOAAColorCache = {}
-export const reflectivityValueToNOAAColor = (reflectivityValue) => {
+export const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
   if (!(reflectivityValue in _reflectivityValueToNOAAColorCache)) {
     _reflectivityValueToNOAAColorCache[reflectivityValue] =
       _reflectivityValueToNOAAColor(reflectivityValue)
@@ -76,7 +71,7 @@ export const NOAAScaleToScaleDescription = () => {
     const [low, red, green, blue] = NOAALowRedGreenBlue[rowIndex]
 
     if (nextRowIndex < NOAALowRedGreenBlue.length) {
-      const [nextLow, nextRed, nextGreen, nextBlue] = NOAALowRedGreenBlue[nextRowIndex] // eslint-disable-line no-unused-vars
+      const [nextLow] = NOAALowRedGreenBlue[nextRowIndex] // eslint-disable-line no-unused-vars
       result.push({
         type: ScaleRangeType.STEP,
         start: { value: low, open: false },
@@ -96,8 +91,7 @@ export const NOAAScaleToScaleDescription = () => {
   return result
 }
 
-
-export const resolveColorForReflectivity = (dataScale, value) => {
+export const resolveColorForReflectivity = (dataScale: DataScale, value: number) => {
   const [valueType, dataValue] = integerToDataValue(dataScale, value)
   if (valueType == DataValueType.NOT_SCANNED) {
     return NOT_SCANNED_COLOR
@@ -111,8 +105,7 @@ export const resolveColorForReflectivity = (dataScale, value) => {
   }
 }
 
-
-export const resolveColorGeneric = (dataScale, value) => {
+export const resolveColorGeneric = (dataScale: DataScale, value: number) => {
   if (value == dataScale.notScanned) {
     return NOT_SCANNED_COLOR
   } else {
@@ -121,7 +114,7 @@ export const resolveColorGeneric = (dataScale, value) => {
 }
 
 
-export const fillWithNotScanned = (dataArray) => {
+export const fillWithNotScanned = (dataArray: Uint8Array) => {
   dataArray.fill(NOT_SCANNED_COLOR[0])
 
   for (let i=3; i<dataArray.length; i = i + 4) {

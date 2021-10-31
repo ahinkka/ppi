@@ -15,7 +15,15 @@ export const DataValueType = {
   NOT_SCANNED: 'not scanned',
   VALUE: 'value'
 }
-export const integerToDataValue = (dataScale, intValue) => {
+
+export type DataScale = {
+  step: number,
+  offset: number,
+  notScanned: number,
+  noEcho: number,
+}
+
+export const integerToDataValue = (dataScale: DataScale, intValue: number): [string, number | null] => {
   if (intValue == dataScale.noEcho) {
     return [DataValueType.NO_ECHO, null]
   } else if (intValue == dataScale.notScanned) {
