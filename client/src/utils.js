@@ -6,7 +6,7 @@ export function httpGetPromise(url, binary) {
   return new Promise(function(resolve, reject) {
     let req = new XMLHttpRequest();
     req.open('GET', url);
-    if (binary !== undefined) {
+    if (binary) {
       req.responseType = 'arraybuffer';
     }
     req.onload = function() {

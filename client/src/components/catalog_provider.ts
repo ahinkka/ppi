@@ -1,19 +1,15 @@
-import { Component } from 'react'
-import PropTypes from 'prop-types'
+import { Component, Dispatch } from 'react'
 
 import { httpGetPromise } from '../utils'
 import { ObserverActions } from '../constants'
 
+type Props = { dispatch: Dispatch<{ type: string, payload: unknown }>, url: string }
 
-class CatalogProvider extends Component {
-  static propTypes = {
-    dispatch: PropTypes.func,
-    url: PropTypes.string
-  }
+class CatalogProvider extends Component<Props> {
+  private intervalId: ReturnType<typeof setInterval> | null
 
-  constructor() {
-    super()
-
+  constructor(props: Readonly<Props> | Props) {
+    super(props)
     this.intervalId = null
   }
 
@@ -22,19 +18,19 @@ class CatalogProvider extends Component {
     const url = this.props.url
 
     const update = () => {
-      httpGetPromise(url)
+      httpGetPromise(url, false)
         .then(JSON.parse)
         .then((obj) => {
-          dispatch({type: ObserverActions.CATALOG_UPDATED, payload: obj})
+          dispatch({ type: ObserverActions.CATALOG_UPDATED, payload: obj })
         })
     }
-    
+
     this.intervalId = setInterval(update, 30000)
     setTimeout(update, 0)
   }
 
   componentWillUnmount() {
-    clearInterval(this.intervalId)
+    if (this.intervalId) clearInterval(this.intervalId)
   }
 
   render() {
