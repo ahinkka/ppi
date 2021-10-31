@@ -1,12 +1,19 @@
 import proj4 from 'proj4'
 proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
 
-export function convertCoordinate(productProjectionDescription, mapProjectionDescription) {
-  const p = proj4(productProjectionDescription, mapProjectionDescription)
+type AffineTransform = [number, number, number, number, number, number]
+
+type Extent = [number, number, number, number]
+
+type ConversionFunction = (coord: [number, number]) => [number, number]
+
+export function convertCoordinate(productProjDef: string, mapProjDef: string) {
+  const p = proj4(productProjDef, mapProjDef)
   return [p.forward, p.inverse]
 }
 
-export function transform(affineTransform, x, y) {
+
+export function transform(affineTransform: AffineTransform, x: number, y: number) {
   // "affineTransform": [
   // 0   19.8869934197,              // X origin
   // 1   0.009449604183593748,       //  width (typically main) coef for calculating X offset
@@ -26,7 +33,7 @@ export function transform(affineTransform, x, y) {
   ]
 }
 
-export function productExtent(affineTransform, width, height) {
+export function productExtent(affineTransform: AffineTransform, width: number, height: number): Extent {
   const origin = [affineTransform[0], affineTransform[3]]
   const extreme = transform(affineTransform, width, height)
   return [
@@ -37,11 +44,14 @@ export function productExtent(affineTransform, width, height) {
   ]
 }
 
-function lerp(a, b, f) {
+function lerp(a: number, b: number, f: number): number {
   return (a * (1.0 - f)) + (b * f)
 }
 
-function canvasPxToMapCoords(canvasWidth, canvasHeight, xMin, xMax, yMin, yMax, x, y) {
+function canvasPxToMapCoords(canvasWidth: number, canvasHeight: number,
+			     xMin: number, xMax: number,
+			     yMin: number, yMax:number,
+			     x: number, y: number): [number, number] {
   const propX = x / canvasWidth
   const propY = 1 - y / canvasHeight
   const mapX = lerp(xMin, xMax, propX)
@@ -49,9 +59,9 @@ function canvasPxToMapCoords(canvasWidth, canvasHeight, xMin, xMax, yMin, yMax, 
   return [mapX, mapY]
 }
 
-function convertExtent(extent, conversionFunction) {
-  const origCoordMin = [extent[0], extent[1]]
-  const origCoordMax = [extent[2], extent[3]]
+function convertExtent(extent: Extent, conversionFunction: ConversionFunction) {
+  const origCoordMin = [extent[0], extent[1]] as [number, number]
+  const origCoordMax = [extent[2], extent[3]] as [number, number]
   const [coordA, coordB] = [
     conversionFunction(origCoordMin),
     conversionFunction(origCoordMax)
@@ -63,7 +73,7 @@ function convertExtent(extent, conversionFunction) {
   ]
 }
 
-export function findClosestIndex(arr, target) {
+export function findClosestIndex(arr: Float32Array, target: number) {
   let start = 0
   let end = arr.length - 1
 
@@ -92,9 +102,9 @@ export function findClosestIndex(arr, target) {
   return smallestDifferenceIndex
 }
 
-const inSortedOrder = (a, b) => [Math.min(a, b), Math.max(a, b)]
+const inSortedOrder = (a: number, b: number) => [Math.min(a, b), Math.max(a, b)]
 
-export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP) {
+export function convertCoordinateWithLut(productExtent: Extent, pToWgs84: ConversionFunction, wgs84ToM: ConversionFunction, mToP: ConversionFunction) {
   const wgs84Extent = convertExtent(productExtent, pToWgs84)
   const xDegrees = wgs84Extent[2] - wgs84Extent[0]
   const yDegrees = wgs84Extent[3] - wgs84Extent[1]
@@ -127,8 +137,8 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
   const productYs = new Float32Array(ySteps.length)
   for (let i=0; i<xSteps.length; i++) {
     for (let j=0; j<ySteps.length; j++) {
-      const xy = [xSteps[i], ySteps[j]]
-      let xyM, xyP
+      const xy = [xSteps[i], ySteps[j]] as [number, number]
+      let xyM: [number, number] | null, xyP: [number, number] | null
 
       try {
         xyM = wgs84ToM(xy)
@@ -145,7 +155,7 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
   }
 
   // Returns NaNs when the pixel isn't inside the LUT (and hence outside the product's extent)
-  return (coord) => {
+  return (coord: [number, number]) => {
     const [x, y] = coord
 
     const nearestXIdx = findClosestIndex(mapXs, x)
@@ -168,12 +178,12 @@ export function convertCoordinateWithLut(productExtent, pToWgs84, wgs84ToM, mToP
 }
 
 export function canvasPxToProductPx(
-  productProjectionDescription,
-  affineTransform,
-  productWidth, productHeight,
-  canvasProjectionDescription,
-  canvasExtent,
-  canvasWidth, canvasHeight,
+  productProjectionDescription: string,
+  affineTransform: AffineTransform,
+  productWidth: number, productHeight: number,
+  canvasProjectionDescription: string,
+  canvasExtent: Extent,
+  canvasWidth: number, canvasHeight: number,
 ) {
   const productExtent_ = productExtent(affineTransform, productWidth, productHeight)
   const [, mToP] = convertCoordinate(productProjectionDescription, canvasProjectionDescription)
@@ -181,7 +191,7 @@ export function canvasPxToProductPx(
   const [pToWgs84,] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
   const mToPLut = convertCoordinateWithLut(productExtent_, pToWgs84, wgs84ToM, mToP)
 
-  return (x, y) => {
+  return (x: number, y: number) => {
     const canvasXY = canvasPxToMapCoords(
       canvasWidth, canvasHeight,
       canvasExtent[0], canvasExtent[2],
@@ -205,13 +215,13 @@ export function canvasPxToProductPx(
 }
 
 export function wgs84ToProductPx(
-  productProjectionDescription,
-  affineTransform,
-  productWidth, productHeight
-) {
+  productProjectionDescription: string,
+  affineTransform: AffineTransform,
+  productWidth: number, productHeight: number
+): (lon: number, lat: number) => [number, number] {
   const [, wgs84ToP] = convertCoordinate(productProjectionDescription, 'EPSG:4326')
 
-  return (lon, lat) => {
+  return (lon: number, lat: number) => {
     const productXY = wgs84ToP([lon, lat])
 
     const productExtent_ = convertExtent(
