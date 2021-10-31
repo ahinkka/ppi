@@ -1,4 +1,6 @@
-const serializeHash = (contents) => {
+import { State } from './types'
+
+const serializeHash = (contents: { [key: string]: string | number | boolean }) => {
   let keys = Object.keys(contents)
   keys.sort()
   let result = '#'
@@ -15,8 +17,7 @@ const serializeHash = (contents) => {
   return result
 }
 
-
-export const makeHashFromState = (state) => {
+export const makeHashFromState = (state: State) => {
   return serializeHash(
     {
       site: state.selection.siteId,
@@ -29,7 +30,7 @@ export const makeHashFromState = (state) => {
 }
 
 
-export const parseHash = (hash) => {
+export const parseHash = (hash: string): { [key: string]: string } => {
   let parts = hash.slice(1).split('&')
   let result = {}
   for (let part of parts) {
