@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Component, WheelEvent } from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
@@ -8,7 +8,7 @@ import LRU from 'lru-cache'
 import {ObserverActions} from '../constants'
 
 
-const minAnimationTime = (times) => {
+const minAnimationTime = (times: number[]): Date => {
   if (times.length == 0) {
     return null
   }
@@ -20,8 +20,7 @@ const minAnimationTime = (times) => {
   return new Date(times[0] - (times[0] - times[1]))
 }
 
-
-const maxAnimationTime = (times) => {
+const maxAnimationTime = (times: number[]): Date => {
   if (times.length == 0) {
     return null
   }
@@ -36,9 +35,17 @@ const maxAnimationTime = (times) => {
   return new Date(lastTime + (lastTime - secondToLastTime))
 }
 
+type TickProps = {
+  key: string,
+  clicked: () => any,
+  position: number,
+  tooltip: string,
+  color: string,
+  character: string,
+}
 
-class Tick extends React.Component {
-  shouldComponentUpdate(nextProps) {
+class Tick extends Component<TickProps> {
+  shouldComponentUpdate(nextProps: Readonly<TickProps> | TickProps) {
     return (
       this.props.position !== nextProps.position ||
 	this.props.tooltip !== nextProps.tooltip ||
@@ -48,24 +55,23 @@ class Tick extends React.Component {
   }
 
   render() {
-    const props = this.props
+    const { clicked, position, tooltip, color, character } = this.props
 
-    const tooltip = (
-      <Tooltip id={'tick-' + props.position + '-tooltip'}>{props.tooltip}</Tooltip>
+    const tooltipComponent = (
+      <Tooltip id={'tick-' + position + '-tooltip'}>{tooltip}</Tooltip>
     )
 
     return (
-      <OverlayTrigger placement="bottom" overlay={tooltip}>
-        <div style={{position: 'absolute', left: (0.01 + 0.98 * props.position) * 100 + '%',
-          color: props.color, cursor: 'pointer'}}
-        onClick={props.clicked}>{props.character}</div>
+      <OverlayTrigger placement="bottom" overlay={tooltipComponent}>
+        <div style={{position: 'absolute', left: (0.01 + 0.98 * position) * 100 + '%',
+          color: color, cursor: 'pointer'}}
+        onClick={clicked}>{character}</div>
       </OverlayTrigger>
     )
   }
 }
 
-
-const _renderTooltip = (time) => {
+const _renderTooltip = (time: number) => {
   const utcTime = moment.utc(time)
   const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
   const displayHours = Math.floor(minutes / 60)
@@ -73,13 +79,12 @@ const _renderTooltip = (time) => {
   return utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
 }
 
-
 const _renderTooltipCache = new LRU({
   max: 50,
   maxAge: 1000 * 60,
   stale: false,
 })
-const renderTooltip = (time) => {
+const renderTooltip = (time: number) => {
   const tooltip = _renderTooltipCache.get(time)
   if (tooltip) {
     return tooltip
@@ -90,16 +95,26 @@ const renderTooltip = (time) => {
   return computed
 }
 
+type TickItem = {
+  time: number,
+  callback: () => any,
+  isCurrent: boolean,
+  isLoaded: boolean,
+  key: string
+}
 
+type ProductSliderProps = {
+  ticks: TickItem[]
+}
 
-function ProductSlider(props) {
+function ProductSlider(props: ProductSliderProps) {
   const times = props.ticks.map((item) => item.time)
   const [minTime, maxTime] = [minAnimationTime(times), maxAnimationTime(times)]
-  const span = maxTime - minTime
+  const span = maxTime.valueOf() - minTime.valueOf()
 
-  const ticks = props.ticks.map((item) => {
-    const fromStart = item.time - minTime
-    const position = fromStart / span
+  const ticks = props.ticks.map((item: TickItem) => {
+    const fromStart = item.time - minTime.valueOf()
+    const tickPosition = fromStart / span
 
     let character = '▏'
     let color = '#e0e0e0'
@@ -111,11 +126,10 @@ function ProductSlider(props) {
       color = '#808080'
     }
 
-    return (<Tick key={item.key} position={position} color={color}
-      character={character} tooltip={renderTooltip(item.time)} clicked={item.callback} />)
+    return (<Tick key={item.key} position={tickPosition} color={color} character={character} tooltip={renderTooltip(item.time)} clicked={item.callback} />)
   })
 
-  const onWheel = (event) => {
+  const onWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (event.deltaY < 0) {
       props.dispatch({type: ObserverActions.TICK_BACKWARD})
     } else if (event.deltaY > 0) {
@@ -134,6 +148,5 @@ function ProductSlider(props) {
     </div>
   )
 }
-
 
 export default ProductSlider
