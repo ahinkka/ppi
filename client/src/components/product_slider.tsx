@@ -105,6 +105,7 @@ type TickItem = {
 
 type ProductSliderProps = {
   ticks: TickItem[]
+  dispatch: (payload: any) => any
 }
 
 function ProductSlider(props: ProductSliderProps) {

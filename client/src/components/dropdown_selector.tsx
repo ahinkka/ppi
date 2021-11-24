@@ -1,16 +1,28 @@
 import React from 'react'
 
-import {OverlayTrigger, Tooltip} from 'react-bootstrap'
+import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
 
-function DropdownSelectorOption(props) {
-  return (
-    <option key={props.id} value={props.id}>{props.display}</option>
-  )
+type DropdownSelectorOptionProps = {
+  id: string,
+  display: string
 }
 
+const DropdownSelectorOption = (props: DropdownSelectorOptionProps) =>
+  (<option key={props.id} value={props.id}>{props.display}</option>)
 
-function DropdownSelector(props) {
+type DropdownSelectorProps = {
+  items: DropdownSelectorOptionProps[]
+  tooltipId: string,
+  tooltip: string,
+  legend: string
+  currentValue: string,
+  disabled: boolean,
+  action: () => any,
+  dispatch: (payload: any) => any
+}
+
+const DropdownSelector = (props: DropdownSelectorProps) => {
   const options = props.items.map(
     (item) => (<DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>)
   )
