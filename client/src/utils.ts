@@ -1,5 +1,3 @@
-import * as L from 'partial.lenses'
-
 export function httpGetPromise(url: string, binary: boolean) {
   return new Promise(function(resolve, reject) {
     let req = new XMLHttpRequest();
@@ -62,6 +60,3 @@ export function twoDtoUint8Array(input: number[][]): [number, number, Uint8Array
 
   return [dim1, dim2, view]
 }
-
-export const lensesToProps = (lenses) =>
-  (state) => lenses.reduce((acc, lens) => L.set(lens, L.get(lens, state), acc), {})
