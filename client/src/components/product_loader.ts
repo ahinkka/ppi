@@ -1,18 +1,12 @@
-import pako from 'pako';
-import * as L from 'partial.lenses'
+import pako from 'pako'
 
 import { Component } from 'react'
 import { connect } from 'react-redux'
 
-import { httpGetPromise, twoDtoUint8Array, lensesToProps } from '../utils'
-
-import {
-  selectedFlavorL,
-  loadedProductsL
-} from '../state_reduction'
-import { ObserverActions } from '../constants'
-
+import { httpGetPromise, twoDtoUint8Array } from '../utils'
+import { ObserverActions, ObserverDispatch } from '../constants'
 import { orderForLoading } from '../product_time_loading_order'
+import { State, Flavor } from '../types'
 
 
 function inflate(stream) {
@@ -48,8 +42,15 @@ const parseProduct = async (resp) => new Promise((resolve, reject) => {
   }
 })
 
+export type ProductUrlResolver = (flavor: Flavor, time: number) => string
 
-const loadOneProduct = (dispatch, productUrlResolver, loadedProducts, loadingProducts, flavor) => {
+const loadOneProduct = (
+  dispatch: ObserverDispatch,
+  productUrlResolver: ProductUrlResolver,
+  loadedProducts: { [key: string]: any },
+  loadingProducts: { [key: string]: Date },
+  flavor: Flavor
+) => {
   const removedUrls = new Set()
   const loadingOrderedTimes = orderForLoading(flavor.times.map((t) => Date.parse(t.time)))
   const intendedUrls = loadingOrderedTimes.map((t) => productUrlResolver(flavor, t))
@@ -99,12 +100,20 @@ const loadOneProduct = (dispatch, productUrlResolver, loadedProducts, loadingPro
     })
 }
 
+type Props = {
+  selectedFlavor: Flavor,
+  loadedProducts: { [key: string]: null | undefined },
+  productUrlResolver: ProductUrlResolver,
+  setProductRepositoryObject: (obj: { [key: string]: null | undefined }) => void,
+  dispatch: ObserverDispatch
+}
 
-class ProductLoader extends Component {
-  constructor() {
-    super()
-    this.loadedProducts = {}
-    this.loadingProducts = {}
+class ProductLoader extends Component<Props> {
+  private loadedProducts: { [key: string]: null | undefined } = {}
+  private loadingProducts: { [key: string]: Date } = {}
+
+  constructor(props: Readonly<Props> | Props) {
+    super(props)
   }
 
   componentDidMount() {
@@ -113,7 +122,7 @@ class ProductLoader extends Component {
 
   render() {
     const props = this.props
-    const flavor =  L.get(selectedFlavorL, props)
+    const flavor = props.selectedFlavor
 
     if (!flavor) {
       return null
@@ -124,7 +133,7 @@ class ProductLoader extends Component {
         props.dispatch,
         props.productUrlResolver,
         this.loadedProducts, this.loadingProducts,
-        L.get(selectedFlavorL, props)
+        props.selectedFlavor
       )
     setTimeout(l, 0)
 
@@ -133,5 +142,11 @@ class ProductLoader extends Component {
 }
 
 
-const mapStateToProps = lensesToProps([selectedFlavorL, loadedProductsL])
+const mapStateToProps =
+  (state: State): Omit<Props, 'dispatch' | 'productUrlResolver' | 'setProductRepositoryObject'> => {
+    return {
+      selectedFlavor: state.selection.flavor,
+      loadedProducts: state.loadedProducts
+    }
+  }
 export default connect(mapStateToProps)(ProductLoader)
