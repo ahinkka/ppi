@@ -135,7 +135,13 @@ def fetch_latest_product(client, site, product_name):
         Bucket=_product_bucket,
         Prefix=prefix
     )
-    files = list(response['Contents'])
+
+    try:
+        files = list(response['Contents'])
+    except Exception as e:
+        print(f'Failed to list bucket contents for {site}, {prefix}', file=sys.stderr)
+        raise e
+
     entries = [with_datetime_and_product_name(f) for f in files]
 
     latest = sorted(
@@ -161,12 +167,15 @@ def fetch_product_list(sites=DEFAULT_SITES):
 
     result = []
     for site in sites:
-        if 'composite' in site:
-            product = fetch_latest_composite_product(client, site)
-        else:
-            product = fetch_latest_product(client, site, 'DBZH')
-
-        result.append(product)
+        try:
+            if 'composite' in site:
+                product = fetch_latest_composite_product(client, site)
+            else:
+                product = fetch_latest_product(client, site, 'DBZH')
+            result.append(product)
+        except Exception as e:
+            traceback.print_exc()
+            print(f'Failed to resolve latest product for site {site}, continuing...', file=sys.stderr)
 
     return result
 
