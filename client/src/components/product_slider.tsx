@@ -5,7 +5,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 import moment from 'moment'
 import LRU from 'lru-cache'
 
-import {ObserverActions} from '../constants'
+import { ObserverActions, ObserverDispatch } from '../constants'
 
 
 const minAnimationTime = (times: number[]): Date => {
@@ -95,7 +95,7 @@ const renderTooltip = (time: number) => {
   return computed
 }
 
-type TickItem = {
+type TickItem = {pp
   time: number,
   callback: () => any,
   isCurrent: boolean,
@@ -105,7 +105,7 @@ type TickItem = {
 
 type ProductSliderProps = {
   ticks: TickItem[]
-  dispatch: (payload: any) => any
+  dispatch: ObserverDispatch
 }
 
 function ProductSlider(props: ProductSliderProps) {
@@ -132,9 +132,9 @@ function ProductSlider(props: ProductSliderProps) {
 
   const onWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (event.deltaY < 0) {
-      props.dispatch({type: ObserverActions.TICK_BACKWARD})
+      props.dispatch({ type: ObserverActions.TICK_BACKWARD })
     } else if (event.deltaY > 0) {
-      props.dispatch({type: ObserverActions.TICK_FORWARD})
+      props.dispatch({ type: ObserverActions.TICK_FORWARD })
     }
   }
 

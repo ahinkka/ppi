@@ -1,9 +1,9 @@
-import { Component, Dispatch } from 'react'
+import { Component } from 'react'
 
 import { httpGetPromise } from '../utils'
-import { ObserverActions } from '../constants'
+import { ObserverActions, ObserverDispatch } from '../constants'
 
-type Props = { dispatch: Dispatch<{ type: string, payload: unknown }>, url: string }
+type Props = { dispatch: ObserverDispatch, url: string }
 
 class GeoInterestsProvider extends Component<Props> {
   componentDidMount() {

@@ -2,6 +2,8 @@ import React from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
+import { ObserverActions, ObserverDispatch } from '../constants'
+
 
 type DropdownSelectorOptionProps = {
   id: string,
@@ -18,8 +20,8 @@ type DropdownSelectorProps = {
   legend: string
   currentValue: string,
   disabled: boolean,
-  action: () => any,
-  dispatch: (payload: any) => any
+  action: ObserverActions,
+  dispatch: ObserverDispatch
 }
 
 const DropdownSelector = (props: DropdownSelectorProps) => {
@@ -29,10 +31,11 @@ const DropdownSelector = (props: DropdownSelectorProps) => {
 
   const tooltipId = '{props.legend}-tooltip'
   const tooltip = (
-    <Tooltip id={tooltipId}>{props.tooltip}</Tooltip>
+      <Tooltip id={tooltipId}>{props.tooltip}</Tooltip>
   )
 
-  const handleChange = (e) => props.dispatch({type: props.action, payload: e.target.value})
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
+  props.dispatch({ type: props.action, payload: e.target.value })
 
   const selectTitle = 'Select ' + props.legend.toLowerCase();
   return (
