@@ -127,7 +127,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
         params = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
 
         _, site_product = params['layers'][0].split(':')
-        site, product_name = site_product.split('_')
+        site, product_name = site_product.split('_', 1)
 
         if site not in sites:
             continue
