@@ -27,6 +27,7 @@ SITE_NAMES = {
     'fipet': 'Petäjävesi',
     'fiuta': 'Utajärvi',
     'fivan': 'Vantaa',
+    'fivih': 'Vihti',
     'fivim': 'Vimpeli',
     'finland_composite': 'Finland composite'
 }
