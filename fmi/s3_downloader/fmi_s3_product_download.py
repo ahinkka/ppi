@@ -3,6 +3,7 @@ import sys
 import traceback
 import json
 import subprocess
+import operator
 
 from os import getcwd, unlink, makedirs
 from os.path import join as path_join
@@ -117,6 +118,44 @@ def fetch_latest_composite_product(client, site):
                    linear_transformation_offset=linear_transformation_offset)
 
 
+def with_datetime_and_product_name(entry):
+    result = dict(entry)
+    result['filename_datetime'] = parse_datetime_from_filename(entry['Key'])
+    filename = entry['Key'].split('/')[-1]
+    filename_without_extension = '.'.join(filename.split('.')[:-1])
+    result['product_name'] = filename_without_extension.split('_', 2)[2]
+    return result
+
+
+def fetch_latest_product(client, site, product_name):
+    date_prefix = dt.now().strftime('%Y/%m/%d')
+    site_suffix = f'{site}'
+    prefix = f'{date_prefix}/{site_suffix}'
+    response = client.list_objects_v2(
+        Bucket=_product_bucket,
+        Prefix=prefix
+    )
+    files = list(response['Contents'])
+    entries = [with_datetime_and_product_name(f) for f in files]
+
+    latest = sorted(
+        [e for e in entries if e['product_name'] == product_name],
+        key=operator.itemgetter('filename_datetime'),
+        reverse=True
+    )[0]
+
+    # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
+    #  radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
+    linear_transformation_gain = 0.5
+    linear_transformation_offset = -32
+    height = '250m'
+    product_time = parse_datetime_from_filename(latest['Key'])
+
+    return Product(site, product_name, product_time, latest['Key'],
+                   linear_transformation_gain=linear_transformation_gain,
+                   linear_transformation_offset=linear_transformation_offset)
+
+
 def fetch_product_list(sites=DEFAULT_SITES):
     client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
@@ -125,7 +164,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
         if 'composite' in site:
             product = fetch_latest_composite_product(client, site)
         else:
-            raise Exception('not implemented')
+            product = fetch_latest_product(client, site, 'DBZH')
 
         result.append(product)
 

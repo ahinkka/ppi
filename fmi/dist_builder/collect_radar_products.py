@@ -61,7 +61,7 @@ def read_product(path):
     product_name = product["product"]
     result["product_name"] = product_name
     result["product_id"] = product_name
-    if product_name == "dbzh" or product_name == 'dbz':
+    if product_name in ('dbzh', 'dbz', 'DBZH'):
         result["radar_product_info"] = {
             "data_type": "REFLECTIVITY",
             "data_unit": "dBZ",
