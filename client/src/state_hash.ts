@@ -1,5 +1,3 @@
-import { State } from './types'
-
 const serializeHash = (contents: { [key: string]: string | number | boolean }) => {
   let keys = Object.keys(contents)
   keys.sort()
@@ -17,15 +15,24 @@ const serializeHash = (contents: { [key: string]: string | number | boolean }) =
   return result
 }
 
-export const makeHashFromState = (state: State) => {
+export type UrlState = {
+  siteId: string | null,
+  productId: string | null,
+  flavorId: string | null,
+  animationRunning: boolean,
+  currentLon: number,
+  currentLat: number
+}
+
+export const makeHashFromState = (urlState: UrlState) => {
   return serializeHash(
     {
-      site: state.selection.siteId,
-      product: state.selection.productId,
-      flavor: state.selection.flavorId,
-      animationRunning: state.animation.running,
-      lon: state.map.current.centerLon,
-      lat: state.map.current.centerLat,
+      site: urlState.siteId,
+      product: urlState.productId,
+      flavor: urlState.flavorId,
+      animationRunning: urlState.animationRunning,
+      lon: urlState.currentLon,
+      lat: urlState.currentLat
     })
 }
 

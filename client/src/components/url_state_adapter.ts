@@ -1,31 +1,22 @@
 import { Component } from 'react'
-import PropTypes from 'prop-types'
 
 import { batch, connect } from 'react-redux'
 
-import * as L from 'partial.lenses'
-
-import {
-  catalogL,
-  selectedSiteIdL,
-  selectedProductIdL,
-  selectedFlavorIdL,
-  animationRunningL,
-  currentLonL,
-  currentLatL
-} from '../state_reduction'
-import { makeHashFromState, parseHash } from '../state_hash'
-import { ObserverActions } from '../constants'
-import { lensesToProps } from '../utils'
+import { UrlState, makeHashFromState, parseHash } from '../state_hash'
+import { State, Catalog } from '../types'
+import { ObserverActions, ObserverDispatch } from '../constants'
 
 
-class UrlStateAdapter extends Component {
-  static propTypes = {
-    dispatch: PropTypes.func
-  }
+type Props = UrlState & {
+  dispatch: ObserverDispatch,
+  catalog: Catalog,
+}
 
-  constructor() {
-    super()
+class UrlStateAdapter extends Component<Props> {
+  private updates: any[] | null
+
+  constructor(props: Readonly<Props> | Props) {
+    super(props)
     this.loadHash.bind(this)
     this.updateHash.bind(this)
     this.updates = null
@@ -45,7 +36,7 @@ class UrlStateAdapter extends Component {
       }, 0)
     }
 
-    if (L.get(currentLonL, this.props) && L.get(currentLatL, this.props)) {
+    if (this.props.currentLon && this.props.currentLat) {
       this.updateHash(this.props)
     }
 
@@ -62,7 +53,7 @@ class UrlStateAdapter extends Component {
       this.updates.push({type: ObserverActions.FLAVOR_SELECTED, payload: parsed.flavor})
 
       const animationRunning = parsed.animationRunning == 'true' ? true : false
-      if (this.props.animation.running != animationRunning) {
+      if (this.props.animationRunning != animationRunning) {
         this.updates.push({type: ObserverActions.TOGGLE_ANIMATION})
       }
 
@@ -75,7 +66,7 @@ class UrlStateAdapter extends Component {
     }
   }
 
-  updateHash(state) {
+  updateHash(state: UrlState) {
     const hash = makeHashFromState(state)
     if (hash != window.location.hash) {
       let hashLess = window.location.href
@@ -87,8 +78,15 @@ class UrlStateAdapter extends Component {
   }
 }
 
-const mapStateToProps = lensesToProps([
-  catalogL, selectedSiteIdL, selectedProductIdL, selectedFlavorIdL,
-  animationRunningL, currentLonL, currentLatL
-])
+const mapStateToProps = (state: State): Props => {
+  return {
+    catalog: state.catalog,
+    siteId: state.selection.siteId,
+    productId: state.selection.productId,
+    flavorId: state.selection.flavorId,
+    animationRunning: state.animation.running,
+    currentLon: state.map.current.centerLon,
+    currentLat: state.map.current.centerLat
+  } as Props
+}
 export default connect(mapStateToProps)(UrlStateAdapter)
