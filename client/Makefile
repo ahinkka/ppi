@@ -6,7 +6,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 .PHONY: lint
-lint: ## Run ESLint
+lint: ## Run TS typecheck and ESLint
 	npx tsc --jsx react-jsxdev --noEmit
 	./node_modules/.bin/eslint src
 
