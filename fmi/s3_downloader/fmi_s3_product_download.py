@@ -81,47 +81,51 @@ class Product(object):
         return result
 
 
-def fetch_product_list(sites=DEFAULT_SITES):
+def parse_datetime_from_filename(key):
+    filename = key.split('/')[-1]
+    timestamp_part = filename.split('_')[0]
+    return dt.strptime(timestamp_part, '%Y%m%d%H%M')
+
+
+def fetch_latest_composite_product(client, site):
     date_prefix = dt.now().strftime('%Y/%m/%d')
+    site_suffix = 'FIN-DBZ-3067-250M'
+    product_name = 'dbz'
+    response = client.list_objects_v2(
+        Bucket=_product_bucket,
+        Prefix=f'{date_prefix}/{site_suffix}'
+    )
+    files = response['Contents']
+
+    latest = sorted(
+        files,
+        key=lambda d: parse_datetime_from_filename(d['Key']),
+        reverse=True
+    )[0]
+
+    # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
+    #  radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
+    linear_transformation_gain = 0.5
+    linear_transformation_offset = -32
+    height = '250m'
+    product_time = parse_datetime_from_filename(latest['Key'])
+
+    return Product(site, product_name, product_time, latest['Key'],
+                   height=height,
+                   linear_transformation_gain=linear_transformation_gain,
+                   linear_transformation_offset=linear_transformation_offset)
+
+
+def fetch_product_list(sites=DEFAULT_SITES):
     client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
     result = []
     for site in sites:
         if 'composite' in site:
-            site_suffix = 'FIN-DBZ-3067-250M'
-            product_name = 'dbz'
+            product = fetch_latest_composite_product(client, site)
         else:
-            site_suffix = f'{site}'
             raise Exception('not implemented')
 
-        response = client.list_objects_v2(
-            Bucket=_product_bucket,
-            Prefix=f'{date_prefix}/{site_suffix}'
-        )
-        files = response['Contents']
-
-        def parse_datetime_from_filename(key):
-            filename = key.split('/')[-1]
-            timestamp_part = filename.split('_')[0]
-            return dt.strptime(timestamp_part, '%Y%m%d%H%M')
-
-        latest = sorted(
-            files,
-            key=lambda d: parse_datetime_from_filename(d['Key']),
-            reverse=True
-        )[0]
-
-        # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
-        #  radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
-        linear_transformation_gain = 0.5
-        linear_transformation_offset = -32
-        height = '250m'
-        product_time = parse_datetime_from_filename(latest['Key'])
-
-        product = Product(site, product_name, product_time, latest['Key'],
-                          height=height,
-                          linear_transformation_gain=linear_transformation_gain,
-                          linear_transformation_offset=linear_transformation_offset)
         result.append(product)
 
     return result
