@@ -90,7 +90,7 @@ def parse_datetime_from_filename(key):
 
 
 def fetch_latest_composite_product(client, site):
-    date_prefix = dt.now().strftime('%Y/%m/%d')
+    date_prefix = dt.utcnow().strftime('%Y/%m/%d')
     site_suffix = 'FIN-DBZ-3067-250M'
     product_name = 'dbz'
     response = client.list_objects_v2(
@@ -128,7 +128,7 @@ def with_datetime_and_product_name(entry):
 
 
 def fetch_latest_product(client, site, product_name):
-    date_prefix = dt.now().strftime('%Y/%m/%d')
+    date_prefix = dt.utcnow().strftime('%Y/%m/%d')
     site_suffix = f'{site}'
     prefix = f'{date_prefix}/{site_suffix}'
     response = client.list_objects_v2(
