@@ -9,6 +9,7 @@ from os import getcwd, unlink, makedirs
 from os.path import join as path_join
 from os.path import exists as path_exists
 from datetime import datetime as dt
+from datetime import timezone
 
 import boto3
 from botocore import UNSIGNED
@@ -86,7 +87,12 @@ class Product(object):
 def parse_datetime_from_filename(key):
     filename = key.split('/')[-1]
     timestamp_part = filename.split('_')[0]
-    return dt.strptime(timestamp_part, '%Y%m%d%H%M')
+    parsed = dt.strptime(timestamp_part, '%Y%m%d%H%M')
+
+    if not parsed.tzinfo:
+        return parsed
+    else:
+        return parsed.replace(tzinfo=timezone.utc)
 
 
 def fetch_latest_composite_product(client, site):
