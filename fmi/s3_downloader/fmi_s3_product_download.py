@@ -137,18 +137,31 @@ def fetch_latest_product(client, site, product_name):
     date_prefix = dt.utcnow().strftime('%Y/%m/%d')
     site_suffix = f'{site}'
     prefix = f'{date_prefix}/{site_suffix}'
-    response = client.list_objects_v2(
-        Bucket=_product_bucket,
-        Prefix=prefix
-    )
 
-    try:
-        files = list(response['Contents'])
-    except Exception as e:
-        print(f'Failed to list bucket contents for {site}, {prefix}', file=sys.stderr)
-        raise e
+    raw_entries = []
+    continuation_token = None
+    while True:
+        if continuation_token:
+            response = client.list_objects_v2(
+                Bucket=_product_bucket,
+                Prefix=prefix,
+                ContinuationToken=continuation_token
+            )
+        else:
+            response = client.list_objects_v2(
+                Bucket=_product_bucket,
+                Prefix=prefix
+            )
 
-    entries = [with_datetime_and_product_name(f) for f in files]
+        for entry in response['Contents']:
+            raw_entries.append(entry)
+
+        if 'NextContinuationToken' in response:
+            continuation_token = response['NextContinuationToken']
+        else:
+            break
+
+    entries = [with_datetime_and_product_name(f) for f in raw_entries]
 
     latest = sorted(
         [e for e in entries if e['product_name'] == product_name],
