@@ -89,7 +89,7 @@ def parse_datetime_from_filename(key):
     timestamp_part = filename.split('_')[0]
     parsed = dt.strptime(timestamp_part, '%Y%m%d%H%M')
 
-    if not parsed.tzinfo:
+    if parsed.tzinfo:
         return parsed
     else:
         return parsed.replace(tzinfo=timezone.utc)
