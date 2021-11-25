@@ -99,14 +99,11 @@ def fetch_latest_composite_product(client, site):
     date_prefix = dt.utcnow().strftime('%Y/%m/%d')
     site_suffix = 'FIN-DBZ-3067-250M'
     product_name = 'dbz'
-    response = client.list_objects_v2(
-        Bucket=_product_bucket,
-        Prefix=f'{date_prefix}/{site_suffix}'
-    )
-    files = response['Contents']
+    prefix = f'{date_prefix}/{site_suffix}'
+    raw_entries = list_objects(client, _product_bucket, prefix)
 
     latest = sorted(
-        files,
+        raw_entries,
         key=lambda d: parse_datetime_from_filename(d['Key']),
         reverse=True
     )[0]
@@ -124,21 +121,8 @@ def fetch_latest_composite_product(client, site):
                    linear_transformation_offset=linear_transformation_offset)
 
 
-def with_datetime_and_product_name(entry):
-    result = dict(entry)
-    result['filename_datetime'] = parse_datetime_from_filename(entry['Key'])
-    filename = entry['Key'].split('/')[-1]
-    filename_without_extension = '.'.join(filename.split('.')[:-1])
-    result['product_name'] = filename_without_extension.split('_', 2)[2]
-    return result
-
-
-def fetch_latest_product(client, site, product_name):
-    date_prefix = dt.utcnow().strftime('%Y/%m/%d')
-    site_suffix = f'{site}'
-    prefix = f'{date_prefix}/{site_suffix}'
-
-    raw_entries = []
+def list_objects(client, bucket, prefix):
+    result = []
     continuation_token = None
     while True:
         if continuation_token:
@@ -154,13 +138,30 @@ def fetch_latest_product(client, site, product_name):
             )
 
         for entry in response['Contents']:
-            raw_entries.append(entry)
+            result.append(entry)
 
         if 'NextContinuationToken' in response:
             continuation_token = response['NextContinuationToken']
         else:
             break
 
+    return result
+
+
+def with_datetime_and_product_name(entry):
+    result = dict(entry)
+    result['filename_datetime'] = parse_datetime_from_filename(entry['Key'])
+    filename = entry['Key'].split('/')[-1]
+    filename_without_extension = '.'.join(filename.split('.')[:-1])
+    result['product_name'] = filename_without_extension.split('_', 2)[2]
+    return result
+
+
+def fetch_latest_product(client, site, product_name):
+    date_prefix = dt.utcnow().strftime('%Y/%m/%d')
+    site_suffix = f'{site}'
+    prefix = f'{date_prefix}/{site_suffix}'
+    raw_entries = list_objects(client, _product_bucket, prefix)
     entries = [with_datetime_and_product_name(f) for f in raw_entries]
 
     latest = sorted(
