@@ -2,7 +2,7 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "jsx": "react-jsx",
-    "downlevelIteration": true,
+    "downlevelIteration": true, // because of product_loader and for (const of ...)
     "skipLibCheck": true, // because of OpenLayers GeoJSON
   }
 }
