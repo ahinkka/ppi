@@ -3,7 +3,7 @@ proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 
 
 type AffineTransform = [number, number, number, number, number, number]
 
-type Extent = [number, number, number, number]
+export type Extent = [number, number, number, number]
 
 type ConversionFunction = (coord: [number, number]) => [number, number]
 

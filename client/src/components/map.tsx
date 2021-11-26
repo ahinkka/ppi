@@ -15,22 +15,25 @@ import {fromLonLat, toLonLat} from 'ol/proj'
 import {getDistance} from 'ol/sphere'
 import GeoJSON from 'ol/format/GeoJSON'
 import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style'
-import {canvasPxToProductPx, wgs84ToProductPx} from '../reprojection'
+import Feature from 'ol/Feature'
+import MapEvent from 'ol/MapEvent'
+
+import { canvasPxToProductPx, wgs84ToProductPx, Extent } from '../reprojection'
 
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { Product } from './product_loader'
 
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 import {
-    fillWithNotScanned,
-    NOT_SCANNED_COLOR,
-    resolveColorForReflectivity,
-    resolveColorGeneric
+  fillWithNotScanned,
+  NOT_SCANNED_COLOR,
+  resolveColorForReflectivity,
+  resolveColorGeneric
 } from './coloring'
 
 
 // https://24ways.org/2010/calculating-color-contrast
-const yiqColorContrast = (r, g, b) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
+const yiqColorContrast = (r: number, g: number, b: number) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
 
 
 const bearingToCompassRoseReading = (bearing: number) => {
@@ -120,13 +123,18 @@ const resolveCursorToolContentAndColors = (
   let [nearestCity, distanceToNearestCity, bearingToNearestCity, nearestTown, distanceToNearestTown, bearingToNearestTown] =
     [undefined, undefined, undefined, undefined, undefined, undefined]
   if (vectorSource && vectorSource.getFeatures().length > 0) {
-      nearestCity = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'city')
-
+    nearestCity = vectorSource.getClosestFeatureToCoordinate(
+      coords,
+      (feature: Feature<never>) => feature.get('osmPlace') === 'city'
+    )
     const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
     distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
     bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
 
-    nearestTown = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'town')
+    nearestTown = vectorSource.getClosestFeatureToCoordinate(
+      coords,
+      (feature: Feature<never>) => feature.get('osmPlace') === 'town'
+    )
     const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
     distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
     bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
@@ -258,7 +266,7 @@ export class Map extends React.Component<Props> {
 
     this.__vectorLayer = new VectorLayer({
       source: this.__vectorSource,
-      style: (feature) => {
+      style: (feature: Feature<never>) => {
         const osmPlace = feature.get('osmPlace')
         if (osmPlace === 'city') {
           return cityStyle
@@ -333,14 +341,16 @@ export class Map extends React.Component<Props> {
     this.map.getLayers().insertAt(1, this.imageLayer);
 
     const dispatch = this.props.dispatch
-    this.map.on('moveend', function(event) {
+    this.map.on('moveend', function(event: MapEvent) {
       const view = event.map.getView()
       const center = view.getCenter()
       const projection = view.getProjection()
       const lonLatCenter = toLonLat(center, projection)
 
-      dispatch({type: ObserverActions.MAP_MOVED,
-        payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}})
+      dispatch({
+        type: ObserverActions.MAP_MOVED,
+        payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}}
+      )
     })
 
     // https://openlayers.org/en/latest/examples/overlay.html
@@ -373,7 +383,13 @@ export class Map extends React.Component<Props> {
     this.__updateMap()
   }
 
-  __canvasFunction(extent, resolution, pixelRatio, size, projection) { // eslint-disable-line no-unused-vars
+  __canvasFunction(
+    extent: Extent,
+    resolution: never,
+    pixelRatio: never,
+    size: [number, number],
+    projection: never
+  ) {
     const startRender = new Date().getTime();
 
     this.canvas = document.createElement('canvas')
@@ -415,7 +431,7 @@ export class Map extends React.Component<Props> {
       this.__colorCaches[colorCacheKey] = {}
     }
     const colorCache = this.__colorCaches[colorCacheKey]
-    const resolveColor = (value) => {
+    const resolveColor = (value: number) => {
       if (!(value in colorCache)) {
         colorCache[value] = _resolveColor(metadata.productInfo.dataScale, value)
       }
