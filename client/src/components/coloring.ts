@@ -1,9 +1,9 @@
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 
 // Global not scanned color; see fillWithNotScanned before changing this
-export const NOT_SCANNED_COLOR = [211, 211, 211, 76]
+export const NOT_SCANNED_COLOR: [number, number, number, number] = [211, 211, 211, 76]
 // Global no echo color (transparent black)
-export const NO_ECHO_COLOR = [0, 0, 0, 0]
+export const NO_ECHO_COLOR: [number, number, number, number] = [0, 0, 0, 0]
 
 export const ScaleRangeType = {
   STEP: 'step',
@@ -12,7 +12,7 @@ export const ScaleRangeType = {
 // TODO: the actual colors might not be completely correct. This is the scale
 //       as described in Wikipedia.  This is a discrete scale for reflectivity
 //       ranges.
-const NOAALowRedGreenBlue = [
+const NOAALowRedGreenBlue: [number, number, number, number][] = [
   // ND  96  101 97
   [-30, 208, 255, 255],
   [-25, 198, 152, 189],
@@ -37,7 +37,8 @@ const NOAALowRedGreenBlue = [
   [70,  154, 86,  195],
   [75,  248, 246, 247]]
 
-const _reflectivityValueToNOAAColor = (reflectivityValue: number) => {
+const _reflectivityValueToNOAAColor =
+  (reflectivityValue: number): [number, number, number] | [null, null, null] => {
   for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
     const [low, red, green, blue] = NOAALowRedGreenBlue[index]
     if (index == NOAALowRedGreenBlue.length - 1) {
@@ -91,21 +92,23 @@ export const NOAAScaleToScaleDescription = () => {
   return result
 }
 
-export const resolveColorForReflectivity = (dataScale: DataScale, value: number) => {
-  const [valueType, dataValue] = integerToDataValue(dataScale, value)
-  if (valueType == DataValueType.NOT_SCANNED) {
-    return NOT_SCANNED_COLOR
-  } else if (valueType == DataValueType.NO_ECHO) {
-    return NO_ECHO_COLOR
-  } else if (valueType == DataValueType.VALUE) {
-    const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
-    return [r, g, b, 255]
-  } else {
-    throw new Error('Unknown DataValueType: ' + valueType)
+export const resolveColorForReflectivity =
+  (dataScale: DataScale, value: number): [number, number, number, number] => {
+    const [valueType, dataValue] = integerToDataValue(dataScale, value)
+    if (valueType == DataValueType.NOT_SCANNED) {
+      return NOT_SCANNED_COLOR
+    } else if (valueType == DataValueType.NO_ECHO) {
+      return NO_ECHO_COLOR
+    } else if (valueType == DataValueType.VALUE) {
+      const [r, g, b] = reflectivityValueToNOAAColor(dataValue)
+      return [r, g, b, 255]
+    } else {
+      throw new Error('Unknown DataValueType: ' + valueType)
+    }
   }
-}
 
-export const resolveColorGeneric = (dataScale: DataScale, value: number) => {
+export const resolveColorGeneric =
+  (dataScale: DataScale, value: number): [number, number, number, number] => {
   if (value == dataScale.notScanned) {
     return NOT_SCANNED_COLOR
   } else {
@@ -114,7 +117,7 @@ export const resolveColorGeneric = (dataScale: DataScale, value: number) => {
 }
 
 
-export const fillWithNotScanned = (dataArray: Uint8Array) => {
+export const fillWithNotScanned = (dataArray: Uint8ClampedArray) => {
   dataArray.fill(NOT_SCANNED_COLOR[0])
 
   for (let i=3; i<dataArray.length; i = i + 4) {

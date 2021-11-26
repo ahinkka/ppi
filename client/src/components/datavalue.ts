@@ -10,10 +10,10 @@
 //         "noEcho": 0
 //     }
 // }
-export const DataValueType = {
-  NO_ECHO: 'no echo',
-  NOT_SCANNED: 'not scanned',
-  VALUE: 'value'
+export enum DataValueType {
+  NO_ECHO = 'no echo',
+  NOT_SCANNED = 'not scanned',
+  VALUE = 'value'
 }
 
 export type DataScale = {

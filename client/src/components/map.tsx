@@ -8,7 +8,7 @@ import stringify from 'json-stable-stringify'
 import {ImageCanvas} from 'ol/source'
 import {Image} from 'ol/layer'
 import {Map as OlMap, View} from 'ol'
-import {OSM, Vector as VectorSource} from 'ol/source'
+import {OSM, Vector} from 'ol/source'
 import Overlay from 'ol/Overlay'
 import {Tile, Vector as VectorLayer} from 'ol/layer'
 import {fromLonLat, toLonLat} from 'ol/proj'
@@ -17,14 +17,15 @@ import GeoJSON from 'ol/format/GeoJSON'
 import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style'
 import {canvasPxToProductPx, wgs84ToProductPx} from '../reprojection'
 
-import {ObserverActions} from '../constants'
+import { ObserverActions, ObserverDispatch } from '../constants'
+import { Product } from './product_loader'
 
-import {DataValueType, integerToDataValue} from './datavalue'
+import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 import {
-  fillWithNotScanned,
-  NOT_SCANNED_COLOR,
-  resolveColorForReflectivity,
-  resolveColorGeneric
+    fillWithNotScanned,
+    NOT_SCANNED_COLOR,
+    resolveColorForReflectivity,
+    resolveColorGeneric
 } from './coloring'
 
 
@@ -32,8 +33,8 @@ import {
 const yiqColorContrast = (r, g, b) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
 
 
-const bearingToCompassRoseReading = (bearing) => {
-  const cardinals = [
+const bearingToCompassRoseReading = (bearing: number) => {
+  const cardinals: [string, number][] = [
     ['S', 0],   ['SSE', 22.5],  ['SE',  45], ['ESE', 67.5],
     ['E', 90],  ['ENE', 112.5], ['NE', 135], ['NNE', 157.5],
     ['N', 180], ['NNW', 202.5], ['NW', 225], ['WNW', 247.5],
@@ -56,9 +57,12 @@ const bearingToCompassRoseReading = (bearing) => {
 
 
 const renderCursorToolContentAndColors = (
-  value, dataScale, dataUnit, color,
-  nearestCityName, distanceToNearestCity, bearingToNearestCity,
-  nearestTownName, distanceToNearestTown, bearingToNearestTown
+  value: number,
+  dataScale: DataScale,
+  dataUnit: DataValueType,
+  color: [number, number, number, number],
+  nearestCityName: string, distanceToNearestCity: number, bearingToNearestCity: number,
+  nearestTownName: string, distanceToNearestTown: number, bearingToNearestTown: number
 ) => {
   const [valueType, dataValue] = integerToDataValue(dataScale, value)
 
@@ -87,9 +91,9 @@ const renderCursorToolContentAndColors = (
 
 
 // Source: https://www.movable-type.co.uk/scripts/latlong.html
-const bearingBetweenCoordinates = (fromLonLat, toLonLat) => {
-  const [fromLon, fromLat] = fromLonLat
-  const [toLon, toLat] = toLonLat
+const bearingBetweenCoordinates = (source: [number, number], destination: [number, number]) => {
+  const [fromLon, fromLat] = source
+  const [toLon, toLat] = destination
 
   const y = Math.sin(toLon-fromLon) * Math.cos(toLat)
   const x = Math.cos(fromLat) * Math.sin(toLat)
@@ -99,26 +103,31 @@ const bearingBetweenCoordinates = (fromLonLat, toLonLat) => {
 }
 
 
-const resolveCursorToolContentAndColors = (product, vectorSource, coords, wgs84ToProductPxFn) => {
+const resolveCursorToolContentAndColors = (
+  product: Product,
+  vectorSource: Vector<never>,
+  coords: [number, number],
+  wgs84ToProductPxFn: (lon: number, lat: number) => [number, number]
+) => {
   if (!product || !product.metadata) return ['', 'white', 'black']
 
   const data = product.data
   const dataView = new Uint8Array(data)
   const dataRows = product._rows
   const metadata = product.metadata
-  const coordsLonLat = toLonLat(coords)
+  const coordsLonLat = toLonLat(coords) as [number, number]
 
   let [nearestCity, distanceToNearestCity, bearingToNearestCity, nearestTown, distanceToNearestTown, bearingToNearestTown] =
     [undefined, undefined, undefined, undefined, undefined, undefined]
   if (vectorSource && vectorSource.getFeatures().length > 0) {
-    nearestCity = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'city')
+      nearestCity = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'city')
 
-    const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates())
+    const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
     distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
     bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
 
     nearestTown = vectorSource.getClosestFeatureToCoordinate(coords, (feature) => feature.get('osmPlace') === 'town')
-    const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates())
+    const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
     distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
     bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
   }
@@ -128,7 +137,7 @@ const resolveCursorToolContentAndColors = (product, vectorSource, coords, wgs84T
   let effectiveValue = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
   if (effectiveValue === undefined) effectiveValue = metadata.productInfo.dataScale.notScanned
 
-  const color = metadata.productInfo.dataType == 'REFLECTIVITY' ?
+  const color: [number, number, number, number] = metadata.productInfo.dataType == 'REFLECTIVITY' ?
     resolveColorForReflectivity(metadata.productInfo.dataScale, effectiveValue) :
     resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
 
@@ -146,13 +155,24 @@ const resolveCursorToolContentAndColors = (product, vectorSource, coords, wgs84T
   )
 }
 
+/* metadata.projectionRef,
+ *       metadata.affineTransform,
+ *       metadata.width, metadata.height */
 
 // https://openlayers.org/en/latest/examples/overlay.html
-const updateCursorTool = (overlay, product, vectorSource, newPosition, resolveTemplateAndColors, conversionFn) => {
+const updateCursorTool = (
+  overlay: Overlay,
+  product: Product,
+  vectorSource: Vector<never>,
+  newPosition: [number, number],
+  resolveTemplateAndColors: typeof resolveCursorToolContentAndColors,
+  conversionFn: (lon: number, lat: number) => [number, number]
+  /* conversionFn: (projectionRef: string, affineTransform: [number, number, number, number, number], width: number, height: number) => [number, number] */
+) => {
   const element = overlay.getElement()
   $(element).popover('dispose')
 
-  const effectivePosition = newPosition ? newPosition : overlay.getPosition()
+  const effectivePosition = (newPosition ? newPosition : overlay.getPosition()) as [number, number]
   if (newPosition) overlay.setPosition(effectivePosition)
   const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, vectorSource, effectivePosition, conversionFn)
 
@@ -177,33 +197,47 @@ const updateCursorTool = (overlay, product, vectorSource, newPosition, resolveTe
   $(element).popover('show')
 }
 
+type Props = {
+  headerElementId: string,
+  intendedCenter: [number, number],
+  product: Product,
+  geoInterests: any,
+  productTime: any,
+  productSelection: any,
+  dispatch: ObserverDispatch
+}
 
-export class Map extends React.Component {
-  constructor(props) {
+const cacheOpts = {
+  max: 50, // maximum number of items
+  maxAge: 1000 * 60 * 15, // items considered over 15 minutes are stale
+  stale: false,
+}
+
+export class Map extends React.Component<Props> {
+  private __previousProduct: Product | null = null
+  private __previousIntendedCenter: [number, number] = [0, 0]
+  private __renderedProducts: any = new LRU(cacheOpts)
+  private __colorCaches: any = {}
+  private mapToProductConversionFn: any | null = null
+  private wgs84ToProductConversionFn: any | null = null
+  private conversionCacheKey: string = ''
+  private cursorToolVisible: boolean = false
+  private __vectorSource: Vector<never> | null = null
+  private __vectorLayer: VectorLayer<Vector<never>> | null = null
+  private map: OlMap | null = null
+  private imageCanvas: ImageCanvas | null = null
+  private imageLayer: Image<ImageCanvas> | null = null
+  private cursorToolOverlay: Overlay | null = null
+  private canvas: HTMLCanvasElement | null = null
+
+  constructor(props: Readonly<Props> | Props) {
     super(props);
-
-    this.__previousProduct = null;
 
     this.__onResize = this.__onResize.bind(this);
     this.__updateMap = this.__updateMap.bind(this);
     this.__canvasFunction = this.__canvasFunction.bind(this);
 
-    this.__previousIntendedCenter = [0, 0]
-
-    const cacheOpts = {
-      max: 50, // maximum number of items
-      maxAge: 1000 * 60 * 15, // items considered over 15 minutes are stale
-      stale: false,
-    }
-    this.__renderedProducts = new LRU(cacheOpts)
-    this.__colorCaches = {}
-    this.mapToProductConversionFn = undefined
-    this.wgs84ToProductConversionFn = undefined
-    this.conversionCacheKey = ''
-
-    this.cursorToolVisible = false
-
-    this.__vectorSource = new VectorSource({})
+    this.__vectorSource = new Vector({})
 
     const cityStyle = new Style({
       image: new CircleStyle({
@@ -316,7 +350,7 @@ export class Map extends React.Component {
     this.map.addOverlay(cursorToolOverlay)
 
     // https://openlayers.org/en/latest/apidoc/module-ol_MapBrowserEvent-MapBrowserEvent.html
-    this.map.on('pointermove', (evt) => {
+    this.map.on('pointermove', (evt: { dragging: any, coordinate: any }) => {
       if (evt.dragging) {
         return
       }
@@ -474,14 +508,14 @@ export class Map extends React.Component {
       Object.keys(this.props.geoInterests).length > 0 &&
       this.__vectorSource.getFeatures().length == 0
     ) {
-      const features = new GeoJSON({ featureProjection: 'EPSG:3857' })
+      const features: any = new GeoJSON({ featureProjection: 'EPSG:3857' })
         .readFeatures(this.props.geoInterests)
       this.__vectorSource.addFeatures(features)
     }
 
-    if (this.__previousProduct == null || this.previousProduct != this.props.product) {
+    if (this.__previousProduct || this.__previousProduct != this.props.product) {
       this.__previousProduct == this.props.product
-      if (this.imageCanvas !== undefined) {
+      if (this.imageCanvas) {
         this.imageCanvas.changed()
       }
     }

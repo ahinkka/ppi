@@ -18,7 +18,15 @@ function inflate(stream) {
 }
 
 
-const parseProduct = async (resp) => new Promise((resolve, reject) => {
+export type Product = {
+  data: Uint8Array,
+  _cols: number,
+  _rows: number,
+  metadata: { [key: string]: any }
+}
+
+
+const parseProduct = async (resp): Promise<Product> => new Promise((resolve, reject) => {
   let inflated = null
   try {
     inflated = inflate(resp)
