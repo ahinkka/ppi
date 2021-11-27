@@ -8,6 +8,8 @@
     "@babel/preset-env": "^7.15.8",
     "@babel/preset-react": "^7.14.5",
     "@types/jest": "^27.0.2",
+    "@types/json-stable-stringify": "^1.0.33",
+    "@types/lru-cache": "^5.1.1",
     "@types/pako": "^1.0.2",
     "@types/proj4": "^2.5.2",
     "babel-jest": "^27.3.1",

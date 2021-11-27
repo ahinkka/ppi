@@ -5,22 +5,28 @@ import LRU from 'lru-cache'
 
 import stringify from 'json-stable-stringify'
 
-import {ImageCanvas} from 'ol/source'
-import {Image} from 'ol/layer'
-import {Map as OlMap, View} from 'ol'
-import {OSM, Vector} from 'ol/source'
+import ImageCanvas from 'ol/source/ImageCanvas'
+import Image from 'ol/layer/Image'
+import View from 'ol/View'
+import OlMap from 'ol/Map'
+import OSMSource from 'ol/source/OSM'
+import VectorSource from 'ol/source/Vector'
 import Overlay from 'ol/Overlay'
-import {Tile, Vector as VectorLayer} from 'ol/layer'
-import {fromLonLat, toLonLat} from 'ol/proj'
-import {getDistance} from 'ol/sphere'
-import GeoJSON from 'ol/format/GeoJSON'
-import {Circle as CircleStyle, Fill, Stroke, Style} from 'ol/style'
+import TileLayer from 'ol/layer/Tile'
+import VectorLayer from 'ol/layer/Vector'
 import Feature from 'ol/Feature'
 import MapEvent from 'ol/MapEvent'
+import CircleStyle from 'ol/style/Circle'
+import FillStyle from 'ol/style/Fill'
+import StrokeStyle from 'ol/style/Stroke'
+import Style from 'ol/style/Style'
 
-import { canvasPxToProductPx, wgs84ToProductPx, Extent } from '../reprojection'
+import { fromLonLat, toLonLat } from 'ol/proj'
+import { getDistance } from 'ol/sphere'
+import GeoJSON from 'ol/format/GeoJSON'
 
 import { ObserverActions, ObserverDispatch } from '../constants'
+import { canvasPxToProductPx, wgs84ToProductPx, Extent } from '../reprojection'
 import { Product } from './product_loader'
 
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
@@ -108,7 +114,7 @@ const bearingBetweenCoordinates = (source: [number, number], destination: [numbe
 
 const resolveCursorToolContentAndColors = (
   product: Product,
-  vectorSource: Vector<never>,
+  vectorSource: VectorSource<never>,
   coords: [number, number],
   wgs84ToProductPxFn: (lon: number, lat: number) => [number, number]
 ) => {
@@ -171,7 +177,7 @@ const resolveCursorToolContentAndColors = (
 const updateCursorTool = (
   overlay: Overlay,
   product: Product,
-  vectorSource: Vector<never>,
+  vectorSource: VectorSource<never>,
   newPosition: [number, number],
   resolveTemplateAndColors: typeof resolveCursorToolContentAndColors,
   conversionFn: (lon: number, lat: number) => [number, number]
@@ -230,8 +236,8 @@ export class Map extends React.Component<Props> {
   private wgs84ToProductConversionFn: any | null = null
   private conversionCacheKey: string = ''
   private cursorToolVisible: boolean = false
-  private __vectorSource: Vector<never> | null = null
-  private __vectorLayer: VectorLayer<Vector<never>> | null = null
+  private __vectorSource: VectorSource<never> | null = null
+  private __vectorLayer: VectorLayer<VectorSource<never>> | null = null
   private map: OlMap | null = null
   private imageCanvas: ImageCanvas | null = null
   private imageLayer: Image<ImageCanvas> | null = null
@@ -245,22 +251,22 @@ export class Map extends React.Component<Props> {
     this.__updateMap = this.__updateMap.bind(this);
     this.__canvasFunction = this.__canvasFunction.bind(this);
 
-    this.__vectorSource = new Vector({})
+    this.__vectorSource = new VectorSource({})
 
     const cityStyle = new Style({
       image: new CircleStyle({
         radius: 3,
-        fill: new Fill({
+        fill: new FillStyle({
           color: 'rgba(0,0,0,0.2)',
         }),
-        stroke: new Stroke({color: 'black', width: 1}),
+        stroke: new StrokeStyle({color: 'black', width: 1}),
       })
     })
 
     const townStyle = new Style({
       image: new CircleStyle({
         radius: 1,
-        stroke: new Stroke({color: 'black', width: 1}),
+        stroke: new StrokeStyle({color: 'black', width: 1}),
       })
     })
 
@@ -306,9 +312,9 @@ export class Map extends React.Component<Props> {
         zoom: 7
       }),
       layers: [
-        new Tile({
+        new TileLayer({
           // https://cartodb.com/basemaps
-          source: new OSM({
+          source: new OSMSource({
             attributions: [
               ' &copy; <a href="https://cartodb.com/attributions">CartoDB</a>, ' +
               ' &copy; <a href="https://en.ilmatieteenlaitos.fi/open-data-manual-radar-data">FMI Open Radar Data</a>' +
@@ -318,9 +324,9 @@ export class Map extends React.Component<Props> {
           })
         }),
 
-        new Tile({
+        new TileLayer({
           // https://cartodb.com/basemaps
-          source: new OSM({
+          source: new OSMSource({
             url: 'https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
             opaque: false
           })

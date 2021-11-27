@@ -79,7 +79,7 @@ const _renderTooltip = (time: number) => {
   return utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
 }
 
-const _renderTooltipCache = new LRU({
+const _renderTooltipCache = new LRU<number, string>({
   max: 50,
   maxAge: 1000 * 60,
   stale: false,
@@ -95,7 +95,7 @@ const renderTooltip = (time: number) => {
   return computed
 }
 
-type TickItem = {pp
+type TickItem = {
   time: number,
   callback: () => any,
   isCurrent: boolean,
