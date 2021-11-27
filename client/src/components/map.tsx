@@ -169,9 +169,6 @@ const resolveCursorToolContentAndColors = (
   )
 }
 
-/* metadata.projectionRef,
- *       metadata.affineTransform,
- *       metadata.width, metadata.height */
 
 // https://openlayers.org/en/latest/examples/overlay.html
 const updateCursorTool = (
@@ -181,7 +178,6 @@ const updateCursorTool = (
   newPosition: [number, number],
   resolveTemplateAndColors: typeof resolveCursorToolContentAndColors,
   conversionFn: (lon: number, lat: number) => [number, number]
-  /* conversionFn: (projectionRef: string, affineTransform: [number, number, number, number, number], width: number, height: number) => [number, number] */
 ) => {
   const element = overlay.getElement()
   $(element).popover('dispose')
