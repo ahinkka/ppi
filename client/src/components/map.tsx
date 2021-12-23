@@ -333,11 +333,13 @@ export class Map extends React.Component<Props> {
       target: 'map-element',
     })
 
-    // Set ratio to 1 for canvas exactly the size of the viewport, i.e. every
-    // scroll is a re-render.
     this.imageCanvas = new ImageCanvas({
-      canvasFunction: this.__canvasFunction
-      // ratio: 1
+      canvasFunction: this.__canvasFunction,
+      // Ratio of 1 means the underlying canvas size is exactly the size of
+      // the viewport. By default the canvas is larger to make panning
+      // seamless. As reprojection is so slow, it makes sense for us to not
+      // optimize for panning but for quicker rendering in general.
+      ratio: 1
     })
     this.imageLayer = new Image({ source: this.imageCanvas })
     this.map.getLayers().insertAt(1, this.imageLayer);
