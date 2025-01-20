@@ -152,8 +152,8 @@ def with_datetime_and_product_name(entry):
     result = dict(entry)
     result['filename_datetime'] = parse_datetime_from_filename(entry['Key'])
     filename = entry['Key'].split('/')[-1]
-    filename_without_extension = '.'.join(filename.split('.')[:-1])
-    result['product_name'] = filename_without_extension.split('_', 2)[2]
+    filename_without_extension = '.'.join(filename.split('.')[:-1]) # 202501201930_fivih_ppi_0.7_dbzh_qc
+    result['product_name'] = filename_without_extension.split('_')[4]
     return result
 
 
@@ -191,7 +191,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
             if 'composite' in site:
                 product = fetch_latest_composite_product(client, site)
             else:
-                product = fetch_latest_product(client, site, 'DBZH')
+                product = fetch_latest_product(client, site, 'dbzh')
             result.append(product)
         except Exception as e:
             traceback.print_exc()
