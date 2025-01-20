@@ -31,7 +31,7 @@ SITE_NAMES = {
     'fivan': 'Vantaa',
     'fivih': 'Vihti',
     'fivim': 'Vimpeli',
-    'finland_composite': 'Finland composite'
+    'finradfast': 'Finland composite'
 }
 DEFAULT_SITES = sorted(SITE_NAMES.keys())
 
@@ -97,10 +97,12 @@ def parse_datetime_from_filename(key):
 
 def fetch_latest_composite_product(client, site):
     date_prefix = dt.utcnow().strftime('%Y/%m/%d')
-    site_suffix = 'FIN-DBZ-3067-250M'
-    product_name = 'dbz'
-    prefix = f'{date_prefix}/{site_suffix}'
-    raw_entries = list_objects(client, _product_bucket, prefix)
+    product_name = 'acrr1h'
+    prefix = f'{date_prefix}/{site}'
+    raw_entries = [
+        o for o in list_objects(client, _product_bucket, prefix)
+        if product_name in o['Key'] # there's also acrr3h products in the directory
+    ]
 
     latest = sorted(
         raw_entries,
@@ -188,7 +190,7 @@ def fetch_product_list(sites=DEFAULT_SITES):
     result = []
     for site in sites:
         try:
-            if 'composite' in site:
+            if 'finrad' in site:
                 product = fetch_latest_composite_product(client, site)
             else:
                 product = fetch_latest_product(client, site, 'dbzh')
