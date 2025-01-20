@@ -20,7 +20,7 @@ import dateutil.parser
 
 SITE_NAMES = {
     'fianj': 'Anjalankoski',
-    'fiika': 'Ikaalinen',
+    'fikan': 'Kankaanpää',
     'fikes': 'Kesälahti',
     'fikor': 'Korpo',
     'fikuo': 'Kuopio',

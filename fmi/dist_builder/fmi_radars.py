@@ -17,9 +17,9 @@ _radar_list = [
         "lat": 60.9039, "lon": 27.1081, "altitude": 139
     },
     {
-        "name": "Ikaalinen",
-        "id": "fiika",
-        "lat": 61.7673, "lon": 23.0764, "altitude": 153
+        "name": "Kankaanpää",
+        "id": "fikan",
+        "lat": 61.8108, "lon": 23.4997, "altitude": 174
     },
     {
         "name": "Kesälahti",
