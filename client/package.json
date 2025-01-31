@@ -19,7 +19,7 @@
     "eslint": "^7.32.0",
     "eslint-plugin-react": "^7.26.1",
     "jest": "^27.3.1",
-    "node-sass": "^6.0.1"
+    "sass": "^1.83.4"
   },
   "dependencies": {
     "@babel/preset-typescript": "^7.16.0",

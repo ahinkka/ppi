@@ -25,8 +25,8 @@ dev-test: ## Run tests continuously
 .PHONY: style
 style:
 	mkdir -p ./build/css
-	npx node-sass \
-		--include-path=node_modules/bootstrap/scss \
+	npx sass \
+		--load-path=node_modules/bootstrap/scss \
 		css/ppi.sass > build/css/ppi.css
 
 .PHONY: bundle
