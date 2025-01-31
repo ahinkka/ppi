@@ -2,8 +2,11 @@
 exit 1 # needs to be configured
 
 set -euo pipefail
-# CODE_ROOT="$HOME/Projects/ppi"
-# WWW_ROOT="/dev/null"
+# Typically where this file is located at
+#CODE_ROOT="$HOME/Projects/ppi"
+
+# Can be used for local development
+#WWW_ROOT="${CODE_ROOT}/client/www"
 
 # Create an updated distribution
 python3 fmi/dist_builder/collect_radar_products.py fmi/data | \
