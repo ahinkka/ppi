@@ -1,7 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import contextlib
 import os
-import SimpleHTTPServer
+import http.server
 
 
 @contextlib.contextmanager
@@ -16,10 +16,10 @@ def working_directory(path):
     os.chdir(prev_cwd)
 
 
-class NoCacheHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class NoCacheHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     def end_headers(self):
         self.send_my_headers()
-        SimpleHTTPServer.SimpleHTTPRequestHandler.end_headers(self)
+        http.server.SimpleHTTPRequestHandler.end_headers(self)
 
     def send_my_headers(self):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -29,4 +29,4 @@ class NoCacheHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     with working_directory("build"):
-        SimpleHTTPServer.test(HandlerClass=NoCacheHTTPRequestHandler)
+        http.server.test(HandlerClass=NoCacheHTTPRequestHandler)
