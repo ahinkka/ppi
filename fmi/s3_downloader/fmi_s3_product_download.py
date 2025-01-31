@@ -247,6 +247,7 @@ def main():
         print("---")
         print(sample_config)
         print("---")
+        print("Note that the path above may not be correct - should most likely be the dir called data one dir above this script!")
         parser.error("Couldn't read configuration file passed in")
 
     products = fetch_product_list(sites=configuration['sites'])
