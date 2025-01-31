@@ -10,7 +10,7 @@ use std::path::Path;
 use gdal::raster::RasterBand;
 use gdal::raster::ResampleAlg;
 use gdal::Dataset;
-use gdal_sys::GDALDataType;
+use gdal::raster::GdalDataType;
 
 use serde_json::{Value, json};
 
@@ -39,15 +39,18 @@ fn populate_data(ds: &Dataset) -> Vec<Vec<u8>> {
     let band: RasterBand = ds.rasterband(1).unwrap();
 
     let band_type = band.band_type();
-    if band_type != GDALDataType::GDT_Byte {
-        panic!("Can only handle Byte data; got {}", band_type);
+    if band_type != GdalDataType::UInt8 {
+        panic!("Can only handle UInt8 (Byte) data; got {}", band_type);
     }
 
     let mut rows: Vec<Vec<u8>> = Vec::with_capacity(width);
 
     let pb = ProgressBar::new(width.try_into().unwrap());
-    pb.set_style(ProgressStyle::default_bar()
-        .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] ({pos}/{len}, ETA {eta})"));
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template("{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] ({pos}/{len}, ETA {eta})")
+            .expect("progress style")
+    );
 
     for x in 0..width {
 	pb.set_position(x.try_into().unwrap());
@@ -58,8 +61,8 @@ fn populate_data(ds: &Dataset) -> Vec<Vec<u8>> {
 	    Some(ResampleAlg::Bilinear)
 	)
 	    .unwrap()
-            .data
-            .clone();
+            .data()
+            .to_vec();
         rows.push(d);
     }
 

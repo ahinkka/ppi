@@ -5,7 +5,7 @@ authors = ["Atte Hinkka <atte.hinkka@iki.fi>"]
 edition = "2018"
 
 [dependencies]
-gdal = "0.10.0"
-gdal-sys = { version = "0.4.0", features = ["bindgen"] }
+gdal = "0.17.1"
+gdal-sys = { version = "0.10.0", features = ["bindgen"] }
 serde_json = "1.0.68"
-indicatif = "0.16.2"
+indicatif = "0.17.11"
