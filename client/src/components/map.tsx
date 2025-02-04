@@ -50,7 +50,7 @@ const bearingToCompassRoseReading = (bearing: number) => {
     ['W', 270], ['WSW', 292.5], ['SW', 315], ['SSW', 337.5],
   ]
 
-  let currentClosest = ['X', 360]
+  let currentClosest = ['X', 360] as [string, number]
   for (let i=0; i<cardinals.length; i++) {
     const [name, angle] = cardinals[i]
     const difference = Math.abs(bearing - angle)
