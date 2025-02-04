@@ -3,7 +3,7 @@ import React, { Component, WheelEvent } from 'react'
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
 import moment from 'moment'
-import LRU from 'lru-cache'
+import { LRUCache } from 'lru-cache'
 
 import { ObserverActions, ObserverDispatch } from '../constants'
 
@@ -79,10 +79,10 @@ const _renderTooltip = (time: number) => {
   return utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
 }
 
-const _renderTooltipCache = new LRU<number, string>({
+const _renderTooltipCache = new LRUCache<number, string>({
   max: 50,
-  maxAge: 1000 * 60,
-  stale: false,
+  ttl: 1000 * 60,
+  allowStale: false,
 })
 const renderTooltip = (time: number) => {
   const tooltip = _renderTooltipCache.get(time)

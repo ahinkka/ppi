@@ -1,7 +1,7 @@
 // -*- indent-tabs-mode: nil; -*-
 import React from 'react'
 import $ from 'jquery'
-import LRU from 'lru-cache'
+import { LRUCache } from 'lru-cache'
 
 import stringify from 'json-stable-stringify'
 
@@ -219,14 +219,14 @@ type Props = {
 
 const cacheOpts = {
   max: 50, // maximum number of items
-  maxAge: 1000 * 60 * 15, // items considered over 15 minutes are stale
-  stale: false,
+  ttl: 1000 * 60 * 15, // items considered over 15 minutes are stale
+  allowStale: false,
 }
 
 export class Map extends React.Component<Props> {
   private __previousProduct: Product | null = null
   private __previousIntendedCenter: [number, number] = [0, 0]
-  private __renderedProducts: any = new LRU(cacheOpts)
+  private __renderedProducts: any = new LRUCache(cacheOpts)
   private __colorCaches: any = {}
   private mapToProductConversionFn: any | null = null
   private wgs84ToProductConversionFn: any | null = null
