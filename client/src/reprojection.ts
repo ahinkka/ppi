@@ -147,7 +147,7 @@ export function convertCoordinateWithLut(productExtent: Extent, pToWgs84: Conver
         xyP = mToP(xyM)
         productXs[i] = xyP[0]
         productYs[j] = xyP[1]
-      } catch (error) {
+      } catch {
         // console.log(error)
         // console.log({xy, xyM, xyP})
       }
