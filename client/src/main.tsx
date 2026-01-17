@@ -19,9 +19,9 @@ const debugRedux = false
 // const debugRedux = true
 const store = !debugRedux ? createStore(reducer) : createStore(
   reducer,
-  // @ts-ignore
+  // @ts-expect-error Redux debugging facilities
   window.__REDUX_DEVTOOLS_EXTENSION__ &&
-    // @ts-ignore
+    // @ts-expect-error Redux debugging facilities
     window.__REDUX_DEVTOOLS_EXTENSION__({ serialize: true, trace: true })
 )
 
