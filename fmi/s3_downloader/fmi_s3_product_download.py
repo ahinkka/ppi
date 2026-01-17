@@ -1,9 +1,10 @@
+import datetime
+import json
+import operator
 import os
+import subprocess
 import sys
 import traceback
-import json
-import subprocess
-import operator
 
 from os import getcwd, unlink, makedirs
 from os.path import join as path_join
@@ -96,7 +97,7 @@ def parse_datetime_from_filename(key):
 
 
 def fetch_latest_composite_product(client, site):
-    date_prefix = dt.utcnow().strftime('%Y/%m/%d')
+    date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
     product_name = 'acrr1h'
     prefix = f'{date_prefix}/{site}'
     raw_entries = [
@@ -160,7 +161,7 @@ def with_datetime_and_product_name(entry):
 
 
 def fetch_latest_product(client, site, product_name):
-    date_prefix = dt.utcnow().strftime('%Y/%m/%d')
+    date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
     site_suffix = f'{site}'
     prefix = f'{date_prefix}/{site_suffix}'
     raw_entries = list_objects(client, _product_bucket, prefix)
@@ -263,7 +264,7 @@ def main():
 
     for index, product in enumerate(newest_products.values()):
         if not args.dry_run:
-            now = dt.utcnow()
+            now = dt.now(datetime.UTC)
             dir_part = [configuration['output-directory'], str(now.year), str(now.month), str(now.day)]
             if not path_exists(path_join(*dir_part)):
                 makedirs(path_join(*dir_part))
