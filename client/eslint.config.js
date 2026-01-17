@@ -13,6 +13,11 @@ export default tseslint.config(
             react: reactPlugin,
         },
         languageOptions: {
+            parserOptions: {
+                ecmaFeatures: {
+                    jsx: true,
+                },
+            },
             globals: {
                 ...globals.browser,
                 ...globals.es2015,
@@ -48,7 +53,7 @@ export default tseslint.config(
             },
         },
         rules: {
-	    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
+            '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
         },
     },
     // Disable type-aware linting for JavaScript files
