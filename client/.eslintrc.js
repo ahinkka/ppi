@@ -8,16 +8,18 @@ module.exports = {
         'Atomics': 'readonly',
         'SharedArrayBuffer': 'readonly'
     },
-    "parser": "@babel/eslint-parser",
+    "parser": "@typescript-eslint/parser",
     'parserOptions': {
         'ecmaFeatures': {
             'jsx': true
         },
         'ecmaVersion': 2018,
-        'sourceType': 'module'
+        'sourceType': 'module',
+        'project': './tsconfig.json'
     },
     'plugins': [
-        'react'
+        'react',
+        '@typescript-eslint'
     ],
     'rules': {
         'indent': [
