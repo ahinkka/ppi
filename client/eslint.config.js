@@ -5,7 +5,7 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['build/**', 'dist/**', 'coverage/**'],
+    ignores: ['build/**', 'coverage/**'],
   },
   eslint.configs.recommended,
   {
