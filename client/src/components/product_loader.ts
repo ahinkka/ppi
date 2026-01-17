@@ -3,7 +3,7 @@ import pako from 'pako'
 import { Component } from 'react'
 import { connect } from 'react-redux'
 
-import { httpGetPromise, twoDtoUint8Array } from '../utils'
+import { twoDtoUint8Array } from '../utils'
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { orderForLoading } from '../product_time_loading_order'
 import { State, Flavor } from '../types'

@@ -1,26 +1,3 @@
-export function httpGetPromise(url: string, binary: boolean) {
-  return new Promise(function(resolve, reject) {
-    let req = new XMLHttpRequest();
-    req.open('GET', url);
-    if (binary) {
-      req.responseType = 'arraybuffer';
-    }
-    req.onload = function() {
-      if (req.status === 200) {
-        resolve(req.response);
-      } else {
-        reject(new Error(req.statusText));
-      }
-    };
-
-    req.onerror = function() {
-      reject(new Error('Network error'));
-    };
-
-    req.send();
-  });
-}
-
 export function objectEquals(x, y) {
   if (x === null || x === undefined || y === null || y === undefined) { return x === y; }
   // after this just checking type of one would be enough

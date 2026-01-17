@@ -1,6 +1,5 @@
 import { Component } from 'react'
 
-import { httpGetPromise } from '../utils'
 import { ObserverActions, ObserverDispatch } from '../constants'
 
 type Props = { dispatch: ObserverDispatch, url: string }
@@ -18,8 +17,8 @@ class CatalogProvider extends Component<Props> {
     const url = this.props.url
 
     const update = () => {
-      httpGetPromise(url, false)
-        .then(JSON.parse)
+      fetch(url)
+        .then((response) => response.json())
         .then((obj) => {
           dispatch({ type: ObserverActions.CATALOG_UPDATED, payload: obj })
         })
