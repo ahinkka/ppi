@@ -81,7 +81,7 @@ export function findClosestIndex(arr: Float32Array, target: number) {
   let smallestDifferenceIndex = -1
 
   while (start <= end) {
-    let mid = Math.floor((start + end) / 2)
+    const mid = Math.floor((start + end) / 2)
     const currentDifference = Math.abs(target - arr[mid])
     // console.log({start, mid, end, smallestDifference, currentDifference})
 

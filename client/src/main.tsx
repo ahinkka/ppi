@@ -17,7 +17,7 @@ import {reducer} from './state_reduction'
 
 const debugRedux = false
 // const debugRedux = true
-let store = !debugRedux ? createStore(reducer) : createStore(
+const store = !debugRedux ? createStore(reducer) : createStore(
   reducer,
   // @ts-ignore
   window.__REDUX_DEVTOOLS_EXTENSION__ &&
@@ -29,7 +29,7 @@ store.dispatch({type: ObserverActions.PRIME})
 
 
 const productUrlResolver = (flavor, time) => {
-  let urlPrefix = 'data/'
+  const urlPrefix = 'data/'
 
   if (flavor === undefined || flavor == null || time == null) {
     console.warn('No URL found for flavor:', flavor, ', time:', time)
@@ -37,7 +37,7 @@ const productUrlResolver = (flavor, time) => {
   }
 
   // TODO: when a new catalog comes in, parse the times
-  let tmp = flavor.times.find((x) => Date.parse(x.time) == time)
+  const tmp = flavor.times.find((x) => Date.parse(x.time) == time)
   if (tmp !== undefined) {
     return urlPrefix + tmp.url
   }

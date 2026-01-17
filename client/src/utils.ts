@@ -17,20 +17,20 @@ export function objectEquals(x, y) {
   if (!(y instanceof Object)) { return false; }
 
   // recursive object equality check
-  var p = Object.keys(x);
+  const p = Object.keys(x);
   return Object.keys(y).every(function (i) { return p.indexOf(i) !== -1; }) &&
         p.every(function (i) { return objectEquals(x[i], y[i]); });
 }
 
 export function twoDtoUint8Array(input: number[][]): [number, number, Uint8Array] {
-  let dim1 = input.length
-  let dim2 = input[0].length
+  const dim1 = input.length
+  const dim2 = input[0].length
 
-  let buffer = new ArrayBuffer(dim1 * dim2)
-  let view = new Uint8Array(buffer)
+  const buffer = new ArrayBuffer(dim1 * dim2)
+  const view = new Uint8Array(buffer)
   for (let i=0; i < dim1; i++) {
     for (let j=0; j < dim2; j++) {
-      let viewIndex = i * dim2 + j
+      const viewIndex = i * dim2 + j
       view[viewIndex] = input[i][j]
     }
   }

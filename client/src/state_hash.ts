@@ -1,10 +1,10 @@
 const serializeHash = (contents: { [key: string]: string | number | boolean }) => {
-  let keys = Object.keys(contents)
+  const keys = Object.keys(contents)
   keys.sort()
   let result = '#'
   let first = true;
   for (const key of keys) {
-    let value = contents[key]
+    const value = contents[key]
     if (first) {
       result += `${key}=${value}`
       first = false
@@ -38,10 +38,10 @@ export const makeHashFromState = (urlState: UrlState) => {
 
 
 export const parseHash = (hash: string): { [key: string]: string } => {
-  let parts = hash.slice(1).split('&')
-  let result = {}
-  for (let part of parts) {
-    let [key, value] = part.split('=')
+  const parts = hash.slice(1).split('&')
+  const result = {}
+  for (const part of parts) {
+    const [key, value] = part.split('=')
     result[key] = value
   }
   return result

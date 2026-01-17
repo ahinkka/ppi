@@ -93,7 +93,7 @@ const loadOneProduct = (
     .then((response) => response.bytes())
     .then(parseProduct)
     .then((parsed) => {
-      loadedProducts[urlToLoad] = parsed // eslint-disable-line require-atomic-updates
+      loadedProducts[urlToLoad] = parsed
       dispatch({
         type: ObserverActions.PRODUCT_LOAD_UPDATE,
         payload: {

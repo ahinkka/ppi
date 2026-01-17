@@ -31,11 +31,11 @@ const DropdownSelector = (props: DropdownSelectorProps) => {
 
   const tooltipId = `${props.legend}-tooltip`
   const tooltip = (
-      <Tooltip id={tooltipId}>{props.tooltip}</Tooltip>
+    <Tooltip id={tooltipId}>{props.tooltip}</Tooltip>
   )
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
-  props.dispatch({ type: props.action, payload: e.target.value })
+    props.dispatch({ type: props.action, payload: e.target.value })
 
   const selectTitle = 'Select ' + props.legend.toLowerCase();
   return (

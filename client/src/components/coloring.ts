@@ -39,20 +39,20 @@ const NOAALowRedGreenBlue: [number, number, number, number][] = [
 
 const _reflectivityValueToNOAAColor =
   (reflectivityValue: number): [number, number, number] | [null, null, null] => {
-  for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
-    const [low, red, green, blue] = NOAALowRedGreenBlue[index]
-    if (index == NOAALowRedGreenBlue.length - 1) {
-      return [red, green, blue]
+    for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
+      const [low, red, green, blue] = NOAALowRedGreenBlue[index]
+      if (index == NOAALowRedGreenBlue.length - 1) {
+        return [red, green, blue]
+      }
+
+      const nextLow = NOAALowRedGreenBlue[index + 1][0]
+      if (reflectivityValue >= low && reflectivityValue < nextLow) {
+        return [red, green, blue]
+      }
     }
 
-    const nextLow = NOAALowRedGreenBlue[index + 1][0]
-    if (reflectivityValue >= low && reflectivityValue < nextLow) {
-      return [red, green, blue]
-    }
+    return [null, null, null]
   }
-
-  return [null, null, null]
-}
 
 const _reflectivityValueToNOAAColorCache = {}
 export const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
@@ -66,13 +66,13 @@ export const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
 
 // TODO: rendering on screen
 export const NOAAScaleToScaleDescription = () => {
-  let result = []
+  const result = []
   for (let rowIndex=0; rowIndex<NOAALowRedGreenBlue.length; rowIndex++) {
-    let nextRowIndex = rowIndex + 1
+    const nextRowIndex = rowIndex + 1
     const [low, red, green, blue] = NOAALowRedGreenBlue[rowIndex]
 
     if (nextRowIndex < NOAALowRedGreenBlue.length) {
-      const [nextLow] = NOAALowRedGreenBlue[nextRowIndex] // eslint-disable-line no-unused-vars
+      const [nextLow] = NOAALowRedGreenBlue[nextRowIndex]
       result.push({
         type: ScaleRangeType.STEP,
         start: { value: low, open: false },
@@ -109,12 +109,12 @@ export const resolveColorForReflectivity =
 
 export const resolveColorGeneric =
   (dataScale: DataScale, value: number): [number, number, number, number] => {
-  if (value == dataScale.notScanned) {
-    return NOT_SCANNED_COLOR
-  } else {
-    return [0, 0, 255, Math.floor((value / 150) * 255)]
+    if (value == dataScale.notScanned) {
+      return NOT_SCANNED_COLOR
+    } else {
+      return [0, 0, 255, Math.floor((value / 150) * 255)]
+    }
   }
-}
 
 
 export const fillWithNotScanned = (dataArray: Uint8ClampedArray) => {

@@ -60,7 +60,7 @@ describe('On catalog update', () => {
     expect(reduced.animation.currentProductTime).toEqual(datesAfter[2])
   })
 
-  test("select last time if current time isn't available", () => {
+  test('select last time if current time isn\'t available', () => {
     const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[0] }})
     const reduced = reduceValidAnimationTime(after)
     expect(reduced.animation.currentProductTime).toEqual(datesAfter[2])

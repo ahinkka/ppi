@@ -58,13 +58,13 @@ describe('LUT', () => {
 
     for (let x = 60.0; x < 65.0; x += 0.1) {
       for (let y = 20.0; y < 25.0; y += 0.1) {
-	const mapCoord = pToM([x, y])
+        const mapCoord = pToM([x, y])
 
-	const expected = [x, y]
-	const converted = c(mapCoord)
+        const expected = [x, y]
+        const converted = c(mapCoord)
 
-	expect(converted[0]).toBeCloseTo(expected[0])
-	expect(converted[1]).toBeCloseTo(expected[1])
+        expect(converted[0]).toBeCloseTo(expected[0])
+        expect(converted[1]).toBeCloseTo(expected[1])
       }
     }
   })
