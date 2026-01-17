@@ -39,19 +39,19 @@ import {
 
 
 // https://24ways.org/2010/calculating-color-contrast
-const yiqColorContrast = (r: number, g: number, b: number) => (r*299 + g*587 + b*114 ) / 1000.0 >= 128
+const yiqColorContrast = (r: number, g: number, b: number) => (r * 299 + g * 587 + b * 114) / 1000.0 >= 128
 
 
 const bearingToCompassRoseReading = (bearing: number) => {
   const cardinals: [string, number][] = [
-    ['S', 0],   ['SSE', 22.5],  ['SE',  45], ['ESE', 67.5],
-    ['E', 90],  ['ENE', 112.5], ['NE', 135], ['NNE', 157.5],
+    ['S', 0], ['SSE', 22.5], ['SE', 45], ['ESE', 67.5],
+    ['E', 90], ['ENE', 112.5], ['NE', 135], ['NNE', 157.5],
     ['N', 180], ['NNW', 202.5], ['NW', 225], ['WNW', 247.5],
     ['W', 270], ['WSW', 292.5], ['SW', 315], ['SSW', 337.5],
   ]
 
   let currentClosest = ['X', 360] as [string, number]
-  for (let i=0; i<cardinals.length; i++) {
+  for (let i = 0; i < cardinals.length; i++) {
     const [name, angle] = cardinals[i]
     const difference = Math.abs(bearing - angle)
 
@@ -91,7 +91,7 @@ const renderCursorToolContentAndColors = (
   }
 
   if (nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined &&
-      nearestTownName && distanceToNearestTown  !== undefined && bearingToNearestTown !== undefined) {
+    nearestTownName && distanceToNearestTown !== undefined && bearingToNearestTown !== undefined) {
     return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km ${bearingToCompassRoseReading(bearingToNearestCity)}<br>${nearestTownName} ${distanceToNearestTown} km ${bearingToCompassRoseReading(bearingToNearestTown)}</small></div>`, bgColor, textColor]
   } else {
     return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
@@ -104,11 +104,11 @@ const bearingBetweenCoordinates = (source: [number, number], destination: [numbe
   const [fromLon, fromLat] = source
   const [toLon, toLat] = destination
 
-  const y = Math.sin(toLon-fromLon) * Math.cos(toLat)
+  const y = Math.sin(toLon - fromLon) * Math.cos(toLat)
   const x = Math.cos(fromLat) * Math.sin(toLat)
-        - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(toLon - fromLon)
+    - Math.sin(fromLat) * Math.cos(toLat) * Math.cos(toLon - fromLon)
   const o = Math.atan2(y, x)
-  return (o * 180/Math.PI + 360) % 360
+  return (o * 180 / Math.PI + 360) % 360
 }
 
 
@@ -211,9 +211,9 @@ type Props = {
   headerElementId: string,
   intendedCenter: [number, number],
   product: Product,
-  geoInterests: any,
-  productTime: any,
-  productSelection: any,
+  geoInterests: unknown,
+  productTime: unknown,
+  productSelection: unknown,
   dispatch: ObserverDispatch
 }
 
@@ -226,8 +226,8 @@ const cacheOpts = {
 export class Map extends React.Component<Props> {
   private __previousProduct: Product | null = null
   private __previousIntendedCenter: [number, number] = [0, 0]
-  private __renderedProducts: any = new LRUCache(cacheOpts)
-  private __colorCaches: any = {}
+  private __renderedProducts: LRUCache<string, HTMLCanvasElement> = new LRUCache(cacheOpts)
+  private __colorCaches: Record<string, Record<number, [number, number, number, number]>> = {}
   private mapToProductConversionFn: any | null = null
   private wgs84ToProductConversionFn: any | null = null
   private conversionCacheKey: string = ''
@@ -255,14 +255,14 @@ export class Map extends React.Component<Props> {
         fill: new FillStyle({
           color: 'rgba(0,0,0,0.2)',
         }),
-        stroke: new StrokeStyle({color: 'black', width: 1}),
+        stroke: new StrokeStyle({ color: 'black', width: 1 }),
       })
     })
 
     const townStyle = new Style({
       image: new CircleStyle({
         radius: 1,
-        stroke: new StrokeStyle({color: 'black', width: 1}),
+        stroke: new StrokeStyle({ color: 'black', width: 1 }),
       })
     })
 
@@ -301,7 +301,7 @@ export class Map extends React.Component<Props> {
       return
     }
     if (this.__previousIntendedCenter[0] != this.props.intendedCenter[0] ||
-        this.__previousIntendedCenter[1] != this.props.intendedCenter[1]) {
+      this.__previousIntendedCenter[1] != this.props.intendedCenter[1]) {
       const mapProjection = this.map.getView().getProjection()
       this.map.getView().setCenter(fromLonLat(this.props.intendedCenter, mapProjection))
     }
@@ -352,7 +352,7 @@ export class Map extends React.Component<Props> {
     this.map.getLayers().insertAt(1, this.imageLayer);
 
     const dispatch = this.props.dispatch
-    this.map.on('moveend', function(event: MapEvent) {
+    this.map.on('moveend', function (event: MapEvent) {
       const view = event.map.getView()
       const center = view.getCenter()
       const projection = view.getProjection()
@@ -360,7 +360,8 @@ export class Map extends React.Component<Props> {
 
       dispatch({
         type: ObserverActions.MAP_MOVED,
-        payload: {lon: lonLatCenter[0], lat: lonLatCenter[1]}}
+        payload: { lon: lonLatCenter[0], lat: lonLatCenter[1] }
+      }
       )
     })
 
@@ -379,12 +380,12 @@ export class Map extends React.Component<Props> {
       updateCursorTool(cursorToolOverlay, this.props.product, this.__vectorSource, evt.coordinate, resolveCursorToolContentAndColors, this.wgs84ToProductConversionFn)
       this.cursorToolVisible = true
 
-      dispatch({type: ObserverActions.POINTER_MOVED, payload: evt.coordinate})
+      dispatch({ type: ObserverActions.POINTER_MOVED, payload: evt.coordinate })
       // const pixel = this.map.getEventPixel(evt.originalEvent)
       // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
     })
     document.getElementById('map-element').addEventListener('mouseleave', () => {
-      dispatch({type: ObserverActions.POINTER_LEFT_MAP})
+      dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
       $(cursorToolElement).popover('dispose');
       this.cursorToolVisible = false
     })
@@ -488,8 +489,8 @@ export class Map extends React.Component<Props> {
     }
 
     const fn = this.mapToProductConversionFn
-    for (let x=0; x<this.canvas.width; x++) {
-      for (let y=0; y<this.canvas.height; y++) {
+    for (let x = 0; x < this.canvas.width; x++) {
+      for (let y = 0; y < this.canvas.height; y++) {
         const dataPxXY = fn(x, y)
 
         if (dataPxXY[0] == -1) { // out of product bounds
