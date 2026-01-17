@@ -48,7 +48,7 @@ There are three main components:
 
 ```
 cd client
-make clean && make
+make clean && make build
 cd ..
 mkdir -p client/build/radar
 python fmi/dist_builder/collect_radar_products.py /path/to/where/you/downloaded/the/stuff | \
