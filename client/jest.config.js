@@ -24,7 +24,7 @@ module.exports = {
   // collectCoverageFrom: null,
 
   // The directory where Jest should output its coverage files
-  coverageDirectory: "coverage",
+  coverageDirectory: 'coverage',
 
   // An array of regexp pattern strings used to skip coverage collection
   // coveragePathIgnorePatterns: [
@@ -62,8 +62,8 @@ module.exports = {
 
   // An array of directory names to be searched recursively up from the requiring module's location
   moduleDirectories: [
-    "node_modules",
-    "test"
+    'node_modules',
+    'test'
   ],
 
   // An array of file extensions your modules use
@@ -166,7 +166,7 @@ module.exports = {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    "^.+\\.(([tj]sx?))$": "esbuild-jest"
+    '^.+\\.(([tj]sx?))$': 'esbuild-jest'
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
