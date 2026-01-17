@@ -9,14 +9,13 @@ import { orderForLoading } from '../product_time_loading_order'
 import { State, Flavor } from '../types'
 
 
-function inflate(input: Uint8Array) {
+function inflate(input: Uint8Array): string {
   try {
     return pako.inflate(input, { to: 'string' })
   } catch (err) {
     console.error('Failed to decompress product file:', err)
   }
 }
-
 
 export type Product = {
   data: Uint8Array,
@@ -25,31 +24,32 @@ export type Product = {
   metadata: { [key: string]: any }
 }
 
-
-const parseProduct = async (input: Uint8Array): Promise<Product> => new Promise((resolve, reject) => {
+async function parseProduct(input: Uint8Array): Promise<Product> {
   let inflated = null
   try {
     inflated = inflate(input)
-    const parsed = JSON.parse(inflated)
-    const [cols, rows, buffer] = twoDtoUint8Array(parsed.data)
-    parsed._cols = cols
-    parsed._rows = rows
-    parsed.data = buffer
-    resolve(parsed)
+    const { data: twoDimensionalArray, metadata } = JSON.parse(inflated)
+    const [_cols, _rows, data] = twoDtoUint8Array(twoDimensionalArray)
+    return {
+      data,
+      _cols,
+      _rows,
+      metadata
+    }
   } catch (e) {
     if (e instanceof SyntaxError) {
-      console.error('Error parsing: ' + e + ' with input ' +
-                    inflated.substring(0, 20) +
-                    ' ... ' +
-                    inflated.substring(inflated.length - 20, inflated.length - 1))
-
+      console.error(
+        'Error parsing: ' + e + ' with input ' +
+          inflated.substring(0, 20) +
+          ' ... ' +
+          inflated.substring(inflated.length - 20, inflated.length - 1)
+      )
     } else {
       console.warn('Unhandled exception during product load', e)
     }
-
-    reject(e)
+    throw e
   }
-})
+}
 
 export type ProductUrlResolver = (flavor: Flavor, time: number) => string
 
