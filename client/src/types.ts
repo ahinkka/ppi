@@ -56,6 +56,6 @@ export type State = {
     stayOnLastTime: boolean
   }
   loadedProducts: { [key: string]: null | undefined },
-  geoInterests: any
+  geoInterests: unknown
 }
 
