@@ -37,7 +37,7 @@ const maxAnimationTime = (times: number[]): Date => {
 
 type TickProps = {
   key: string,
-  clicked: () => any,
+  clicked: () => unknown,
   position: number,
   tooltip: string,
   color: string,
@@ -97,7 +97,7 @@ const renderTooltip = (time: number) => {
 
 type TickItem = {
   time: number,
-  callback: () => any,
+  callback: () => unknown,
   isCurrent: boolean,
   isLoaded: boolean,
   key: string
