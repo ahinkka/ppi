@@ -13,7 +13,7 @@ type Props = UrlState & {
 }
 
 class UrlStateAdapter extends Component<Props> {
-  private updates: any[] | null
+  private updates: { type: string, payload?: unknown }[] | null
 
   constructor(props: Readonly<Props> | Props) {
     super(props)
