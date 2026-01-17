@@ -2,21 +2,21 @@
   "name": "ppi",
   "version": "0.0.0",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.0.0",
-    "@typescript-eslint/parser": "^5.0.0",
+    "@typescript-eslint/eslint-plugin": "6.21.0",
+    "@typescript-eslint/parser": "6.21.0",
     "@types/jest": "^27.0.2",
     "@types/json-stable-stringify": "^1.0.33",
     "@types/pako": "^2.0.3",
     "@types/proj4": "^2.5.2",
     "esbuild": "^0.24.2",
     "esbuild-jest": "^0.5.0",
-    "eslint": "^7.32.0",
-    "eslint-plugin-react": "^7.26.1",
+    "eslint": "8.57.0",
+    "eslint-plugin-react": "7.37.5",
     "jest": "^27.3.1",
-    "sass": "^1.83.4"
+    "sass": "^1.83.4",
+    "typescript": "5.9.3"
   },
   "dependencies": {
-    "@babel/preset-typescript": "^7.16.0",
     "bootstrap": "^4.6.0",
     "fp-ts": "^2.11.5",
     "jquery": "^3.6.0",
@@ -34,8 +34,7 @@
     "react-dom": "^17.0.2",
     "react-draggable": "^4.4.4",
     "react-redux": "~7.2.5",
-    "redux": "~4.1.1",
-    "typescript": "^5.7.3"
+    "redux": "~4.1.1"
   },
   "license": "AGPL-3.0"
 }
