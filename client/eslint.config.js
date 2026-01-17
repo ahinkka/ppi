@@ -48,7 +48,7 @@ export default tseslint.config(
             },
         },
         rules: {
-            // Add custom TS rules here if needed
+	    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
         },
     },
     // Disable type-aware linting for JavaScript files
