@@ -3,7 +3,7 @@ import 'jquery'
 import 'bootstrap'
 
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import {createStore} from 'redux'
 import { Provider } from 'react-redux'
 
@@ -64,19 +64,20 @@ const [getProductByUrl, setProductRepositoryObject] = (() => {
 const url = 'data/catalog.json'
 const geoInterestsUrl = 'data/geointerests.geojson'
 const renderApp = () => {
-  ReactDOM.render(
-    [
-      <CatalogProvider key='cp' dispatch={store.dispatch} url={url} />,
-      <GeoInterestsProvider key='gip' dispatch={store.dispatch} url={geoInterestsUrl} />,
-      <Provider key='p' store={store}>
-        <ProductLoader key='pl' productUrlResolver={productUrlResolver}
+  const container = document.getElementById('ppi')
+  const root = createRoot(container)
+  root.render(
+    <React.StrictMode>
+      <CatalogProvider dispatch={store.dispatch} url={url} />
+      <GeoInterestsProvider dispatch={store.dispatch} url={geoInterestsUrl} />
+      <Provider store={store}>
+        <ProductLoader productUrlResolver={productUrlResolver}
           setProductRepositoryObject={setProductRepositoryObject} />
-        <UrlStateAdapter key='usa' />
-        <ObserverApp key='oa' productUrlResolver={productUrlResolver}
+        <UrlStateAdapter />
+        <ObserverApp productUrlResolver={productUrlResolver}
           getProductByUrl={getProductByUrl} />
       </Provider>
-    ],
-    document.getElementById('ppi')
+    </React.StrictMode>
   )
 }
 

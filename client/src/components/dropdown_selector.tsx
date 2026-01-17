@@ -29,7 +29,7 @@ const DropdownSelector = (props: DropdownSelectorProps) => {
     (item) => (<DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>)
   )
 
-  const tooltipId = '{props.legend}-tooltip'
+  const tooltipId = `${props.legend}-tooltip`
   const tooltip = (
       <Tooltip id={tooltipId}>{props.tooltip}</Tooltip>
   )
@@ -42,10 +42,10 @@ const DropdownSelector = (props: DropdownSelectorProps) => {
     <div className="dropdown-selector">
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <label className="dropdown-selector__label"
-          htmlFor="{props.legend}-select"
+          htmlFor={`${props.legend}-select`}
           title={props.legend}>{props.legend}</label>
       </OverlayTrigger>
-      <select id="{props.legend}-select" className="form-control dropdown-selector__select"
+      <select id={`${props.legend}-select`} className="form-control dropdown-selector__select"
         value={props.currentValue} onChange={handleChange}
         disabled={props.disabled} title={selectTitle}>
         {options}

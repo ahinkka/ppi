@@ -283,10 +283,17 @@ export class Map extends React.Component<Props> {
 
   __onResize() {
     const elem = document.getElementById(this.props.headerElementId)
-    const desiredHeight = window.innerHeight - elem.offsetHeight
-    const style = '' + desiredHeight + 'px'
-    document.getElementById('map-element').style.height = style
-    this.map.updateSize()
+    if (elem) {
+      const desiredHeight = window.innerHeight - elem.offsetHeight
+      const style = '' + desiredHeight + 'px'
+      const mapElem = document.getElementById('map-element')
+      if (mapElem) {
+        mapElem.style.height = style
+      }
+      if (this.map) {
+        this.map.updateSize()
+      }
+    }
   }
 
   __updateMap() {
@@ -533,8 +540,8 @@ export class Map extends React.Component<Props> {
       this.__vectorSource.addFeatures(features)
     }
 
-    if (this.__previousProduct || this.__previousProduct != this.props.product) {
-      this.__previousProduct == this.props.product
+    if (this.__previousProduct != this.props.product) {
+      this.__previousProduct = this.props.product
       if (this.imageCanvas) {
         this.imageCanvas.changed()
       }
