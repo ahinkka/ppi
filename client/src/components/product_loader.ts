@@ -101,7 +101,7 @@ const loadOneProduct = (
       })
     })
     .catch((e) => {
-      console.error('Failed to load product', e)
+      console.error(`Failed to load product from url ${urlToLoad}`, e)
     })
     .finally(() => {
       delete loadingProducts[urlToLoad]
