@@ -9,11 +9,11 @@ import { orderForLoading } from '../product_time_loading_order'
 import { State, Flavor } from '../types'
 
 
-function inflate(stream) {
+function inflate(input: Uint8Array) {
   try {
-    return pako.inflate(stream, { to: 'string' })
+    return pako.inflate(input, { to: 'string' })
   } catch (err) {
-    console.error('Error while decompressing product file:', err);
+    console.error('Failed to decompress product file:', err)
   }
 }
 
@@ -26,10 +26,10 @@ export type Product = {
 }
 
 
-const parseProduct = async (resp): Promise<Product> => new Promise((resolve, reject) => {
+const parseProduct = async (input: Uint8Array): Promise<Product> => new Promise((resolve, reject) => {
   let inflated = null
   try {
-    inflated = inflate(resp)
+    inflated = inflate(input)
     const parsed = JSON.parse(inflated)
     const [cols, rows, buffer] = twoDtoUint8Array(parsed.data)
     parsed._cols = cols
@@ -42,6 +42,7 @@ const parseProduct = async (resp): Promise<Product> => new Promise((resolve, rej
                     inflated.substring(0, 20) +
                     ' ... ' +
                     inflated.substring(inflated.length - 20, inflated.length - 1))
+
     } else {
       console.warn('Unhandled exception during product load', e)
     }
@@ -88,7 +89,8 @@ const loadOneProduct = (
 
   loadingProducts[urlToLoad] = new Date()
 
-  httpGetPromise(urlToLoad, true)
+  fetch(urlToLoad)
+    .then((response) => response.bytes())
     .then(parseProduct)
     .then((parsed) => {
       loadedProducts[urlToLoad] = parsed // eslint-disable-line require-atomic-updates
