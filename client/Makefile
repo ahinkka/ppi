@@ -1,36 +1,55 @@
+##############################################################################
+## Mandatory machinery
+##############################################################################
 # See http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html for
 # syntax details.
-
 .PHONY: help
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: lint
-lint: ## Run TS typecheck and ESLint
-	npx tsc --jsx react-jsxdev --noEmit
-	./node_modules/.bin/eslint src
+.PHONY: clean
+clean: ## Clean build directory
+	rm -rf ./build/{js,css} ./build/*.html
 
-.PHONY: fix-lint
-fix-lint: ## Fix lint using ESLint
-	npx eslint --fix $(find src -type d)
 
-.PHONY: test
-test: ## Run tests
-	npx jest
+##############################################################################
+## Styles
+##############################################################################
+build/css:
+	mkdir -v build/css
 
-.PHONY: dev-test
-dev-test: ## Run tests continuously
-	npx jest --watch
+build/css/ol.css: build/css
+	cp -v node_modules/ol/ol.css $@
 
-.PHONY: style
-style:
-	mkdir -p ./build/css
-	npx sass \
-		--load-path=node_modules/bootstrap/scss \
-		css/ppi.sass > build/css/ppi.css
+build/css/bootstrap.min.css: build/css
+	cp -v node_modules/bootstrap/dist/css/bootstrap.min.css $@
 
-.PHONY: bundle
-bundle: lint
+build/css/ppi.css: $(wildcard css/*) build/css
+	npx sass --load-path=node_modules/bootstrap/scss css/ppi.sass > $@
+
+.PHONY: styles
+styles: build/css/ppi.css build/css/bootstrap.min.css build/css/ol.css
+
+
+##############################################################################
+## HTML
+##############################################################################
+source_html_files := $(wildcard www/*.html)
+html_files := $(patsubst www/%, build/%, $(source_html_files))
+
+$(html_files): build/%: www/%
+	cp -v $< $@
+
+.PHONY: html
+html: $(html_files)
+
+
+##############################################################################
+## Production build
+##############################################################################
+.PHONY: bundle-prod
+bundle-prod:
+	mkdir -p build/js
 	npx esbuild \
 		src/main.tsx \
 		--bundle \
@@ -39,6 +58,76 @@ bundle: lint
 		--define:process.env.NODE_ENV=\"production\" \
 		--minify
 
+.PHONY: build-prod
+build-prod: lint test bundle-prod $(html_files) styles ## Build a production distribution into directory 'build'
+
+
+##############################################################################
+## Development build
+##############################################################################
+.PHONY: bundle-dev
+bundle-dev:
+	npx esbuild \
+		src/main.tsx \
+		--bundle \
+		--outfile=build/js/ppi.js \
+		--loader:.js=jsx \
+		--define:process.env.NODE_ENV=\"test\" \
+		--sourcemap
+
+# This is called by build-dev.bash, don't use directly
+.PHONY: bundle-and-serve-dev
+bundle-and-serve-dev:
+	npx esbuild \
+	    src/main.tsx \
+	    --bundle \
+	    --outfile=build/js/ppi.js \
+	    --loader:.js=jsx \
+	    --define:process.env.NODE_ENV=\"test\" \
+	    --sourcemap \
+	    --serve=8000 \
+	    --watch=forever \
+	    --servedir=build
+
+.PHONY: watch
+watch: $(html_files) styles ## Build and watch everything continously
+	echo "foo"
+	bash watch.bash
+	echo "bar"
+
+
+##############################################################################
+## Testing & linting
+##############################################################################
+.PHONY: lint
+lint: ## Run TS typecheck and ESLint
+	npx tsc --jsx react-jsxdev --noEmit
+	./node_modules/.bin/eslint src
+
+.PHONY: lint-watch
+lint-watch: ## Run typechecker and ESLint continously
+	find src -type f | entr make lint
+
+.PHONY: fix-lint
+fix-lint: ## Fix lint using ESLint
+	npx eslint --fix $(find src -type d)
+
+.PHONY: typecheck-watch
+typecheck-watch: # Watch for filesystem changes and typecheck
+	npx tsc --jsx react-jsxdev -w --noEmit
+
+.PHONY: test
+test: ## Run tests
+	npx jest
+
+.PHONY: test-watch
+test-watch: ## Run tests continuously
+	npx jest --watch
+
+
+##############################################################################
+## bench.js specifics
+##############################################################################
 build/js/bench.js: src/bench.js src/reprojection.ts
 	npx esbuild \
 		src/bench.js \
@@ -53,34 +142,3 @@ bench: build/js/bench.js
 	node $<
 	rm $<
 
-.PHONY: build
-build: bundle style ## Build distribution into directory 'build'
-	mkdir -p ./build/js
-	mkdir -p ./build/css
-
-	cp node_modules/ol/ol.css build/css/
-	cp node_modules/bootstrap/dist/css/bootstrap.min.css build/css/
-	cp -R www/* build/
-
-.PHONY: dev-bundle
-dev-bundle:
-	npx esbuild \
-		src/main.tsx \
-		--bundle \
-		--outfile=build/js/ppi.js \
-		--loader:.js=jsx \
-		--define:process.env.NODE_ENV=\"test\" \
-		--sourcemap
-
-.PHONY: dev-build
-dev-build: ## Watch for filesystem changes and build on change
-	make dev-bundle style
-	find Makefile src www -type f | entr make dev-bundle style
-
-.PHONY: dev-typecheck
-dev-typecheck: # Watch for filesystem changes and typecheck
-	npx tsc --jsx react-jsxdev -w --noEmit
-
-.PHONY: clean
-clean: ## Clean build directory
-	rm -rf ./build/js/* ./build/css/* ./build/*.html

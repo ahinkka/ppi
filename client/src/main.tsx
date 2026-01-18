@@ -67,7 +67,7 @@ const renderApp = () => {
   const container = document.getElementById('ppi')
   const root = createRoot(container)
   root.render(
-    <React.StrictMode>
+    <React.Fragment>
       <CatalogProvider dispatch={store.dispatch} url={url} />
       <GeoInterestsProvider dispatch={store.dispatch} url={geoInterestsUrl} />
       <Provider store={store}>
@@ -77,7 +77,7 @@ const renderApp = () => {
         <ObserverApp productUrlResolver={productUrlResolver}
           getProductByUrl={getProductByUrl} />
       </Provider>
-    </React.StrictMode>
+    </React.Fragment>
   )
 }
 
