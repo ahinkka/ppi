@@ -11,20 +11,22 @@ help:
 clean: ## Clean build directory
 	rm -rf ./build/{js,css} ./build/*.html
 
+.PHONY: dirs
+dirs:
+	mkdir -p build/js
+	mkdir -p build/css
+
 
 ##############################################################################
 ## Styles
 ##############################################################################
-build/css:
-	mkdir -v build/css
+build/css/ol.css: dirs
+	cp node_modules/ol/ol.css $@
 
-build/css/ol.css: build/css
-	cp -v node_modules/ol/ol.css $@
+build/css/bootstrap.min.css: dirs
+	cp node_modules/bootstrap/dist/css/bootstrap.min.css $@
 
-build/css/bootstrap.min.css: build/css
-	cp -v node_modules/bootstrap/dist/css/bootstrap.min.css $@
-
-build/css/ppi.css: $(wildcard css/*) build/css
+build/css/ppi.css: dirs $(wildcard css/*)
 	npx sass --load-path=node_modules/bootstrap/scss css/ppi.sass > $@
 
 .PHONY: styles
@@ -37,8 +39,8 @@ styles: build/css/ppi.css build/css/bootstrap.min.css build/css/ol.css
 source_html_files := $(wildcard www/*.html)
 html_files := $(patsubst www/%, build/%, $(source_html_files))
 
-$(html_files): build/%: www/%
-	cp -v $< $@
+$(html_files): build/%: www/% dirs
+	cp $< $@
 
 .PHONY: html
 html: $(html_files)
@@ -47,9 +49,11 @@ html: $(html_files)
 ##############################################################################
 ## Production build
 ##############################################################################
-.PHONY: bundle-prod
-bundle-prod:
+build/js:
 	mkdir -p build/js
+
+.PHONY: bundle-prod
+bundle-prod: dirs
 	npx esbuild \
 		src/main.tsx \
 		--bundle \
@@ -66,7 +70,7 @@ build-prod: lint test bundle-prod $(html_files) styles ## Build a production dis
 ## Development build
 ##############################################################################
 .PHONY: bundle-dev
-bundle-dev:
+bundle-dev: dirs
 	npx esbuild \
 		src/main.tsx \
 		--bundle \
@@ -77,7 +81,7 @@ bundle-dev:
 
 # This is called by build-dev.bash, don't use directly
 .PHONY: bundle-and-serve-dev
-bundle-and-serve-dev:
+bundle-and-serve-dev: dirs
 	npx esbuild \
 	    src/main.tsx \
 	    --bundle \
@@ -91,9 +95,7 @@ bundle-and-serve-dev:
 
 .PHONY: watch
 watch: $(html_files) styles ## Build and watch everything continously
-	echo "foo"
 	bash watch.bash
-	echo "bar"
 
 
 ##############################################################################
