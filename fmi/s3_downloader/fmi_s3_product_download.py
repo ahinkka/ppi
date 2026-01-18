@@ -295,7 +295,7 @@ def main():
                 subprocess.check_call([
                     'gdalwarp', '-overwrite', orig_tiff_dest_path, reproj_tiff_dest_path,
                     '-t_srs', 'EPSG:4326',
-                    '-ts', str(dims[0]), str(dims[1]),
+                    '-ts', str(int(dims[0])), str(int(dims[1])),
                     '-srcnodata', '255',
                     '-dstnodata', '0',
                     # https://lists.osgeo.org/pipermail/gdal-dev/2010-May/024553.html
