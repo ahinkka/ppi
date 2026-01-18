@@ -108,7 +108,7 @@ class ObserverApp extends React.Component {
     this._animationTick = () =>
       L.get(animationRunningL, this.props) ? this.props.dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
 
-    setTimeout(this._animationTick, 500)
+    this.initialAnimationTimerToken = setTimeout(this._animationTick, 500)
     this.animationTimerToken = setInterval(this._animationTick, 1500)
 
     this._onKeyPress = (event) => handleKeyPress(this.props.dispatch, event)
@@ -118,6 +118,8 @@ class ObserverApp extends React.Component {
   }
 
   componentWillUnmount() {
+    if (this.initialAnimationTimerToken) clearTimeout(this.initialAnimationTimerToken)
+    if (this.animationTimerToken) clearInterval(this.animationTimerToken)
     document.removeEventListener('keypress', this._onKeyPress)
     document.removeEventListener('keydown', this._onKeyDown)
   }
