@@ -2,7 +2,7 @@
 name = "raster_to_json"
 version = "0.2.0"
 authors = ["Atte Hinkka <atte.hinkka@iki.fi>"]
-edition = "2018"
+edition = "2024"
 
 [dependencies]
 gdal = "0.19"
