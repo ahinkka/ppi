@@ -276,6 +276,7 @@ def collect(infile, exporter, directory):
                 process.stdin.write(json.dumps(additional_metadata).encode('utf-8'))
                 process.stdin.close()
                 process.wait()
+            # TODO: needs a sanity check that the command actually returned with non-error status, and that the file is readable
             err(u"Written. Compressing...")
             subprocess.check_call(["gzip", "-v", dest_path])
             err(u"Exported in {} s".format((datetime.datetime.now() - started).total_seconds()))
