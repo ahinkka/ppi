@@ -18,6 +18,7 @@ function SolidColorRange(props) {
 
 
 const MemoizedColorScale = React.memo(function ColorScale(props) {
+  const nodeRef = React.useRef(null);
   // -type: ScaleRangeType.STEP
   // -color [r,g,b]
   // -start
@@ -45,11 +46,13 @@ const MemoizedColorScale = React.memo(function ColorScale(props) {
   // TODO: use non-px units everywhere
   // <div style={{width: '7em'}}>{props.name}</div><br/>
   return (
-    <Draggable grid={[25, 25]}>
-      <div style={{backgroundColor: '#c0c0c0', padding: '10px',
-        'zIndex': 100, position: 'absolute', top: 150, left: 25}}>
-        <div style={{width: '7em', fontSize: '0.9em'}}>{props.type}, {props.unit}</div>
-        <div style={{display: 'flex', flexDirection: 'column'}}>
+    <Draggable nodeRef={nodeRef} grid={[25, 25]}>
+      <div ref={nodeRef} style={{
+        backgroundColor: '#c0c0c0', padding: '10px',
+        'zIndex': 100, position: 'absolute', top: 150, left: 25
+      }}>
+        <div style={{ width: '7em', fontSize: '0.9em' }}>{props.type}, {props.unit}</div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {ranges}
         </div>
       </div>
