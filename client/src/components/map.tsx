@@ -241,11 +241,15 @@ export class Map extends React.Component<Props> {
   private imageLayer: Image<ImageCanvas> | null = null
   private cursorToolOverlay: Overlay | null = null
   private canvas: HTMLCanvasElement | null = null
+  private mapElementRef = React.createRef<HTMLDivElement>()
+  private cursorToolOverlayRef = React.createRef<HTMLDivElement>()
+  private __resizeTimeout: number | null = null
 
   constructor(props: Readonly<Props> | Props) {
     super(props);
 
     this.__onResize = this.__onResize.bind(this);
+    this.__onMouseLeave = this.__onMouseLeave.bind(this);
     this.__updateMap = this.__updateMap.bind(this);
     this.__canvasFunction = this.__canvasFunction.bind(this);
 
@@ -285,17 +289,21 @@ export class Map extends React.Component<Props> {
 
   __onResize() {
     const elem = document.getElementById(this.props.headerElementId)
-    if (elem) {
+    const mapElem = this.mapElementRef.current
+    if (elem && mapElem) {
       const desiredHeight = window.innerHeight - elem.offsetHeight
       const style = '' + desiredHeight + 'px'
-      const mapElem = document.getElementById('map-element')
-      if (mapElem) {
-        mapElem.style.height = style
-      }
+      mapElem.style.height = style
       if (this.map) {
         this.map.updateSize()
       }
     }
+  }
+
+  __onMouseLeave() {
+    this.props.dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
+    $(this.cursorToolOverlayRef.current).popover('dispose');
+    this.cursorToolVisible = false
   }
 
   __updateMap() {
@@ -339,7 +347,7 @@ export class Map extends React.Component<Props> {
 
         this.__vectorLayer,
       ],
-      target: 'map-element',
+      target: this.mapElementRef.current,
     })
 
     this.imageCanvas = new ImageCanvas({
@@ -368,7 +376,7 @@ export class Map extends React.Component<Props> {
     })
 
     // https://openlayers.org/en/latest/examples/overlay.html
-    const cursorToolElement = document.getElementById('cursor-tool-overlay')
+    const cursorToolElement = this.cursorToolOverlayRef.current
     const cursorToolOverlay = new Overlay({ element: cursorToolElement })
     this.cursorToolOverlay = cursorToolOverlay
     this.map.addOverlay(cursorToolOverlay)
@@ -386,13 +394,9 @@ export class Map extends React.Component<Props> {
       // const pixel = this.map.getEventPixel(evt.originalEvent)
       // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
     })
-    document.getElementById('map-element').addEventListener('mouseleave', () => {
-      dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
-      $(cursorToolElement).popover('dispose');
-      this.cursorToolVisible = false
-    })
+    this.mapElementRef.current.addEventListener('mouseleave', this.__onMouseLeave)
 
-    setTimeout(this.__onResize, 200)
+    this.__resizeTimeout = window.setTimeout(this.__onResize, 200)
     window.addEventListener('resize', this.__onResize)
     this.__updateMap()
   }
@@ -530,6 +534,18 @@ export class Map extends React.Component<Props> {
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.__onResize)
+    if (this.mapElementRef.current) {
+      this.mapElementRef.current.removeEventListener('mouseleave', this.__onMouseLeave)
+    }
+    if (this.__resizeTimeout) {
+      window.clearTimeout(this.__resizeTimeout)
+      this.__resizeTimeout = null
+    }
+    if (this.map) {
+      this.map.setTarget(null)
+      this.map = null
+      this.__previousIntendedCenter = [0, 0]
+    }
   }
 
   render() {
@@ -554,8 +570,8 @@ export class Map extends React.Component<Props> {
 
     return (
       <React.Fragment>
-        <div id="map-element"></div>
-        <div id="cursor-tool-overlay"></div>
+        <div id="map-element" ref={this.mapElementRef}></div>
+        <div id="cursor-tool-overlay" ref={this.cursorToolOverlayRef}></div>
       </React.Fragment>
     )
   }
