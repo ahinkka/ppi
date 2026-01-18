@@ -7,6 +7,8 @@ import { twoDtoUint8Array } from '../utils'
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { orderForLoading } from '../product_time_loading_order'
 import { State, Flavor } from '../types'
+import { DataValueType } from './datavalue'
+import { AffineTransform } from '../reprojection'
 
 
 function inflate(input: Uint8Array): string {
@@ -21,7 +23,22 @@ export type Product = {
   data: Uint8Array,
   _cols: number,
   _rows: number,
-  metadata: { [key: string]: any }
+  metadata: {
+    productInfo: {
+      dataType: string,
+      dataUnit: DataValueType,
+      dataScale: {
+	step: number,
+	offset: number
+	notScanned: number,
+	noEcho: number
+      }
+    },
+    projectionRef: string,
+    width: number,
+    height: number,
+    affineTransform: AffineTransform
+  }
 }
 
 async function parseProduct(input: Uint8Array): Promise<Product> {
@@ -56,7 +73,7 @@ export type ProductUrlResolver = (flavor: Flavor, time: number) => string
 const loadOneProduct = (
   dispatch: ObserverDispatch,
   productUrlResolver: ProductUrlResolver,
-  loadedProducts: { [key: string]: any },
+  loadedProducts: { [key: string]: Product },
   loadingProducts: { [key: string]: Date },
   flavor: Flavor
 ) => {

@@ -20,6 +20,8 @@ import CircleStyle from 'ol/style/Circle'
 import FillStyle from 'ol/style/Fill'
 import StrokeStyle from 'ol/style/Stroke'
 import Style from 'ol/style/Style'
+import { Coordinate } from 'ol/coordinate'
+import Geometry from 'ol/geom/Geometry'
 
 import { fromLonLat, toLonLat } from 'ol/proj'
 import { getDistance } from 'ol/sphere'
@@ -175,7 +177,7 @@ const updateCursorTool = (
   overlay: Overlay,
   product: Product,
   vectorSource: VectorSource<never>,
-  newPosition: [number, number],
+  newPosition: Coordinate,
   resolveTemplateAndColors: typeof resolveCursorToolContentAndColors,
   conversionFn: (lon: number, lat: number) => [number, number]
 ) => {
@@ -228,8 +230,8 @@ export class Map extends React.Component<Props> {
   private __previousIntendedCenter: [number, number] = [0, 0]
   private __renderedProducts: LRUCache<string, HTMLCanvasElement> = new LRUCache(cacheOpts)
   private __colorCaches: Record<string, Record<number, [number, number, number, number]>> = {}
-  private mapToProductConversionFn: any | null = null
-  private wgs84ToProductConversionFn: any | null = null
+  private mapToProductConversionFn: (x: number, y: number) => [number, number] | null = null
+  private wgs84ToProductConversionFn: (x: number, y: number) => [number, number] | null = null
   private conversionCacheKey: string = ''
   private cursorToolVisible: boolean = false
   private __vectorSource: VectorSource<never> | null = null
@@ -372,7 +374,7 @@ export class Map extends React.Component<Props> {
     this.map.addOverlay(cursorToolOverlay)
 
     // https://openlayers.org/en/latest/apidoc/module-ol_MapBrowserEvent-MapBrowserEvent.html
-    this.map.on('pointermove', (evt: { dragging: any, coordinate: any }) => {
+    this.map.on('pointermove', (evt: { dragging: boolean, coordinate: Coordinate }) => {
       if (evt.dragging) {
         return
       }
@@ -400,7 +402,7 @@ export class Map extends React.Component<Props> {
     resolution: never,
     pixelRatio: never,
     size: [number, number],
-    projection: never
+    projection: never // eslint-disable-line @typescript-eslint/no-unused-vars
   ) {
     const startRender = new Date().getTime();
 
@@ -438,7 +440,7 @@ export class Map extends React.Component<Props> {
     }
 
     // Use the same color cache between calls
-    const colorCacheKey = stringify(metadata.productInfo.dataType, metadata.productInfo.dataScale)
+    const colorCacheKey = stringify([metadata.productInfo.dataType, metadata.productInfo.dataScale])
     if (!(colorCacheKey in this.__colorCaches)) {
       this.__colorCaches[colorCacheKey] = {}
     }
@@ -536,9 +538,9 @@ export class Map extends React.Component<Props> {
       Object.keys(this.props.geoInterests).length > 0 &&
       this.__vectorSource.getFeatures().length == 0
     ) {
-      const features: any = new GeoJSON({ featureProjection: 'EPSG:3857' })
+      const features: Feature<Geometry>[] = new GeoJSON({ featureProjection: 'EPSG:3857' })
         .readFeatures(this.props.geoInterests)
-      this.__vectorSource.addFeatures(features)
+      this.__vectorSource.addFeatures(features as Feature<never>[])
     }
 
     if (this.__previousProduct != this.props.product) {

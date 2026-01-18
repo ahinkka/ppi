@@ -1,7 +1,7 @@
 import proj4 from 'proj4'
 proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs')
 
-type AffineTransform = [number, number, number, number, number, number]
+export type AffineTransform = [number, number, number, number, number, number]
 
 export type Extent = [number, number, number, number]
 
@@ -184,7 +184,7 @@ export function canvasPxToProductPx(
   canvasProjectionDescription: string,
   canvasExtent: Extent,
   canvasWidth: number, canvasHeight: number,
-) {
+): (x: number, y: number) => [number, number] {
   const productExtent_ = productExtent(affineTransform, productWidth, productHeight)
   const [, mToP] = convertCoordinate(productProjectionDescription, canvasProjectionDescription)
   const [wgs84ToM,] = convertCoordinate('EPSG:4326', 'EPSG:3857')
