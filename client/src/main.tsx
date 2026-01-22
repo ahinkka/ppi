@@ -15,8 +15,7 @@ import ObserverApp from './components/app'
 import ProductLoaderComponent from './product_loader'
 import UrlStateAdapter from './components/url_state_adapter.js'
 import {ObserverActions} from './constants'
-import {reducer} from './state_reduction'
-import { State } from './types'
+import { State, reducer } from './state'
 
 const debugRedux = false
 // const debugRedux = true
@@ -97,8 +96,7 @@ const renderApp = () => {
           })}
         />
         <UrlStateAdapter />
-        <ObserverApp productUrlResolver={productUrlResolver}
-          getProductByUrl={getProductByUrl} />
+        <ObserverApp productUrlResolver={productUrlResolver} getProductByUrl={getProductByUrl} />
       </Provider>
     </React.StrictMode>
   )

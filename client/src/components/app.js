@@ -2,25 +2,17 @@ import React from 'react'
 import moment from 'moment';
 import { connect } from 'react-redux'
 
-import * as L from 'partial.lenses'
+import * as O from 'optics-ts'
 import {
-  catalogL,
   radarProductsL,
   geoInterestsL,
   selectedSiteIdL,
   selectedProductIdL,
   selectedFlavorIdL,
-  selectedSiteL,
-  selectedProductL,
   selectedFlavorL,
   animationRunningL,
-  currentLonL,
-  currentLatL,
-  intendedLonL,
-  intendedLatL,
-  loadedProductsL,
   currentProductTimeL
-} from '../state_reduction'
+} from '../state'
 
 import {ObserverActions} from '../constants'
 
@@ -105,7 +97,7 @@ class ObserverApp extends React.Component {
 
   componentDidMount() {
     this._animationTick = () =>
-      L.get(animationRunningL, this.props) ? this.props.dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
+      O.get(animationRunningL)(this.props) ? this.props.dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
 
     this.initialAnimationTimerToken = setTimeout(this._animationTick, 500)
     this.animationTimerToken = setInterval(this._animationTick, 1500)
@@ -126,17 +118,17 @@ class ObserverApp extends React.Component {
   render() {
     const props = this.props
     const [siteId, productId, flavorId] = [
-      L.get(selectedSiteIdL, props),
-      L.get(selectedProductIdL, props),
-      L.get(selectedFlavorIdL, props)
+      O.get(selectedSiteIdL)(props),
+      O.get(selectedProductIdL)(props),
+      O.get(selectedFlavorIdL)(props)
     ]
 
     if (!siteId || !productId || !flavorId) {
       return (<div></div>)
     }
 
-    const flavor = L.get(selectedFlavorL, props)
-    const currentProductTime = L.get(currentProductTimeL, props)
+    const flavor = O.get(selectedFlavorL)(props)
+    const currentProductTime = O.get(currentProductTimeL)(props)
     const productUrl = props.productUrlResolver(flavor, currentProductTime)
 
     const tickClickCallback = (time) => {
@@ -165,7 +157,7 @@ class ObserverApp extends React.Component {
             <DropdownSelector className="header-row__site-selector"
               currentValue={props.selection.siteId}
               legend="Site"
-              items={siteSelections(L.get(radarProductsL, props))}
+              items={siteSelections(O.get(radarProductsL)(props))}
               tooltip="Press S to cycle sites"
               action={ObserverActions.SITE_SELECTED}
               dispatch={props.dispatch} />
@@ -195,7 +187,7 @@ class ObserverApp extends React.Component {
         </div>
         <Map headerElementId="header-row"
           intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
-          geoInterests={L.get(geoInterestsL, props)}
+          geoInterests={O.get(geoInterestsL)(props)}
           dispatch={props.dispatch}
           product={product}
           productTime={props.animation.currentProductTime}
@@ -209,27 +201,6 @@ class ObserverApp extends React.Component {
 
 
 const mapStateToProps = (state) => {
-  const result = [
-    catalogL,
-    geoInterestsL,
-    selectedSiteIdL,
-    selectedProductIdL,
-    selectedFlavorIdL,
-    selectedSiteL,
-    selectedProductL,
-    selectedFlavorL,
-    animationRunningL,
-    currentLonL,
-    currentLatL,
-    intendedLonL,
-    intendedLatL,
-    loadedProductsL,
-    currentProductTimeL
-  ].reduce(
-    (acc, lens) => L.set(lens, L.get(lens, state), acc),
-    {}
-  )
-
-  return result
+  return state
 }
 export default connect(mapStateToProps)(ObserverApp)

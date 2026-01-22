@@ -1,39 +1,74 @@
-// -*- indent-tabs-mode: nil; -*-
-import * as L from 'partial.lenses'
-import {ObserverActions} from './constants'
+import * as O from 'optics-ts'
+
+import { ObserverActions } from './constants'
+import { Catalog, Site, CatalogProduct, Flavor } from './catalog'
+
+export type State = {
+  catalog: Catalog,
+  selection: {
+    siteId: string | null,
+    productId: string | null,
+    flavorId: string | null,
+
+    site: Site | null,
+    product: CatalogProduct | null,
+    flavor: Flavor | null
+  },
+  map: {
+    current: { // the map element controls this
+      pointerLocation: {
+        x: number,
+        y: number
+      },
+      centerLon: number,
+      centerLat: number
+    },
+    intended: { // the app controls this; whenever this changes, map centers on it
+      centerLon: number,
+      centerLat: number
+    },
+  },
+  animation: {
+    currentProductTime: number | null,
+    running: boolean,
+    stayOnLastTime: boolean
+  }
+  loadedProducts: { [key: string]: null | undefined },
+  geoInterests: unknown
+}
 
 const compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x)
 const pipe = (x, ...fns) => fns.reduce((acc, fn) => fn(acc), x)
 
 // Lenses into state
-export const catalogL = L.prop('catalog')
-export const radarProductsL = L.compose(catalogL, 'radarProducts')
-export const geoInterestsL = L.prop('geoInterests')
+export const catalogL = O.optic_<State>().prop('catalog')
+export const radarProductsL = catalogL.prop('radarProducts')
+export const geoInterestsL = O.optic_<State>().prop('geoInterests')
 
-export const selectionL = L.prop('selection')
-export const selectedSiteIdL = L.compose(selectionL, 'siteId')
-export const selectedProductIdL = L.compose(selectionL, 'productId')
-export const selectedFlavorIdL = L.compose(selectionL, 'flavorId')
+export const selectionL = O.optic_<State>().prop('selection')
+export const selectedSiteIdL = selectionL.prop('siteId')
+export const selectedProductIdL = selectionL.prop('productId')
+export const selectedFlavorIdL = selectionL.prop('flavorId')
 
-export const selectedSiteL = L.compose(selectionL, 'site')
-export const selectedProductL = L.compose(selectionL, 'product')
-export const selectedFlavorL = L.compose(selectionL, 'flavor')
+export const selectedSiteL = selectionL.prop('site')
+export const selectedProductL = selectionL.prop('product')
+export const selectedFlavorL = selectionL.prop('flavor')
 
-const animationL = L.prop('animation')
-export const currentProductTimeL = L.compose(animationL, 'currentProductTime')
-export const animationRunningL = L.compose(animationL, 'running')
-export const stayOnLastTimeL = L.compose(animationL, 'stayOnLastTime')
+const animationL = O.optic_<State>().prop('animation')
+export const currentProductTimeL = animationL.prop('currentProductTime')
+export const animationRunningL = animationL.prop('running')
+export const stayOnLastTimeL = animationL.prop('stayOnLastTime')
 
-const mapCurrentL = L.compose(L.prop('map'), 'current')
-export const currentLonL = L.compose(mapCurrentL, 'centerLon')
-export const currentLatL = L.compose(mapCurrentL, 'centerLat')
-const mapIntendedL = L.compose(L.prop('map'), 'intended')
-export const intendedLonL = L.compose(mapIntendedL, 'centerLon')
-export const intendedLatL = L.compose(mapIntendedL, 'centerLat')
+const mapCurrentL = O.optic_<State>().prop('map').prop('current')
+export const currentLonL = mapCurrentL.prop('centerLon')
+export const currentLatL = mapCurrentL.prop('centerLat')
+const mapIntendedL = O.optic_<State>().prop('map').prop('intended')
+export const intendedLonL = mapIntendedL.prop('centerLon')
+export const intendedLatL = mapIntendedL.prop('centerLat')
 
-export const currentPointerLocationL = L.compose(mapCurrentL, 'pointerLocation')
+export const currentPointerLocationL = mapCurrentL.prop('pointerLocation')
 
-export const loadedProductsL = L.prop('loadedProducts')
+export const loadedProductsL = O.optic_<State>().prop('loadedProducts')
 
 
 const selectSite = (previousSiteId, radarProducts) => {
@@ -44,8 +79,7 @@ const selectSite = (previousSiteId, radarProducts) => {
       }
     }
   } else {
-    let options = Object.keys(radarProducts)
-    options.sort()
+    const options = Object.keys(radarProducts).sort()
     return options.length > 0 ? [options[0], radarProducts[options[0]]] : [null, null];
   }
 }
@@ -93,7 +127,7 @@ const findFlavorTimeIndex = (flavorTimes, time) => {
   // We start looking from the end because the mechanism breaks if there are
   // multiple identical times.
   for (let i=flavorTimes.length-1; i>-1; i--) {
-    let parsedTime = Date.parse(flavorTimes[i].time)
+    const parsedTime = Date.parse(flavorTimes[i].time)
     if (parsedTime === time) {
       currentIndex = i
       break
@@ -137,29 +171,29 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext, stayOnLastTime
 
 
 const reduceValidSelection = (state) => {
-  const [siteId, site] = selectSite(L.get(selectedSiteIdL, state), L.get(radarProductsL, state))
+  const [siteId, site] = selectSite(O.get(selectedSiteIdL)(state), O.get(radarProductsL)(state))
   const withValidSite = compose(
-    L.set(selectedSiteIdL, siteId),
-    L.set(selectedSiteL, site)
+    O.set(selectedSiteIdL)(siteId),
+    O.set(selectedSiteL)(site)
   )(state)
 
   const [productId, product] = selectProduct(
-    L.get(selectedProductIdL, withValidSite),
-    L.get(selectedSiteL, withValidSite)
+    O.get(selectedProductIdL)(withValidSite),
+    O.get(selectedSiteL)(withValidSite)
   )
   const withValidProduct = compose(
-    L.set(selectedProductIdL, productId),
-    L.set(selectedProductL, product)
+    O.set(selectedProductIdL)(productId),
+    O.set(selectedProductL)(product)
   )(withValidSite)
 
   const [flavorId, flavor] = selectFlavor(
-    L.get(selectedFlavorIdL, withValidProduct),
-    L.get(selectedProductL, withValidProduct)
+    O.get(selectedFlavorIdL)(withValidProduct),
+    O.get(selectedProductL)(withValidProduct)
   )
 
   return compose(
-    L.set(selectedFlavorIdL, flavorId),
-    L.set(selectedFlavorL, flavor),
+    O.set(selectedFlavorIdL)(flavorId),
+    O.set(selectedFlavorL)(flavor),
     reduceStayOnLastTime,
   )(withValidProduct)
 }
@@ -168,18 +202,18 @@ const reduceValidSelection = (state) => {
 export const reduceValidAnimationTime = (state) => {
   const currentTime = selectFlavorTime(
     state.selection.flavor,
-    L.get(currentProductTimeL, state),
+    O.get(currentProductTimeL)(state),
     false,
-    L.get(stayOnLastTimeL, state)
+    O.get(stayOnLastTimeL)(state)
   )
 
-  return L.set(currentProductTimeL, currentTime)(state)
+  return O.set(currentProductTimeL)(currentTime)(state)
 }
 
 
 const reduceIntendedInitialMapCenter = (state) => {
   if ([currentLonL, currentLatL, intendedLonL, intendedLatL]
-    .every((lens) => !L.get(lens, state))) {
+    .every((lens) => !O.get(lens)(state))) {
     return makeCurrentSiteIntendedReducer(state)
   } else {
     return state
@@ -190,7 +224,7 @@ const reduceIntendedInitialMapCenter = (state) => {
 export const catalogUpdatedReducer = (state, action) =>
   pipe(
     state,
-    L.set(catalogL, action.payload),
+    O.set(catalogL)(action.payload),
     reduceValidSelection,
     reduceValidAnimationTime,
     reduceIntendedInitialMapCenter
@@ -198,13 +232,13 @@ export const catalogUpdatedReducer = (state, action) =>
 
 
 const siteSelectedReducer = (state, action) => {
-  let [siteId, site] = [action.payload, L.get(radarProductsL, state)[action.payload]]
+  let [siteId, site] = [action.payload, O.get(radarProductsL)(state)[action.payload]]
   if (site == undefined) {
-    [siteId, site] = selectSite(state.selection.siteId, L.get(radarProductsL, state))
+    [siteId, site] = selectSite(state.selection.siteId, O.get(radarProductsL)(state))
   }
-  let siteChanged = state.selection.siteId != siteId
+  const siteChanged = state.selection.siteId != siteId
 
-  const withSiteSet = compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
+  const withSiteSet = compose(O.set(selectedSiteIdL)(siteId), O.set(selectedSiteL)(site))(state)
 
   if (siteChanged) {
     return pipe(
@@ -226,7 +260,7 @@ const siteSelectedReducer = (state, action) => {
 const productSelectedReducer = (state, action) => {
   let [productId, product] = [
     action.payload,
-    (L.get(L.compose(selectedSiteL, 'products'), state) ?? {})[action.payload]
+    (O.get(selectedSiteL.prop('products'))(state) ?? {})[action.payload]
   ]
 
   if (product == undefined) {
@@ -235,8 +269,8 @@ const productSelectedReducer = (state, action) => {
 
   return pipe(
     state,
-    L.set(selectedProductIdL, productId),
-    L.set(selectedProductL, product),
+    O.set(selectedProductIdL)(productId),
+    O.set(selectedProductL)(product),
     reduceValidSelection,
     reduceValidAnimationTime
   )
@@ -246,7 +280,7 @@ const productSelectedReducer = (state, action) => {
 const flavorSelectedReducer = (state, action) => {
   let [flavorId, flavor] = [
     action.payload,
-    (L.get(L.compose(selectedProductL, 'flavors'), state) ?? {})[action.payload]
+    (O.get(selectedProductL.prop('flavors'))(state) ?? {})[action.payload]
   ]
 
   if (flavor == undefined) {
@@ -255,8 +289,8 @@ const flavorSelectedReducer = (state, action) => {
 
   return pipe(
     state,
-    L.set(selectedFlavorIdL, flavorId),
-    L.set(selectedFlavorL, flavor),
+    O.set(selectedFlavorIdL)(flavorId),
+    O.set(selectedFlavorL)(flavor),
     reduceValidAnimationTime,
     reduceValidSelection
   )
@@ -300,21 +334,20 @@ const makeCurrentSiteIntendedReducer = (state) => {
 
 
 const pointerLocationReducer = (state, newLocation) =>
-  L.set(currentPointerLocationL, newLocation)(state)
+  O.set(currentPointerLocationL)(newLocation)(state)
 
 
 const cycleSiteReducer = (state) => {
-  let options = Object.keys(L.get(radarProductsL, state))
-  options.sort()
+  const options = Object.keys(O.get(radarProductsL)(state)).sort()
 
   // returns -1 if not found, which is handy as we just select the first then
   const current = options.indexOf(state.selection.siteId)
-  let newIndex = current + 1 == options.length ? 0 : current + 1
+  const newIndex = current + 1 == options.length ? 0 : current + 1
 
-  let [newSiteId, newSite] = [options[newIndex], L.get(radarProductsL, state)[options[newIndex]]]
-  let siteChanged = state.selection.siteId != newSiteId
+  const [newSiteId, newSite] = [options[newIndex], O.get(radarProductsL)(state)[options[newIndex]]]
+  const siteChanged = state.selection.siteId != newSiteId
 
-  state = compose(L.set(selectedSiteIdL, newSiteId), L.set(selectedSiteL, newSite))(state)
+  state = compose(O.set(selectedSiteIdL)(newSiteId), O.set(selectedSiteL)(newSite))(state)
 
   if (siteChanged) {
     state = makeCurrentSiteIntendedReducer(state)
@@ -325,48 +358,45 @@ const cycleSiteReducer = (state) => {
 
 
 const cycleProductReducer = (state) => {
-  let options = Object.keys(state.selection.site.products)
-  options.sort()
+  const options = Object.keys(state.selection.site.products).sort()
 
   // returns -1 if not found, which is handy as we just select the first then
   const current = options.indexOf(state.selection.productId)
-  let newIndex = current + 1 == options.length ? 0 : current + 1
+  const newIndex = current + 1 == options.length ? 0 : current + 1
 
-  let [newProductId, newProduct] = [options[newIndex], state.selection.site.products[options[newIndex]]]
-  state = compose(L.set(selectedProductIdL, newProductId), L.set(selectedProductL, newProduct))(state)
+  const [newProductId, newProduct] = [options[newIndex], state.selection.site.products[options[newIndex]]]
+  state = compose(O.set(selectedProductIdL)(newProductId), O.set(selectedProductL)(newProduct))(state)
 
   return reduceValidAnimationTime(reduceValidSelection(state))
 }
 
 
 const cycleFlavorReducer = (state) => {
-  let options = Object.keys(state.selection.product.flavors)
-  options.sort()
+  const options = Object.keys(state.selection.product.flavors).sort()
 
   // returns -1 if not found, which is handy as we just select the first then
   const current = options.indexOf(state.selection.flavorId)
-  let newIndex = current + 1 == options.length ? 0 : current + 1
+  const newIndex = current + 1 == options.length ? 0 : current + 1
 
-  let [newFlavorId, newFlavor] = [options[newIndex], state.selection.product.flavors[options[newIndex]]]
-  state = compose(L.set(selectedFlavorIdL, newFlavorId), L.set(selectedFlavorL, newFlavor))(state)
+  const [newFlavorId, newFlavor] = [options[newIndex], state.selection.product.flavors[options[newIndex]]]
+  state = compose(O.set(selectedFlavorIdL)(newFlavorId), O.set(selectedFlavorL)(newFlavor))(state)
 
   return reduceValidAnimationTime(state)
 }
 
 
 export const animationTickReducer = (state) =>
-  L.set(currentProductTimeL,
-    selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true, false),
-    state)
+  O.set(currentProductTimeL)(
+    selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true, false)
+  )(state)
 
 
 const reduceStayOnLastTime = (state) => {
   const flavorTimes = state.selection.flavor ? state.selection.flavor.times : []
-  const intendedIndex = findFlavorTimeIndex(flavorTimes, L.get(currentProductTimeL, state))
+  const intendedIndex = findFlavorTimeIndex(flavorTimes, O.get(currentProductTimeL)(state))
 
-  return L.set(
-    stayOnLastTimeL,
-    !L.get(animationRunningL)(state) && intendedIndex == flavorTimes.length - 1
+  return O.set(stayOnLastTimeL)(
+    !O.get(animationRunningL)(state) && intendedIndex == flavorTimes.length - 1
   )(state)
 }
 
@@ -374,18 +404,18 @@ const reduceStayOnLastTime = (state) => {
 const tickClickedReducer = (state, action) =>
   pipe(
     state,
-    L.set(currentProductTimeL, action.payload),
+    O.set(currentProductTimeL)(action.payload),
     reduceStayOnLastTime
   )
 
 
 const forwardBackwardReducer = (state, forward) => {
-  let times = state.selection.flavor.times
+  const times = state.selection.flavor.times
   let previousIndex = null;
 
   if (forward) {
     for (let i=times.length-1; i>-1; i--) {
-      let time = Date.parse(times[i].time)
+      const time = Date.parse(times[i].time)
       if (time === state.animation.currentProductTime) {
         previousIndex = i
         break
@@ -393,7 +423,7 @@ const forwardBackwardReducer = (state, forward) => {
     }
   } else {
     for (let i=0; i<times.length; i++) {
-      let time = Date.parse(times[i].time)
+      const time = Date.parse(times[i].time)
       if (time === state.animation.currentProductTime) {
         previousIndex = i
         break
@@ -412,7 +442,7 @@ const forwardBackwardReducer = (state, forward) => {
 
   return pipe(
     state,
-    L.set(currentProductTimeL, newTime),
+    O.set(currentProductTimeL)(newTime),
     reduceStayOnLastTime
   )
 }
@@ -423,7 +453,7 @@ const tickBackwardReducer = (state) => forwardBackwardReducer(state, false)
 const toggleAnimationReducer = (state) =>
   pipe(
     state,
-    (s) => L.set(animationRunningL, !L.get(animationRunningL, s))(s),
+    (s) => O.set(animationRunningL)(!O.get(animationRunningL)(s))(s),
     reduceStayOnLastTime
   )
 
@@ -476,11 +506,11 @@ export const reducer = (state, action) => {
         running: false,
         stayOnLastTime: true
       }
-    }
+    } as State
   } else if (action.type === ObserverActions.CATALOG_UPDATED) {
     return catalogUpdatedReducer(state, action);
   } else if (action.type === ObserverActions.GEOINTERESTS_UPDATED) {
-    return L.set(geoInterestsL, action.payload)(state)
+    return O.set(geoInterestsL)(action.payload)(state)
   } else if (action.type === ObserverActions.SITE_SELECTED) {
     return siteSelectedReducer(state, action);
   } else if (action.type === ObserverActions.CYCLE_SITE) {
@@ -512,7 +542,7 @@ export const reducer = (state, action) => {
   } else if (action.type === ObserverActions.TICK_BACKWARD) {
     return tickBackwardReducer(state);
   } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {
-    return toggleAnimationReducer(state, action);
+    return toggleAnimationReducer(state)
   } else if (action.type === ObserverActions.PRODUCT_LOAD_UPDATE) {
     return productLoadUpdateReducer(state, action);
   }
