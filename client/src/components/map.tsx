@@ -30,6 +30,7 @@ import GeoJSON from 'ol/format/GeoJSON'
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { canvasPxToProductPx, wgs84ToProductPx, Extent } from '../reprojection'
 import { LoadedProduct } from '../product_loader'
+import { State } from '../state'
 
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 import {
@@ -213,9 +214,9 @@ type Props = {
   headerElementId: string,
   intendedCenter: [number, number],
   product: LoadedProduct,
-  geoInterests: unknown,
-  productTime: unknown,
-  productSelection: unknown,
+  geoInterests: State['geoInterests'],
+  productTime: number | null,
+  productSelection: [string, string, string],
   dispatch: ObserverDispatch
 }
 

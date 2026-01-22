@@ -18,7 +18,7 @@ import {
 import { Flavor } from '../catalog'
 
 import DropdownSelector from './dropdown_selector'
-import {Map} from './map.js'
+import {Map} from './map'
 import {ToggleButton} from './toggle_button'
 import ProductSlider from './product_slider'
 import ColorScale from './color_scale'
@@ -145,7 +145,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
     const currentProductTime = O.get(currentProductTimeL)(props)
     const productUrl = props.productUrlResolver(flavor, currentProductTime)
 
-    const tickClickCallback = (time) => {
+    const tickClickCallback = (time: number) => {
       return () =>  props.dispatch({ type: ObserverActions.TICK_CLICKED, payload: time })
     }
 

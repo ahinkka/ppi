@@ -54,7 +54,7 @@ const _reflectivityValueToNOAAColor =
     return [null, null, null]
   }
 
-const _reflectivityValueToNOAAColorCache = {}
+const _reflectivityValueToNOAAColorCache: Record<number, [number, number, number] | [null, null, null]> = {}
 export const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
   if (!(reflectivityValue in _reflectivityValueToNOAAColorCache)) {
     _reflectivityValueToNOAAColorCache[reflectivityValue] =

@@ -10,10 +10,10 @@ import { Provider } from 'react-redux'
 import { connect } from 'react-redux'
 
 import CatalogProvider from './catalog'
-import GeoInterestsProvider from './components/geointerests_provider.js'
+import GeoInterestsProvider from './components/geointerests_provider'
 import ObserverApp from './components/app'
 import ProductLoaderComponent from './product_loader'
-import UrlStateAdapter from './components/url_state_adapter.js'
+import UrlStateAdapter from './components/url_state_adapter'
 import {ObserverActions} from './constants'
 import { State, reducer } from './state'
 

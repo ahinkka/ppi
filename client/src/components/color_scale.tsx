@@ -75,7 +75,7 @@ const MemoizedColorScale = React.memo(function ColorScale(props: ColorScaleProps
     <Draggable nodeRef={nodeRef} grid={[25, 25]}>
       <div ref={nodeRef} style={{
         backgroundColor: '#c0c0c0', padding: '10px',
-        'zIndex': 100, position: 'absolute', top: 150, left: 25
+        zIndex: 100, position: 'absolute', top: 150, left: 25
       }}>
         <div style={{ width: '7em', fontSize: '0.9em' }}>{props.type}, {props.unit}</div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
