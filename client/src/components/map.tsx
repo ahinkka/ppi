@@ -29,7 +29,7 @@ import GeoJSON from 'ol/format/GeoJSON'
 
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { canvasPxToProductPx, wgs84ToProductPx, Extent } from '../reprojection'
-import { LoadedProduct } from './product_loader'
+import { LoadedProduct } from '../product_loader'
 
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 import {

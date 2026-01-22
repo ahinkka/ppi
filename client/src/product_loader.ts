@@ -1,15 +1,12 @@
 import pako from 'pako'
 
 import { Component } from 'react'
-import { connect } from 'react-redux'
 
-import { twoDtoUint8Array } from '../utils'
-import { ObserverActions, ObserverDispatch } from '../constants'
-import { orderForLoading } from '../product_time_loading_order'
-import { State } from '../types'
-import { Flavor } from '../catalog'
-import { DataValueType } from './datavalue'
-import { AffineTransform } from '../reprojection'
+import { twoDtoUint8Array } from './utils'
+import { orderForLoading } from './product_time_loading_order'
+import { Flavor } from './catalog'
+import { DataValueType } from './components/datavalue'
+import { AffineTransform } from './reprojection'
 
 
 function inflate(input: Uint8Array): string {
@@ -72,13 +69,13 @@ async function parseProduct(input: Uint8Array): Promise<LoadedProduct> {
 export type ProductUrlResolver = (flavor: Flavor, time: number) => string
 
 const loadOneProduct = (
-  dispatch: ObserverDispatch,
+  onProductLoadUpdate: (payload: { loaded: string[], unloaded: string[] }) => void,
   productUrlResolver: ProductUrlResolver,
   loadedProducts: { [key: string]: LoadedProduct },
   loadingProducts: { [key: string]: Date },
   flavor: Flavor
 ) => {
-  const removedUrls = new Set()
+  const removedUrls = new Set<string>()
   const loadingOrderedTimes = orderForLoading(flavor.times.map((t) => Date.parse(t.time)))
   const intendedUrls = loadingOrderedTimes.map((t) => productUrlResolver(flavor, t))
 
@@ -112,12 +109,9 @@ const loadOneProduct = (
     .then(parseProduct)
     .then((parsed) => {
       loadedProducts[urlToLoad] = parsed
-      dispatch({
-        type: ObserverActions.PRODUCT_LOAD_UPDATE,
-        payload: {
-          loaded: [urlToLoad],
-          unloaded: Array.from(removedUrls)
-        }
+      onProductLoadUpdate({
+        loaded: [urlToLoad],
+        unloaded: Array.from(removedUrls)
       })
     })
     .catch((e) => {
@@ -133,7 +127,7 @@ type Props = {
   loadedProducts: { [key: string]: null | undefined },
   productUrlResolver: ProductUrlResolver,
   setProductRepositoryObject: (obj: { [key: string]: null | undefined }) => void,
-  dispatch: ObserverDispatch
+  onProductLoadUpdate: (payload: { loaded: string[], unloaded: string[] }) => void
 }
 
 class ProductLoader extends Component<Props> {
@@ -158,7 +152,7 @@ class ProductLoader extends Component<Props> {
 
     const l = () =>
       loadOneProduct(
-        props.dispatch,
+        props.onProductLoadUpdate,
         props.productUrlResolver,
         this.loadedProducts, this.loadingProducts,
         props.selectedFlavor
@@ -169,12 +163,4 @@ class ProductLoader extends Component<Props> {
   }
 }
 
-
-const mapStateToProps =
-  (state: State): Omit<Props, 'dispatch' | 'productUrlResolver' | 'setProductRepositoryObject'> => {
-    return {
-      selectedFlavor: state.selection.flavor,
-      loadedProducts: state.loadedProducts
-    }
-  }
-export default connect(mapStateToProps)(ProductLoader)
+export default ProductLoader

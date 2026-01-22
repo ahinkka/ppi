@@ -7,13 +7,16 @@ import { createRoot } from 'react-dom/client'
 import {createStore} from 'redux'
 import { Provider } from 'react-redux'
 
+import { connect } from 'react-redux'
+
 import CatalogProvider from './catalog'
 import GeoInterestsProvider from './components/geointerests_provider.js'
 import ObserverApp from './components/app'
-import ProductLoader from './components/product_loader.js'
+import ProductLoaderComponent from './product_loader'
 import UrlStateAdapter from './components/url_state_adapter.js'
 import {ObserverActions} from './constants'
 import {reducer} from './state_reduction'
+import { State } from './types'
 
 const debugRedux = false
 // const debugRedux = true
@@ -26,6 +29,14 @@ const store = !debugRedux ? createStore(reducer) : createStore(
 )
 
 store.dispatch({type: ObserverActions.PRIME})
+
+
+const ReduxConnectedProductLoader = connect(
+  (state: State) => ({
+    selectedFlavor: state.selection.flavor,
+    loadedProducts: state.loadedProducts
+  })
+)(ProductLoaderComponent)
 
 
 const productUrlResolver = (flavor, time) => {
@@ -77,8 +88,14 @@ const renderApp = () => {
       />
       <GeoInterestsProvider dispatch={store.dispatch} url={geoInterestsUrl} />
       <Provider store={store}>
-        <ProductLoader productUrlResolver={productUrlResolver}
-          setProductRepositoryObject={setProductRepositoryObject} />
+        <ReduxConnectedProductLoader
+          productUrlResolver={productUrlResolver}
+          setProductRepositoryObject={setProductRepositoryObject}
+          onProductLoadUpdate={(payload) => store.dispatch({
+            type: ObserverActions.PRODUCT_LOAD_UPDATE,
+            payload: payload
+          })}
+        />
         <UrlStateAdapter />
         <ObserverApp productUrlResolver={productUrlResolver}
           getProductByUrl={getProductByUrl} />
