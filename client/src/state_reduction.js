@@ -1,7 +1,9 @@
 // -*- indent-tabs-mode: nil; -*-
 import * as L from 'partial.lenses'
-import * as R from 'ramda'
 import {ObserverActions} from './constants'
+
+const compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x)
+const pipe = (...fns) => (x) => fns.reduce((acc, fn) => fn(acc), x)
 
 // Lenses into state
 export const catalogL = L.prop('catalog')
@@ -136,7 +138,7 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext, stayOnLastTime
 
 const reduceValidSelection = (state) => {
   const [siteId, site] = selectSite(L.get(selectedSiteIdL, state), L.get(radarProductsL, state))
-  const withValidSite = R.compose(
+  const withValidSite = compose(
     L.set(selectedSiteIdL, siteId),
     L.set(selectedSiteL, site)
   )(state)
@@ -145,7 +147,7 @@ const reduceValidSelection = (state) => {
     L.get(selectedProductIdL, withValidSite),
     L.get(selectedSiteL, withValidSite)
   )
-  const withValidProduct = R.compose(
+  const withValidProduct = compose(
     L.set(selectedProductIdL, productId),
     L.set(selectedProductL, product)
   )(withValidSite)
@@ -155,7 +157,7 @@ const reduceValidSelection = (state) => {
     L.get(selectedProductL, withValidProduct)
   )
 
-  return R.compose(
+  return compose(
     L.set(selectedFlavorIdL, flavorId),
     L.set(selectedFlavorL, flavor),
     reduceStayOnLastTime,
@@ -176,8 +178,8 @@ export const reduceValidAnimationTime = (state) => {
 
 
 const reduceIntendedInitialMapCenter = (state) => {
-  if (R.all((lens) => !L.get(lens, state),
-    [currentLonL, currentLatL, intendedLonL, intendedLatL])) {
+  if ([currentLonL, currentLatL, intendedLonL, intendedLatL]
+    .every((lens) => !L.get(lens, state))) {
     return makeCurrentSiteIntendedReducer(state)
   } else {
     return state
@@ -186,7 +188,7 @@ const reduceIntendedInitialMapCenter = (state) => {
 
 
 export const catalogUpdatedReducer = (state, action) =>
-  R.pipe(
+  pipe(
     L.set(catalogL, action.payload),
     reduceValidSelection,
     reduceValidAnimationTime,
@@ -201,12 +203,12 @@ const siteSelectedReducer = (state, action) => {
   }
   let siteChanged = state.selection.siteId != siteId
 
-  const withSiteSet = R.compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
+  const withSiteSet = compose(L.set(selectedSiteIdL, siteId), L.set(selectedSiteL, site))(state)
 
   if (siteChanged) {
-    return R.pipe(reduceValidSelection, makeCurrentSiteIntendedReducer, reduceValidAnimationTime)(withSiteSet)
+    return pipe(reduceValidSelection, makeCurrentSiteIntendedReducer, reduceValidAnimationTime)(withSiteSet)
   } else {
-    return R.pipe(reduceValidSelection, reduceValidAnimationTime)(withSiteSet)
+    return pipe(reduceValidSelection, reduceValidAnimationTime)(withSiteSet)
   }
 }
 
@@ -214,14 +216,14 @@ const siteSelectedReducer = (state, action) => {
 const productSelectedReducer = (state, action) => {
   let [productId, product] = [
     action.payload,
-    R.defaultTo({})(L.get(L.compose(selectedSiteL, 'products'), state))[action.payload]
+    (L.get(L.compose(selectedSiteL, 'products'), state) ?? {})[action.payload]
   ]
 
   if (product == undefined) {
     [productId, product] = selectProduct(state.selection.productId, state.selection.site);
   }
 
-  return R.pipe(L.set(selectedProductIdL, productId), L.set(selectedProductL, product),
+  return pipe(L.set(selectedProductIdL, productId), L.set(selectedProductL, product),
     reduceValidSelection,
     reduceValidAnimationTime)(state)
 }
@@ -230,14 +232,14 @@ const productSelectedReducer = (state, action) => {
 const flavorSelectedReducer = (state, action) => {
   let [flavorId, flavor] = [
     action.payload,
-    R.defaultTo({})(L.get(L.compose(selectedProductL, 'flavors')))[action.payload]
+    (L.get(L.compose(selectedProductL, 'flavors'), state) ?? {})[action.payload]
   ]
 
   if (flavor == undefined) {
     [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product);
   }
 
-  return R.pipe(L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor),
+  return pipe(L.set(selectedFlavorIdL, flavorId), L.set(selectedFlavorL, flavor),
     reduceValidAnimationTime,
     reduceValidSelection)(state)
 }
@@ -294,7 +296,7 @@ const cycleSiteReducer = (state) => {
   let [newSiteId, newSite] = [options[newIndex], L.get(radarProductsL, state)[options[newIndex]]]
   let siteChanged = state.selection.siteId != newSiteId
 
-  state = R.compose(L.set(selectedSiteIdL, newSiteId), L.set(selectedSiteL, newSite))(state)
+  state = compose(L.set(selectedSiteIdL, newSiteId), L.set(selectedSiteL, newSite))(state)
 
   if (siteChanged) {
     state = makeCurrentSiteIntendedReducer(state)
@@ -313,7 +315,7 @@ const cycleProductReducer = (state) => {
   let newIndex = current + 1 == options.length ? 0 : current + 1
 
   let [newProductId, newProduct] = [options[newIndex], state.selection.site.products[options[newIndex]]]
-  state = R.compose(L.set(selectedProductIdL, newProductId), L.set(selectedProductL, newProduct))(state)
+  state = compose(L.set(selectedProductIdL, newProductId), L.set(selectedProductL, newProduct))(state)
 
   return reduceValidAnimationTime(reduceValidSelection(state))
 }
@@ -328,7 +330,7 @@ const cycleFlavorReducer = (state) => {
   let newIndex = current + 1 == options.length ? 0 : current + 1
 
   let [newFlavorId, newFlavor] = [options[newIndex], state.selection.product.flavors[options[newIndex]]]
-  state = R.compose(L.set(selectedFlavorIdL, newFlavorId), L.set(selectedFlavorL, newFlavor))(state)
+  state = compose(L.set(selectedFlavorIdL, newFlavorId), L.set(selectedFlavorL, newFlavor))(state)
 
   return reduceValidAnimationTime(state)
 }
@@ -352,7 +354,7 @@ const reduceStayOnLastTime = (state) => {
 
 
 const tickClickedReducer = (state, action) =>
-  R.pipe(
+  pipe(
     L.set(currentProductTimeL, action.payload),
     reduceStayOnLastTime
   )(state)
@@ -389,7 +391,7 @@ const forwardBackwardReducer = (state, forward) => {
   }
   newTime = Date.parse(times[nextIndex].time)
 
-  return R.pipe(
+  return pipe(
     L.set(currentProductTimeL, newTime),
     reduceStayOnLastTime
   )(state)
@@ -399,7 +401,7 @@ const tickBackwardReducer = (state) => forwardBackwardReducer(state, false)
 
 
 const toggleAnimationReducer = (state) =>
-  R.pipe(
+  pipe(
     (s) => L.set(animationRunningL, !L.get(animationRunningL, s))(s),
     reduceStayOnLastTime
   )(state)
