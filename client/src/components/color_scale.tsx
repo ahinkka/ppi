@@ -3,13 +3,39 @@ import Draggable from 'react-draggable'
 
 import {ScaleRangeType} from './coloring'
 
+type RangeBoundary = {
+  value: number;
+  open: boolean;
+}
 
-function SolidColorRange(props) {
+type RGBColor = [number, number, number];
+
+type ScaleRange = {
+  type: typeof ScaleRangeType.STEP | 'step';
+  color: RGBColor;
+  start: RangeBoundary;
+  end: RangeBoundary;
+}
+
+type SolidColorRangeProps = {
+  color: RGBColor;
+  start: RangeBoundary;
+  end: RangeBoundary;
+}
+
+type ColorScaleProps = {
+  name?: string;
+  type: string;
+  unit: string;
+  ranges: ScaleRange[];
+}
+
+function SolidColorRange(props: SolidColorRangeProps) {
   // TODO: handle open ranges
   return (
     <div style={{display: 'flex', flexDirection: 'row'}}>
       <div style={{width: '5em', fontSize: '0.8em', textAlign: 'center',
-        rightPadding: '0.2em'}}>{props.start.value} &ndash; {props.end.value}</div>
+        paddingRight: '0.2em'}}>{props.start.value} &ndash; {props.end.value}</div>
       <div style={{width: '2em',
         backgroundColor: 'rgb(' + props.color.join(', ') + ')'}}></div>
     </div>
@@ -17,8 +43,8 @@ function SolidColorRange(props) {
 }
 
 
-const MemoizedColorScale = React.memo(function ColorScale(props) {
-  const nodeRef = React.useRef(null);
+const MemoizedColorScale = React.memo(function ColorScale(props: ColorScaleProps) {
+  const nodeRef = React.useRef<HTMLDivElement>(null);
   // -type: ScaleRangeType.STEP
   // -color [r,g,b]
   // -start
