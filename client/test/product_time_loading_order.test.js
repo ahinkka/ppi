@@ -1,12 +1,11 @@
-import * as R from 'ramda'
 import moment from 'moment'
 import { orderForLoading, evenIndexed, everyFourthIndexed } from '../src/product_time_loading_order'
 
 describe('Should order more recent products first', () => {
   const startTime = moment.utc('2019-04-19T00:00:00+00:00')
-  const times = R.map(
-    (minutes) => startTime.clone().add(moment.duration(minutes, 'minutes')),
-    R.map(R.multiply(15), R.range(0, 24 * 4)))
+  const times = Array.from({ length: 24 * 4 }, (_, i) =>
+    startTime.clone().add(moment.duration(i * 15, 'minutes'))
+  )
   const sorted = orderForLoading(times)
 
   const threeHourProductCount = 3 * 4 + 1
@@ -14,24 +13,24 @@ describe('Should order more recent products first', () => {
 
   test('with all products from the last three hours (inclusive) first', () => {
     expect(sorted.slice(0, threeHourProductCount))
-      .toEqual(R.reverse(times.slice(times.length - threeHourProductCount)))
+      .toEqual([...times.slice(times.length - threeHourProductCount)].reverse())
   })
 
   test('with every other product from the last 12 hours (inclusive)', () => {
     const twelveToThreeHoursInThePast =
       times.slice(times.length - 12 * 4 - 1, times.length - threeHourProductCount)
-    const everyEvenIndexed = evenIndexed(R.reverse(twelveToThreeHoursInThePast))
+    const everyEvenIndexed = evenIndexed([...twelveToThreeHoursInThePast].reverse())
     expect(sorted.slice(threeHourProductCount, threeHourProductCount + 9 * 2)).toEqual(everyEvenIndexed)
   })
 
   test('with every fourth product after that', () => {
     const startToTwelveHoursInThePast = times.slice(0, times.length - 12 * 4 - 1)
-    const everyFourth = everyFourthIndexed(R.reverse(startToTwelveHoursInThePast))
+    const everyFourth = everyFourthIndexed([...startToTwelveHoursInThePast].reverse())
     expect(sorted.slice(twelveHourProductCount, twelveHourProductCount + 12)).toEqual(everyFourth)
   })
 
   test('remaining products in descending order', () => {
-    const remaining = R.reverse(sorted.slice(twelveHourProductCount + 12, sorted.length - 1))
+    const remaining = [...sorted.slice(twelveHourProductCount + 12, sorted.length - 1)].reverse()
     expect(remaining.reduce(
       (previousOrFalse, current) => previousOrFalse.valueOf() < current.valueOf() ? current : false,
       new Date(0)
