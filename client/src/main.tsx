@@ -68,7 +68,13 @@ const renderApp = () => {
   const root = createRoot(container)
   root.render(
     <React.StrictMode>
-      <CatalogProvider dispatch={store.dispatch} url={url} />
+      <CatalogProvider
+        onCatalogUpdate={(catalog) => store.dispatch({
+          type: ObserverActions.CATALOG_UPDATED,
+          payload: catalog
+        })}
+        url={url}
+      />
       <GeoInterestsProvider dispatch={store.dispatch} url={geoInterestsUrl} />
       <Provider store={store}>
         <ProductLoader productUrlResolver={productUrlResolver}

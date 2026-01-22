@@ -1,7 +1,5 @@
 import { Component } from 'react'
 
-import { ObserverActions, ObserverDispatch } from './constants'
-
 export type FlavorTime = {
   time: string,
   url: string
@@ -33,7 +31,7 @@ export type Catalog = {
 }
 
 type CatalogProviderProps = {
-  dispatch: ObserverDispatch,
+  onCatalogUpdate: (catalog: Catalog) => void,
   url: string
 }
 
@@ -48,14 +46,14 @@ class CatalogProvider extends Component<CatalogProviderProps> {
   }
 
   componentDidMount() {
-    const dispatch = this.props.dispatch
+    const onCatalogUpdate = this.props.onCatalogUpdate
     const url = this.props.url
 
     const update = () => {
       fetch(url)
         .then((response) => response.json())
         .then((obj) => {
-          dispatch({ type: ObserverActions.CATALOG_UPDATED, payload: obj })
+          onCatalogUpdate(obj)
         })
     }
 
