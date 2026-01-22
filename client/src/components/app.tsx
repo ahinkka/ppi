@@ -1,20 +1,21 @@
 import React from 'react'
 import moment from 'moment';
 import { connect } from 'react-redux'
-
 import * as O from 'optics-ts'
+
+import { ObserverActions, ObserverDispatch } from '../constants'
+import { State } from '../state'
 import {
-  radarProductsL,
-  geoInterestsL,
+  animationRunningL,
   selectedSiteIdL,
   selectedProductIdL,
   selectedFlavorIdL,
   selectedFlavorL,
-  animationRunningL,
-  currentProductTimeL
+  currentProductTimeL,
+  radarProductsL,
+  geoInterestsL
 } from '../state'
-
-import {ObserverActions} from '../constants'
+import { Flavor } from '../catalog'
 
 import DropdownSelector from './dropdown_selector'
 import {Map} from './map.js'
@@ -26,8 +27,8 @@ import {NOAAScaleToScaleDescription} from './coloring'
 const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
 
-const siteSelections = (radarProducts) => {
-  const result = []
+const siteSelections = (radarProducts: State['catalog']['radarProducts']): Array<{id: string, display: string}> => {
+  const result: Array<{id: string, display: string}> = []
   for (const siteId in radarProducts) {
     result.push({id: siteId, display: radarProducts[siteId].display})
   }
@@ -35,8 +36,8 @@ const siteSelections = (radarProducts) => {
   return result
 }
 
-const productSelections = (site) => {
-  const result = []
+const productSelections = (site: State['selection']['site']): Array<{id: string, display: string}> => {
+  const result: Array<{id: string, display: string}> = []
   for (const productId in site.products) {
     result.push({id: productId, display: site.products[productId].display})
   }
@@ -44,8 +45,8 @@ const productSelections = (site) => {
   return result
 }
 
-const flavorSelections = (product) => {
-  const result = []
+const flavorSelections = (product: State['selection']['product']): Array<{id: string, display: string}> => {
+  const result: Array<{id: string, display: string}> = []
   for (const flavorId in product.flavors) {
     result.push({id: flavorId, display: product.flavors[flavorId].display})
   }
@@ -54,7 +55,7 @@ const flavorSelections = (product) => {
 }
 
 
-const handleKeyPress = (dispatch, event) => {
+const handleKeyPress = (dispatch: ObserverDispatch, event: KeyboardEvent): void => {
   const key = String.fromCharCode(event.charCode)
   if (key == 's' || key == 'S') {
     dispatch({type: ObserverActions.CYCLE_SITE})
@@ -71,7 +72,7 @@ const handleKeyPress = (dispatch, event) => {
 }
 
 
-const handleKeyDown = (dispatch, event) => {
+const handleKeyDown = (dispatch: ObserverDispatch, event: KeyboardEvent): void => {
   const key = event.key
   if (key == 'ArrowRight') {
     dispatch({type: ObserverActions.TICK_FORWARD})
@@ -81,7 +82,7 @@ const handleKeyDown = (dispatch, event) => {
 }
 
 
-const TimeDisplay = (props) => {
+const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement => {
   const display = moment.utc(props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
   const title = 'Current displayed product time is ' + display
   return (
@@ -90,8 +91,21 @@ const TimeDisplay = (props) => {
 }
 
 
-class ObserverApp extends React.Component {
-  constructor(props) {
+export type ObserverAppProps = State & {
+  dispatch: ObserverDispatch,
+  productUrlResolver: (flavor: Flavor, currentProductTime: State['animation']['currentProductTime']) => string | null,
+  getProductByUrl: (url: string | null) => unknown
+}
+
+
+class ObserverApp extends React.Component<ObserverAppProps> {
+  private initialAnimationTimerToken?: ReturnType<typeof setTimeout>
+  private animationTimerToken?: ReturnType<typeof setInterval>
+  private _animationTick?: () => void | undefined
+  private _onKeyPress?: (event: KeyboardEvent) => void
+  private _onKeyDown?: (event: KeyboardEvent) => void
+
+  constructor(props: ObserverAppProps) {
     super(props);
   }
 
@@ -141,7 +155,7 @@ class ObserverApp extends React.Component {
       const callback = tickClickCallback(time)
       const isCurrent = time === currentProductTime
       const isLoaded = !!props.getProductByUrl(props.productUrlResolver(props.selection.flavor, time))
-      const key = [...keyBase, flavorTime.time]
+      const key = [...keyBase, flavorTime.time].join('-')
       return { time, callback, isCurrent, isLoaded, key }
     })
 
@@ -154,26 +168,32 @@ class ObserverApp extends React.Component {
       <div>
         <div id="header-row">
           <div id="header-row__selector-container">
-            <DropdownSelector className="header-row__site-selector"
+            <DropdownSelector
               currentValue={props.selection.siteId}
               legend="Site"
               items={siteSelections(O.get(radarProductsL)(props))}
               tooltip="Press S to cycle sites"
+              tooltipId="site-tooltip"
               action={ObserverActions.SITE_SELECTED}
+              disabled={false}
               dispatch={props.dispatch} />
-            <DropdownSelector className="header-row__product-selector"
+            <DropdownSelector
               currentValue={props.selection.productId}
               legend="Product"
               items={productSelections(props.selection.site)}
               tooltip="Press P to cycle products"
+              tooltipId="product-tooltip"
               action={ObserverActions.PRODUCT_SELECTED}
+              disabled={false}
               dispatch={props.dispatch} />
-            <DropdownSelector className="header-row__flavor-selector"
+            <DropdownSelector
               currentValue={props.selection.flavorId}
               legend="Flavor"
               items={flavorSelections(props.selection.product)}
               tooltip="Press F to cycle flavors"
+              tooltipId="flavor-tooltip"
               action={ObserverActions.FLAVOR_SELECTED}
+              disabled={false}
               dispatch={props.dispatch} />
           </div>
           <div id="play-controls">
@@ -181,7 +201,7 @@ class ObserverApp extends React.Component {
               onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
               action={ObserverActions.TOGGLE_ANIMATION}
               tooltip="Press SPACE to toggle animation" />
-            <ProductSlider ticks={tickItems} />
+            <ProductSlider ticks={tickItems} dispatch={props.dispatch} />
           </div>
           <TimeDisplay currentValue={props.animation.currentProductTime} />
         </div>
@@ -200,7 +220,7 @@ class ObserverApp extends React.Component {
 }
 
 
-const mapStateToProps = (state) => {
+const mapStateToProps = (state: State): State => {
   return state
 }
 export default connect(mapStateToProps)(ObserverApp)
