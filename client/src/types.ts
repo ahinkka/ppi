@@ -1,32 +1,4 @@
-export type RadarProducts = {
-  [siteId: string]: Site
-}
-
-export type Catalog = {
-  radarProducts: RadarProducts
-}
-
-export type FlavorTime = {
-  time: string,
-  url: string
-}
-
-export type Flavor = {
-  display: string,
-  times: FlavorTime[]
-}
-
-export type Product = {
-  display: string,
-  flavors: { [flavorId: string]: Flavor }
-}
-
-export type Site = {
-  display: string,
-  products: { [productId: string]: Product }
-  lat: number,
-  lon: number
-}
+import { Catalog, Site, CatalogProduct, Flavor } from './catalog'
 
 export type State = {
   catalog: Catalog,
@@ -36,7 +8,7 @@ export type State = {
     flavorId: string | null,
 
     site: Site | null,
-    product: Product | null,
+    product: CatalogProduct | null,
     flavor: Flavor | null
   },
   map: {

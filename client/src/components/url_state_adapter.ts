@@ -3,7 +3,8 @@ import { Component } from 'react'
 import { batch, connect } from 'react-redux'
 
 import { UrlState, makeHashFromState, parseHash } from '../state_hash'
-import { State, Catalog } from '../types'
+import { State } from '../types'
+import { Catalog } from '../catalog'
 import { ObserverActions, ObserverDispatch } from '../constants'
 
 

@@ -6,7 +6,8 @@ import { connect } from 'react-redux'
 import { twoDtoUint8Array } from '../utils'
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { orderForLoading } from '../product_time_loading_order'
-import { State, Flavor } from '../types'
+import { State } from '../types'
+import { Flavor } from '../catalog'
 import { DataValueType } from './datavalue'
 import { AffineTransform } from '../reprojection'
 
@@ -19,7 +20,7 @@ function inflate(input: Uint8Array): string {
   }
 }
 
-export type Product = {
+export type LoadedProduct = {
   data: Uint8Array,
   _cols: number,
   _rows: number,
@@ -41,7 +42,7 @@ export type Product = {
   }
 }
 
-async function parseProduct(input: Uint8Array): Promise<Product> {
+async function parseProduct(input: Uint8Array): Promise<LoadedProduct> {
   let inflated = null
   try {
     inflated = inflate(input)
@@ -73,7 +74,7 @@ export type ProductUrlResolver = (flavor: Flavor, time: number) => string
 const loadOneProduct = (
   dispatch: ObserverDispatch,
   productUrlResolver: ProductUrlResolver,
-  loadedProducts: { [key: string]: Product },
+  loadedProducts: { [key: string]: LoadedProduct },
   loadingProducts: { [key: string]: Date },
   flavor: Flavor
 ) => {

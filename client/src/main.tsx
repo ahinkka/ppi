@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client'
 import {createStore} from 'redux'
 import { Provider } from 'react-redux'
 
-import CatalogProvider from './components/catalog_provider.js'
+import CatalogProvider from './catalog'
 import GeoInterestsProvider from './components/geointerests_provider.js'
 import ObserverApp from './components/app'
 import ProductLoader from './components/product_loader.js'

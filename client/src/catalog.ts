@@ -1,14 +1,47 @@
 import { Component } from 'react'
 
-import { ObserverActions, ObserverDispatch } from '../constants'
+import { ObserverActions, ObserverDispatch } from './constants'
 
-type Props = { dispatch: ObserverDispatch, url: string }
+export type FlavorTime = {
+  time: string,
+  url: string
+}
 
-class CatalogProvider extends Component<Props> {
+export type Flavor = {
+  display: string,
+  times: FlavorTime[]
+}
+
+export type CatalogProduct = {
+  display: string,
+  flavors: { [flavorId: string]: Flavor }
+}
+
+export type Site = {
+  display: string,
+  products: { [productId: string]: CatalogProduct }
+  lat: number,
+  lon: number
+}
+
+export type RadarProducts = {
+  [siteId: string]: Site
+}
+
+export type Catalog = {
+  radarProducts: RadarProducts
+}
+
+type CatalogProviderProps = {
+  dispatch: ObserverDispatch,
+  url: string
+}
+
+class CatalogProvider extends Component<CatalogProviderProps> {
   private intervalId: number | null
   private initialTimeoutId: number | null
 
-  constructor(props: Readonly<Props> | Props) {
+  constructor(props: Readonly<CatalogProviderProps> | CatalogProviderProps) {
     super(props)
     this.intervalId = null
     this.initialTimeoutId = null
@@ -39,6 +72,5 @@ class CatalogProvider extends Component<Props> {
     return null
   }
 }
-
 
 export default CatalogProvider

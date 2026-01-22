@@ -29,7 +29,7 @@ import GeoJSON from 'ol/format/GeoJSON'
 
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { canvasPxToProductPx, wgs84ToProductPx, Extent } from '../reprojection'
-import { Product } from './product_loader'
+import { LoadedProduct } from './product_loader'
 
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 import {
@@ -115,7 +115,7 @@ const bearingBetweenCoordinates = (source: [number, number], destination: [numbe
 
 
 const resolveCursorToolContentAndColors = (
-  product: Product,
+  product: LoadedProduct,
   vectorSource: VectorSource<never>,
   coords: [number, number],
   wgs84ToProductPxFn: (lon: number, lat: number) => [number, number]
@@ -175,7 +175,7 @@ const resolveCursorToolContentAndColors = (
 // https://openlayers.org/en/latest/examples/overlay.html
 const updateCursorTool = (
   overlay: Overlay,
-  product: Product,
+  product: LoadedProduct,
   vectorSource: VectorSource<never>,
   newPosition: Coordinate,
   resolveTemplateAndColors: typeof resolveCursorToolContentAndColors,
@@ -212,7 +212,7 @@ const updateCursorTool = (
 type Props = {
   headerElementId: string,
   intendedCenter: [number, number],
-  product: Product,
+  product: LoadedProduct,
   geoInterests: unknown,
   productTime: unknown,
   productSelection: unknown,
@@ -226,7 +226,7 @@ const cacheOpts = {
 }
 
 export class Map extends React.Component<Props> {
-  private __previousProduct: Product | null = null
+  private __previousProduct: LoadedProduct | null = null
   private __previousIntendedCenter: [number, number] = [0, 0]
   private __renderedProducts: LRUCache<string, HTMLCanvasElement> = new LRUCache(cacheOpts)
   private __colorCaches: Record<string, Record<number, [number, number, number, number]>> = {}
