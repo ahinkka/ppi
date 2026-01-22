@@ -1,5 +1,5 @@
 export type RadarProducts = {
-  [key: string]: never
+  [siteId: string]: Site
 }
 
 export type Catalog = {
@@ -12,15 +12,18 @@ export type FlavorTime = {
 }
 
 export type Flavor = {
+  display: string,
   times: FlavorTime[]
 }
 
-type Product = {
-  flavors: Flavor[]
+export type Product = {
+  display: string,
+  flavors: { [flavorId: string]: Flavor }
 }
 
-type Site = {
-  products: Product[]
+export type Site = {
+  display: string,
+  products: { [productId: string]: Product }
   lat: number,
   lon: number
 }
