@@ -1,8 +1,8 @@
 *.pyc
 client/node_modules
 client/build
-fmi/downloader/env
-fmi/downloader/config.ini
+fmi/s3_downloader/env
+fmi/s3_downloader/config.ini
 *.json
 *.tiff.gz
 *.json.gz

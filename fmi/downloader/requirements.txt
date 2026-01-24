@@ -1,4 +1,0 @@
-OWSLib
-python-dateutil
-pyproj
-lxml
