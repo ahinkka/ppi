@@ -60,7 +60,10 @@ class UrlStateAdapter extends Component<Props> {
 
       const [lon, lat] = [parseFloat(parsed.lon), parseFloat(parsed.lat)]
       if (!isNaN(lon) && !isNaN(lat)) {
-        this.updates.push({type: ObserverActions.MAP_CENTER_CHANGED, payload: {lon: lon, lat: lat}})
+        this.updates.push({
+          type: ObserverActions.MAP_CENTER_CHANGED,
+          payload: { lon: lon, lat: lat }
+        })
       } else {
         this.updates.push({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
       }

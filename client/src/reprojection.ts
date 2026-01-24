@@ -33,7 +33,11 @@ export function transform(affineTransform: AffineTransform, x: number, y: number
   ]
 }
 
-export function productExtent(affineTransform: AffineTransform, width: number, height: number): Extent {
+export function productExtent(
+  affineTransform: AffineTransform,
+  width: number,
+  height: number
+): Extent {
   const origin = [affineTransform[0], affineTransform[3]]
   const extreme = transform(affineTransform, width, height)
   return [
@@ -104,7 +108,12 @@ export function findClosestIndex(arr: Float32Array, target: number) {
 
 const inSortedOrder = (a: number, b: number) => [Math.min(a, b), Math.max(a, b)]
 
-export function convertCoordinateWithLut(productExtent: Extent, pToWgs84: ConversionFunction, wgs84ToM: ConversionFunction, mToP: ConversionFunction) {
+export function convertCoordinateWithLut(
+  productExtent: Extent,
+  pToWgs84: ConversionFunction,
+  wgs84ToM: ConversionFunction,
+  mToP: ConversionFunction
+) {
   const wgs84Extent = convertExtent(productExtent, pToWgs84)
   const xDegrees = wgs84Extent[2] - wgs84Extent[0]
   const yDegrees = wgs84Extent[3] - wgs84Extent[1]

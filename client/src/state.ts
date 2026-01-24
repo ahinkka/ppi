@@ -357,7 +357,8 @@ function cycleSiteReducer(state: State): State {
   const current = options.indexOf(state.selection.siteId)
   const newIndex = current + 1 == options.length ? 0 : current + 1
 
-  const [newSiteId, newSite] = [options[newIndex], O.get(radarProductsL)(state)[options[newIndex]]]
+  const newSiteId = options[newIndex]
+  const newSite = O.get(radarProductsL)(state)[options[newIndex]]
   const siteChanged = state.selection.siteId != newSiteId
 
   state = compose(O.set(selectedSiteIdL)(newSiteId), O.set(selectedSiteL)(newSite))(state)
@@ -377,8 +378,12 @@ function cycleProductReducer(state: State): State {
   const current = options.indexOf(state.selection.productId)
   const newIndex = current + 1 == options.length ? 0 : current + 1
 
-  const [newProductId, newProduct] = [options[newIndex], state.selection.site.products[options[newIndex]]]
-  state = compose(O.set(selectedProductIdL)(newProductId), O.set(selectedProductL)(newProduct))(state)
+  const newProductId = options[newIndex]
+  const newProduct = state.selection.site.products[options[newIndex]]
+  state = compose(
+    O.set(selectedProductIdL)(newProductId),
+    O.set(selectedProductL)(newProduct)
+  )(state)
 
   return reduceValidAnimationTime(reduceValidSelection(state))
 }
@@ -391,7 +396,8 @@ function cycleFlavorReducer(state: State): State {
   const current = options.indexOf(state.selection.flavorId)
   const newIndex = current + 1 == options.length ? 0 : current + 1
 
-  const [newFlavorId, newFlavor] = [options[newIndex], state.selection.product.flavors[options[newIndex]]]
+  const newFlavorId = options[newIndex]
+  const newFlavor = state.selection.product.flavors[options[newIndex]]
   state = compose(O.set(selectedFlavorIdL)(newFlavorId), O.set(selectedFlavorL)(newFlavor))(state)
 
   return reduceValidAnimationTime(state)

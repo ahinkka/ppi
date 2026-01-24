@@ -23,7 +23,10 @@ export type DataScale = {
   noEcho: number,
 }
 
-export const integerToDataValue = (dataScale: DataScale, intValue: number): [string, number | null] => {
+export function integerToDataValue(
+  dataScale: DataScale,
+  intValue: number
+): [string, number | null] {
   if (intValue == dataScale.noEcho) {
     return [DataValueType.NO_ECHO, null]
   } else if (intValue == dataScale.notScanned) {

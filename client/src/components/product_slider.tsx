@@ -127,7 +127,16 @@ function ProductSlider(props: ProductSliderProps) {
       color = '#808080'
     }
 
-    return (<Tick key={item.key} position={tickPosition} color={color} character={character} tooltip={renderTooltip(item.time)} clicked={item.callback} />)
+    return (
+      <Tick
+        key={item.key}
+        position={tickPosition}
+        color={color}
+        character={character}
+        tooltip={renderTooltip(item.time)}
+        clicked={item.callback}
+      />
+    )
   })
 
   const onWheel = (event: WheelEvent<HTMLDivElement>) => {

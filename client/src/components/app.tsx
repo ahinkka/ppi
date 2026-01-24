@@ -101,7 +101,9 @@ class ObserverApp extends React.Component<ObserverAppProps> {
 
   componentDidMount() {
     this._animationTick = () =>
-      this.props.animation.running ? this.props.dispatch({ type: ObserverActions.ANIMATION_TICK }) : undefined
+      this.props.animation.running
+        ? this.props.dispatch({ type: ObserverActions.ANIMATION_TICK })
+        : undefined
 
     this.initialAnimationTimerToken = setTimeout(this._animationTick, 500)
     this.animationTimerToken = setInterval(this._animationTick, 1500)
@@ -122,13 +124,12 @@ class ObserverApp extends React.Component<ObserverAppProps> {
   render() {
     const props = this.props
 
-    const { siteId, productId, flavorId } = props.selection
+    const { siteId, productId, flavorId, flavor, site, product } = props.selection
     if (!siteId || !productId || !flavorId) {
       return (<div></div>)
     }
 
-    const flavor = props.selection.flavor
-    const currentProductTime = props.animation.currentProductTime
+    const { currentProductTime } = props.animation
     const productUrl = props.productUrlResolver(flavor, currentProductTime)
 
     const tickClickCallback = (time: number) => {
@@ -140,14 +141,14 @@ class ObserverApp extends React.Component<ObserverAppProps> {
       const time = Date.parse(flavorTime.time)
       const callback = tickClickCallback(time)
       const isCurrent = time === currentProductTime
-      const isLoaded = !!props.getProductByUrl(props.productUrlResolver(props.selection.flavor, time))
+      const isLoaded = !!props.getProductByUrl(props.productUrlResolver(flavor, time))
       const key = [...keyBase, flavorTime.time].join('-')
       return { time, callback, isCurrent, isLoaded, key }
     })
 
-    let product: LoadedProduct | null = null
+    let loadedProduct: LoadedProduct | null = null
     if (productUrl in props.loadedProducts) {
-      product = props.getProductByUrl(productUrl) as LoadedProduct
+      loadedProduct = props.getProductByUrl(productUrl) as LoadedProduct
     }
 
     return (
@@ -155,7 +156,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
         <div id="header-row">
           <div id="header-row__selector-container">
             <DropdownSelector
-              currentValue={props.selection.siteId}
+              currentValue={siteId}
               legend="Site"
               items={siteSelections(props.catalog.radarProducts)}
               tooltip="Press S to cycle sites"
@@ -164,18 +165,18 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               disabled={false}
               dispatch={props.dispatch} />
             <DropdownSelector
-              currentValue={props.selection.productId}
+              currentValue={productId}
               legend="Product"
-              items={productSelections(props.selection.site)}
+              items={productSelections(site)}
               tooltip="Press P to cycle products"
               tooltipId="product-tooltip"
               action={ObserverActions.PRODUCT_SELECTED}
               disabled={false}
               dispatch={props.dispatch} />
             <DropdownSelector
-              currentValue={props.selection.flavorId}
+              currentValue={flavorId}
               legend="Flavor"
-              items={flavorSelections(props.selection.product)}
+              items={flavorSelections(product)}
               tooltip="Press F to cycle flavors"
               tooltipId="flavor-tooltip"
               action={ObserverActions.FLAVOR_SELECTED}
@@ -189,15 +190,16 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               tooltip="Press SPACE to toggle animation" />
             <ProductSlider ticks={tickItems} dispatch={props.dispatch} />
           </div>
-          <TimeDisplay currentValue={props.animation.currentProductTime} />
+          <TimeDisplay currentValue={currentProductTime} />
         </div>
         <Map headerElementId="header-row"
           intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
           geoInterests={props.geoInterests}
           dispatch={props.dispatch}
-          product={product}
-          productTime={props.animation.currentProductTime}
-          productSelection={[props.selection.siteId, props.selection.productId, props.selection.flavorId]} />
+          product={loadedProduct}
+          productTime={currentProductTime}
+          productSelection={[siteId, productId, flavorId]}
+        />
         <ColorScale name={'NOAA Reflectivity Scale'} unit={'dBZ'} type={'Reflectivity'}
           ranges={_NOAAReflectivityColorScale} />
       </div>

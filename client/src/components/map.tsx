@@ -43,7 +43,8 @@ import {
 
 
 // https://24ways.org/2010/calculating-color-contrast
-const yiqColorContrast = (r: number, g: number, b: number) => (r * 299 + g * 587 + b * 114) / 1000.0 >= 128
+const yiqColorContrast = (r: number, g: number, b: number) =>
+  (r * 299 + g * 587 + b * 114) / 1000.0 >= 128
 
 
 const bearingToCompassRoseReading = (bearing: number) => {
@@ -94,8 +95,10 @@ const renderCursorToolContentAndColors = (
     textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
   }
 
-  if (nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined &&
-    nearestTownName && distanceToNearestTown !== undefined && bearingToNearestTown !== undefined) {
+  if (
+    nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined &&
+    nearestTownName && distanceToNearestTown !== undefined && bearingToNearestTown !== undefined
+  ) {
     return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km ${bearingToCompassRoseReading(bearingToNearestCity)}<br>${nearestTownName} ${distanceToNearestTown} km ${bearingToCompassRoseReading(bearingToNearestTown)}</small></div>`, bgColor, textColor]
   } else {
     return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
@@ -135,8 +138,9 @@ function resolveNearestCityAndTown(
     coords,
     (feature: Feature) => feature.get('osmPlace') === 'city'
   )
-  // @ts-expect-error OL is hard to type
-  const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
+  const nearestCityLonLat =
+    // @ts-expect-error OL is hard to type
+    toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
   const distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
   const bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
 
@@ -145,8 +149,9 @@ function resolveNearestCityAndTown(
     // @ts-expect-error OL is hard to type
     (feature: Feature<never>) => feature.get('osmPlace') === 'town'
   )
-  // @ts-expect-error OL is hard to type
-  const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
+  const nearestTownLonLat =
+    // @ts-expect-error OL is hard to type
+    toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
   const distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
   const bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
 
@@ -212,9 +217,15 @@ const updateCursorTool = (
   // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
   $(element).popover('dispose')
 
-  const effectivePosition = (newPosition ? newPosition : overlay.getPosition()) as [number, number]
+  const effectivePosition =
+    (newPosition ? newPosition : overlay.getPosition()) as [number, number]
   if (newPosition) overlay.setPosition(effectivePosition)
-  const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, vectorSource, effectivePosition, conversionFn)
+  const [content, backgroundColor, textColor] = resolveTemplateAndColors(
+    product,
+    vectorSource,
+    effectivePosition,
+    conversionFn
+  )
 
   // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
   $(element).popover({
@@ -420,7 +431,14 @@ export class Map extends React.Component<Props> {
         return
       }
 
-      updateCursorTool(cursorToolOverlay, this.props.product, this.__vectorSource, evt.coordinate, resolveCursorToolContentAndColors, this.wgs84ToProductConversionFn)
+      updateCursorTool(
+        cursorToolOverlay,
+        this.props.product,
+        this.__vectorSource,
+        evt.coordinate,
+        resolveCursorToolContentAndColors,
+        this.wgs84ToProductConversionFn
+      )
       this.cursorToolVisible = true
 
       dispatch({ type: ObserverActions.POINTER_MOVED, payload: evt.coordinate })
@@ -457,7 +475,14 @@ export class Map extends React.Component<Props> {
     if (cached !== undefined) {
       this.canvas = cached
       if (this.cursorToolVisible)
-        updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors, this.wgs84ToProductConversionFn)
+        updateCursorTool(
+          this.cursorToolOverlay,
+          this.props.product,
+          this.__vectorSource,
+          undefined,
+          resolveCursorToolContentAndColors,
+          this.wgs84ToProductConversionFn
+        )
       return this.canvas
     }
 
@@ -480,7 +505,8 @@ export class Map extends React.Component<Props> {
     }
 
     // Use the same color cache between calls
-    const colorCacheKey = stringify([metadata.productInfo.dataType, metadata.productInfo.dataScale])
+    const colorCacheKey =
+      stringify([metadata.productInfo.dataType, metadata.productInfo.dataScale])
     if (!(colorCacheKey in this.__colorCaches)) {
       this.__colorCaches[colorCacheKey] = {}
     }
@@ -564,7 +590,14 @@ export class Map extends React.Component<Props> {
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
     if (this.cursorToolVisible)
-      updateCursorTool(this.cursorToolOverlay, this.props.product, this.__vectorSource, undefined, resolveCursorToolContentAndColors, this.wgs84ToProductConversionFn)
+      updateCursorTool(
+        this.cursorToolOverlay,
+        this.props.product,
+        this.__vectorSource,
+        undefined,
+        resolveCursorToolContentAndColors,
+        this.wgs84ToProductConversionFn
+      )
     return this.canvas
   }
 
