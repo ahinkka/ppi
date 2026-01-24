@@ -1,4 +1,4 @@
-import { catalogUpdatedReducer, reduceValidAnimationTime, selectFlavorTime, animationTickReducer } from '../src/state'
+import { catalogUpdatedReducer,  reduceValidAnimationTime, selectFlavorTime } from '../src/state'
 
 const times = ['2019-04-19T18:10:00+00:00', '2019-04-19T19:10:00+00:00',
 	       '2019-04-19T20:10:00+00:00', '2019-04-19T21:10:00+00:00',
@@ -63,7 +63,7 @@ describe('On catalog update', () => {
 
   test.skip('select last time if current time isn\'t available', () => {
     const state = Object.assign({}, after, { animation: { currentProductTime: datesBefore[0] }})
-    const reduced = reduceValidAnimationTime(after)
+    const reduced = reduceValidAnimationTime(state)
     expect(reduced.animation.currentProductTime).toEqual(datesAfter[2])
   })
 })

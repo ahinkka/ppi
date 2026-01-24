@@ -1,7 +1,8 @@
+import { pipe } from 'fp-ts/function'
 import * as O from 'optics-ts'
 
 import { ObserverActions } from './constants'
-import { Catalog, Site, CatalogProduct, Flavor } from './catalog'
+import { Catalog, CatalogProduct, Flavor, RadarProducts, Site } from './catalog'
 
 export type State = {
   catalog: Catalog,
@@ -37,8 +38,10 @@ export type State = {
   geoInterests: unknown
 }
 
+export type Action = { type: ObserverActions, payload?: unknown }
+
+// @ts-expect-error TODO replace usage with pipe later
 const compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x)
-const pipe = (x, ...fns) => fns.reduce((acc, fn) => fn(acc), x)
 
 // Lenses into state
 export const catalogL = O.optic_<State>().prop('catalog')
@@ -71,13 +74,17 @@ export const currentPointerLocationL = mapCurrentL.prop('pointerLocation')
 export const loadedProductsL = O.optic_<State>().prop('loadedProducts')
 
 
-const selectSite = (previousSiteId, radarProducts) => {
+function selectSite(
+  previousSiteId: string,
+  radarProducts: RadarProducts
+): [string, Site] | [null, null] {
   if (previousSiteId != null) {
     for (const siteId in radarProducts) {
       if (siteId == previousSiteId) {
         return [siteId, radarProducts[siteId]]
       }
     }
+    return [null, null]
   } else {
     const options = Object.keys(radarProducts).sort()
     return options.length > 0 ? [options[0], radarProducts[options[0]]] : [null, null];
@@ -85,7 +92,7 @@ const selectSite = (previousSiteId, radarProducts) => {
 }
 
 
-const selectProduct = (previousProductSelection, site) => {
+function selectProduct(previousProductSelection: string, site: State['selection']['site']): [string, CatalogProduct] {
   if (previousProductSelection != null) {
     for (const productId in site.products) {
       if (productId == previousProductSelection) {
@@ -94,7 +101,7 @@ const selectProduct = (previousProductSelection, site) => {
     }
   }
 
-  let options = []
+  let options: string[] = []
   if (site && site.products) {
     options = Object.keys(site.products)
   }
@@ -103,7 +110,7 @@ const selectProduct = (previousProductSelection, site) => {
 }
 
 
-const selectFlavor = (previousFlavor, product) => {
+function selectFlavor(previousFlavor: string, product: CatalogProduct): [string, Flavor] {
   if (previousFlavor != null) {   
     for (const flavorId in product.flavors) {
       if (flavorId == previousFlavor) {
@@ -112,7 +119,7 @@ const selectFlavor = (previousFlavor, product) => {
     }
   }
 
-  let options = []
+  let options: string[] = []
   if (product && product.flavors) {
     options = Object.keys(product.flavors)
   }
@@ -121,7 +128,7 @@ const selectFlavor = (previousFlavor, product) => {
 }
 
 
-const findFlavorTimeIndex = (flavorTimes, time) => {
+const findFlavorTimeIndex = (flavorTimes: Flavor['times'], time: number) => {
   let currentIndex = null
 
   // We start looking from the end because the mechanism breaks if there are
@@ -138,7 +145,12 @@ const findFlavorTimeIndex = (flavorTimes, time) => {
 }
 
 
-export const selectFlavorTime = (flavor, currentTime, chooseNext, stayOnLastTime) => {
+export const selectFlavorTime = (
+  flavor: Flavor,
+  currentTime: number,
+  chooseNext: boolean,
+  stayOnLastTime: boolean
+) => {
   if (flavor == null) {
     console.warn('selectFlavorTime, flavor is null')
     return null
@@ -170,7 +182,7 @@ export const selectFlavorTime = (flavor, currentTime, chooseNext, stayOnLastTime
 }
 
 
-const reduceValidSelection = (state) => {
+const reduceValidSelection = (state: State) => {
   const [siteId, site] = selectSite(O.get(selectedSiteIdL)(state), O.get(radarProductsL)(state))
   const withValidSite = compose(
     O.set(selectedSiteIdL)(siteId),
@@ -199,7 +211,7 @@ const reduceValidSelection = (state) => {
 }
 
 
-export const reduceValidAnimationTime = (state) => {
+export const reduceValidAnimationTime = (state: State) => {
   const currentTime = selectFlavorTime(
     state.selection.flavor,
     O.get(currentProductTimeL)(state),
@@ -211,7 +223,7 @@ export const reduceValidAnimationTime = (state) => {
 }
 
 
-const reduceIntendedInitialMapCenter = (state) => {
+const reduceIntendedInitialMapCenter = (state: State) => {
   if ([currentLonL, currentLatL, intendedLonL, intendedLatL]
     .every((lens) => !O.get(lens)(state))) {
     return makeCurrentSiteIntendedReducer(state)
@@ -221,18 +233,18 @@ const reduceIntendedInitialMapCenter = (state) => {
 }
 
 
-export const catalogUpdatedReducer = (state, action) =>
+export const catalogUpdatedReducer = (state: State, action: Action) =>
   pipe(
     state,
-    O.set(catalogL)(action.payload),
+    O.set(catalogL)(action.payload as Catalog),
     reduceValidSelection,
     reduceValidAnimationTime,
     reduceIntendedInitialMapCenter
   )
 
 
-const siteSelectedReducer = (state, action) => {
-  let [siteId, site] = [action.payload, O.get(radarProductsL)(state)[action.payload]]
+const siteSelectedReducer = (state: State, action: Action) => {
+  let [siteId, site] = [action.payload, O.get(radarProductsL)(state)[action.payload as string]]
   if (site == undefined) {
     [siteId, site] = selectSite(state.selection.siteId, O.get(radarProductsL)(state))
   }
@@ -257,10 +269,10 @@ const siteSelectedReducer = (state, action) => {
 }
 
 
-const productSelectedReducer = (state, action) => {
-  let [productId, product] = [
-    action.payload,
-    (O.get(selectedSiteL.prop('products'))(state) ?? {})[action.payload]
+const productSelectedReducer = (state: State, action: Action) => {
+  let [productId, product]: [string, CatalogProduct] = [
+    action.payload as string,
+    (O.get(selectedSiteL.prop('products'))(state) ?? {})[action.payload as string]
   ]
 
   if (product == undefined) {
@@ -277,10 +289,10 @@ const productSelectedReducer = (state, action) => {
 }
 
 
-const flavorSelectedReducer = (state, action) => {
-  let [flavorId, flavor] = [
-    action.payload,
-    (O.get(selectedProductL.prop('flavors'))(state) ?? {})[action.payload]
+const flavorSelectedReducer = (state: State, action: Action) => {
+  let [flavorId, flavor]: [string, Flavor] = [
+    action.payload as string,
+    (O.get(selectedProductL.prop('flavors'))(state) ?? {})[action.payload as string]
   ]
 
   if (flavor == undefined) {
@@ -297,47 +309,50 @@ const flavorSelectedReducer = (state, action) => {
 }
 
 
-const mapCenterChangedReducer = (state, action) => {
-  state = Object.assign({}, state)
-  state.map = Object.assign({}, state.map)
-  state.map.intended = Object.assign({}, state.map.intended,
-    {
-      centerLon: action.payload.lon,
-      centerLat: action.payload.lat,
-    })
-  return state
+const mapCenterChangedReducer = (state: State, action: Action) => {
+  const { lon: centerLon, lat: centerLat } = (action.payload as { lon: number, lat: number })
+  return {
+    ...state,
+    map: {
+      ...state.map,
+      intended: { centerLon, centerLat }
+    }
+  } as State
 }
 
 
-const mapMovedReducer = (state, action) => {
-  state = Object.assign({}, state)
-  state.map = Object.assign({}, state.map)
-  state.map.current = Object.assign({}, state.map.current,
-    {
-      centerLon: action.payload.lon,
-      centerLat: action.payload.lat,
-    })
-  return state
+const mapMovedReducer = (state: State, action: Action) => {
+  const { lon: centerLon, lat: centerLat } = (action.payload as { lon: number, lat: number })
+  return {
+    ...state,
+    map: {
+      ...state.map,
+      current: { centerLon, centerLat }
+    }
+  } as State
 }
 
 
-const makeCurrentSiteIntendedReducer = (state) => {
-  state = Object.assign({}, state)
-  state.map = Object.assign({}, state.map)
-  state.map.intended = Object.assign({}, state.map.current,
-    {
-      centerLon: state.selection.site.lon,
-      centerLat: state.selection.site.lat,
-    })
-  return state
+function makeCurrentSiteIntendedReducer(state: State): State {
+  return {
+    ...state,
+    map: {
+      ...state.map,
+      intended: {
+        ...state.map.current,
+        centerLon: state.selection.site.lon,
+        centerLat: state.selection.site.lat,
+      }
+    }
+  }
 }
 
 
-const pointerLocationReducer = (state, newLocation) =>
-  O.set(currentPointerLocationL)(newLocation)(state)
+const pointerLocationReducer = (state: State, newLocation: unknown): State =>
+  O.set(currentPointerLocationL)(newLocation as State['map']['current']['pointerLocation'])(state)
 
 
-const cycleSiteReducer = (state) => {
+function cycleSiteReducer(state: State): State {
   const options = Object.keys(O.get(radarProductsL)(state)).sort()
 
   // returns -1 if not found, which is handy as we just select the first then
@@ -357,7 +372,7 @@ const cycleSiteReducer = (state) => {
 }
 
 
-const cycleProductReducer = (state) => {
+function cycleProductReducer(state: State): State {
   const options = Object.keys(state.selection.site.products).sort()
 
   // returns -1 if not found, which is handy as we just select the first then
@@ -371,7 +386,7 @@ const cycleProductReducer = (state) => {
 }
 
 
-const cycleFlavorReducer = (state) => {
+function cycleFlavorReducer(state: State): State {
   const options = Object.keys(state.selection.product.flavors).sort()
 
   // returns -1 if not found, which is handy as we just select the first then
@@ -385,13 +400,13 @@ const cycleFlavorReducer = (state) => {
 }
 
 
-export const animationTickReducer = (state) =>
+export const animationTickReducer = (state: State): State =>
   O.set(currentProductTimeL)(
     selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true, false)
   )(state)
 
 
-const reduceStayOnLastTime = (state) => {
+function reduceStayOnLastTime(state: State): State {
   const flavorTimes = state.selection.flavor ? state.selection.flavor.times : []
   const intendedIndex = findFlavorTimeIndex(flavorTimes, O.get(currentProductTimeL)(state))
 
@@ -401,15 +416,15 @@ const reduceStayOnLastTime = (state) => {
 }
 
 
-const tickClickedReducer = (state, action) =>
+const tickClickedReducer = (state: State, action: Action): State =>
   pipe(
     state,
-    O.set(currentProductTimeL)(action.payload),
+    O.set(currentProductTimeL)(action.payload as number),
     reduceStayOnLastTime
   )
 
 
-const forwardBackwardReducer = (state, forward) => {
+function forwardBackwardReducer(state: State, forward: boolean): State {
   const times = state.selection.flavor.times
   let previousIndex = null;
 
@@ -446,36 +461,35 @@ const forwardBackwardReducer = (state, forward) => {
     reduceStayOnLastTime
   )
 }
-const tickForwardReducer = (state) => forwardBackwardReducer(state, true)
-const tickBackwardReducer = (state) => forwardBackwardReducer(state, false)
+const tickForwardReducer = (state: State) => forwardBackwardReducer(state, true)
+const tickBackwardReducer = (state: State) => forwardBackwardReducer(state, false)
 
 
-const toggleAnimationReducer = (state) =>
+const toggleAnimationReducer = (state: State): State =>
   pipe(
     state,
-    (s) => O.set(animationRunningL)(!O.get(animationRunningL)(s))(s),
+    (s: State) => O.set(animationRunningL)(!O.get(animationRunningL)(s))(s),
     reduceStayOnLastTime
   )
 
 
-const productLoadUpdateReducer = (state, action) => {
+function productLoadUpdateReducer(state: State, action: Action): State {
   // TODO: implement properly to handle removes
-  state = Object.assign({}, state)
-  state.loadedProducts = Object.assign({}, state.loadedProducts)
+  const loadedProducts = { ...state.loadedProducts }
 
-  for (const url of action.payload.loaded) {
-    state.loadedProducts[url] = null
+  for (const url of (action.payload as { loaded: string[] }).loaded) {
+    loadedProducts[url] = null
   }
 
-  for (const url of action.payload.unloaded) {
-    delete state.loadedProducts[url]
+  for (const url of (action.payload as { unloaded: string[] }).unloaded) {
+    delete loadedProducts[url]
   }
 
-  return state
+  return { ...state, loadedProducts }
 }
 
 
-export const reducer = (state, action) => {
+export function reducer(state: State, action: Action): State {
   if (state === undefined || action.type === ObserverActions.PRIME) {
     return {
       selection: {
@@ -495,18 +509,22 @@ export const reducer = (state, action) => {
         current: { // the map element controls this
           centerLon: 0,
           centerLat: 0,
+          pointerLocation: {
+            x: 0,
+            y: 0
+          }
         },
         intended: { // the app controls this; whenever this changes, map centers on it
           centerLon: 0,
           centerLat: 0,
-        },
+        }
       },
       animation: {
         currentProductTime: null, // the product time we are currently showing
         running: false,
         stayOnLastTime: true
       }
-    } as State
+    }
   } else if (action.type === ObserverActions.CATALOG_UPDATED) {
     return catalogUpdatedReducer(state, action);
   } else if (action.type === ObserverActions.GEOINTERESTS_UPDATED) {
@@ -545,5 +563,8 @@ export const reducer = (state, action) => {
     return toggleAnimationReducer(state)
   } else if (action.type === ObserverActions.PRODUCT_LOAD_UPDATE) {
     return productLoadUpdateReducer(state, action);
+  } else {
+    console.error(state)
+    throw Error(`no reducer match: ${action}`)
   }
 }

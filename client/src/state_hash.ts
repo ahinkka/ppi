@@ -42,7 +42,7 @@ export const parseHash = (hash: string): Record<string, string> => {
   const result = {}
   for (const part of parts) {
     const [key, value] = part.split('=')
-    // @ts-ignore
+    // @ts-expect-error Good luck typing this
     result[key] = value
   }
   return result

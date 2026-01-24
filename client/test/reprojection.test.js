@@ -16,8 +16,9 @@ describe('Coordinate system conversions', () => {
   })
 
   test('should support a real product projectionRef', () => {
+    // eslint-disable-next-line no-useless-escape
     const ref = 'PROJCS[\"UTM Zone 35, Northern Hemisphere\",GEOGCS[\"GRS 1980(IUGG, 1980)\",DATUM[\"unknown\",SPHEROID[\"GRS80\",6378137,298.257222101]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",0],PARAMETER[\"central_meridian\",27],PARAMETER[\"scale_factor\",0.9996],PARAMETER[\"false_easting\",500000],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]'
-    const [pToM, mToP] = convertCoordinate(ref, 'EPSG:4326')
+    const [_pToM, mToP] = convertCoordinate(ref, 'EPSG:4326')
     expect(mToP([25, 65])[0]).toBeCloseTo(405698.98, 1)
     expect(mToP([25, 65])[1]).toBeCloseTo(7209946.44, 1)
   })
@@ -53,7 +54,7 @@ describe('Closest index', () => {
 describe('LUT', () => {
   test('should work in trivial cases', () => {
     const [pToM, mToP] = convertCoordinate('EPSG:4326', 'EPSG:3857')
-    const [pToWgs84, wgs84ToP] = convertCoordinate('EPSG:4326', 'EPSG:4326')
+    const [pToWgs84, _wgs84ToP] = convertCoordinate('EPSG:4326', 'EPSG:4326')
     const c = convertCoordinateWithLut([60, 20, 65, 25], pToWgs84, pToM, mToP)
 
     for (let x = 60.0; x < 65.0; x += 0.1) {

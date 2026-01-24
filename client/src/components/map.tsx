@@ -133,20 +133,19 @@ function resolveNearestCityAndTown(
 
   const nearestCity: Feature = vectorSource.getClosestFeatureToCoordinate(
     coords,
-    // @ts-ignore
     (feature: Feature) => feature.get('osmPlace') === 'city'
   )
-  // @ts-ignore
+  // @ts-expect-error OL is hard to type
   const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
   const distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
   const bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
 
   const nearestTown: Feature = vectorSource.getClosestFeatureToCoordinate(
     coords,
-    // @ts-ignore
+    // @ts-expect-error OL is hard to type
     (feature: Feature<never>) => feature.get('osmPlace') === 'town'
   )
-  // @ts-ignore
+  // @ts-expect-error OL is hard to type
   const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
   const distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
   const bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
@@ -181,9 +180,9 @@ const resolveCursorToolContentAndColors = (
     resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
 
   const {
-      nearestCityName, distanceToNearestCity, bearingToNearestCity,
-      nearestTownName, distanceToNearestTown, bearingToNearestTown
-    } = resolveNearestCityAndTown(vectorSource, coords, coordsLonLat)
+    nearestCityName, distanceToNearestCity, bearingToNearestCity,
+    nearestTownName, distanceToNearestTown, bearingToNearestTown
+  } = resolveNearestCityAndTown(vectorSource, coords, coordsLonLat)
 
   return renderCursorToolContentAndColors(
     effectiveValue,
@@ -210,14 +209,14 @@ const updateCursorTool = (
   conversionFn: (lon: number, lat: number) => [number, number]
 ) => {
   const element = overlay.getElement()
-  // @ts-ignore
+  // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
   $(element).popover('dispose')
 
   const effectivePosition = (newPosition ? newPosition : overlay.getPosition()) as [number, number]
   if (newPosition) overlay.setPosition(effectivePosition)
   const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, vectorSource, effectivePosition, conversionFn)
 
-  // @ts-ignore
+  // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
   $(element).popover({
     container: element,
     placement: 'auto',
@@ -236,7 +235,7 @@ const updateCursorTool = (
         .css('color', textColor)
     })
 
-  // @ts-ignore
+  // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
   $(element).popover('show')
 }
 
@@ -305,7 +304,7 @@ export class Map extends React.Component<Props> {
 
     this.__vectorLayer = new VectorLayer({
       source: this.__vectorSource,
-      // @ts-ignore
+      // @ts-expect-error OL is hard to type
       style: (feature: Feature) => {
         const osmPlace = feature.get('osmPlace')
         if (osmPlace === 'city') {
@@ -334,7 +333,7 @@ export class Map extends React.Component<Props> {
 
   __onMouseLeave() {
     this.props.dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
-    // @ts-ignore
+    // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
     $(this.cursorToolOverlayRef.current).popover('dispose');
     this.cursorToolVisible = false
   }
@@ -384,7 +383,7 @@ export class Map extends React.Component<Props> {
     })
 
     this.imageCanvas = new ImageCanvas({
-      // @ts-ignore
+      // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
       canvasFunction: this.__canvasFunction,
       // Ratio of 1 means the underlying canvas size is exactly the size of
       // the viewport. By default the canvas is larger to make panning
@@ -436,15 +435,14 @@ export class Map extends React.Component<Props> {
   }
 
   __canvasFunction(
-    // @ts-ignore
     extent: OlExtent,
-    // @ts-ignore
+    // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
     resolution: never,
-    // @ts-ignore
+    // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
     pixelRatio: never,
     size: [number, number],
-    // @ts-ignore
-    projection: never
+    // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
+    projection: never // eslint-disable-line @typescript-eslint/no-unused-vars
   ) {
     const startRender = new Date().getTime();
 

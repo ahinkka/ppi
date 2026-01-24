@@ -33,11 +33,22 @@ export default tseslint.config(
     },
     rules: {
       ...reactPlugin.configs.recommended.rules,
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       'indent': ['error', 2],
       'linebreak-style': ['error', 'unix'],
       'quotes': ['error', 'single'],
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      'max-len': ['warn', {
+        code: 98,
+        tabWidth: 2,
+        ignoreUrls: true,
+        ignoreStrings: true,
+        ignoreTemplateLiterals: true,
+        ignoreRegExpLiterals: true,
+        ignoreComments: true
+      }],
       'react/prop-types': 'off',
+      'react/react-in-jsx-scope': 'off' // Not needed after React 17
     },
   },
   // TypeScript specific configuration
@@ -53,7 +64,12 @@ export default tseslint.config(
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
     },
   },
   // Disable type-aware linting for JavaScript files

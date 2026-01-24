@@ -53,7 +53,7 @@ export class CatalogProvider extends Component<CatalogProviderProps> {
       fetch(url)
         .then((response) => response.json())
         .then((obj) => {
-          onCatalogUpdate(obj)
+          onCatalogUpdate(obj as Catalog)
         })
     }
 
