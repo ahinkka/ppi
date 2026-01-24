@@ -8,11 +8,11 @@ import { Flavor } from './catalog'
 import { LoadedProduct } from './product_loader'
 
 import DropdownSelector from './dropdown_selector'
-import {Map} from './map'
-import {ToggleButton} from './toggle_button'
+import { Map } from './map'
+import { ToggleButton } from './toggle_button'
 import ProductSlider from './product_slider'
 import ColorScale from './color_scale'
-import {NOAAScaleToScaleDescription} from './coloring'
+import { NOAAScaleToScaleDescription } from './coloring'
 
 const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
@@ -20,7 +20,7 @@ const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 const siteSelections = (radarProducts: State['catalog']['radarProducts']): Array<{id: string, display: string}> => {
   const result: Array<{id: string, display: string}> = []
   for (const siteId in radarProducts) {
-    result.push({id: siteId, display: radarProducts[siteId].display})
+    result.push({ id: siteId, display: radarProducts[siteId].display })
   }
   result.sort((a, b) => a.id.localeCompare(b.id))
   return result
@@ -29,7 +29,7 @@ const siteSelections = (radarProducts: State['catalog']['radarProducts']): Array
 const productSelections = (site: State['selection']['site']): Array<{id: string, display: string}> => {
   const result: Array<{id: string, display: string}> = []
   for (const productId in site.products) {
-    result.push({id: productId, display: site.products[productId].display})
+    result.push({ id: productId, display: site.products[productId].display })
   }
   result.sort((a, b) => a.id.localeCompare(b.id))
   return result
@@ -38,7 +38,7 @@ const productSelections = (site: State['selection']['site']): Array<{id: string,
 const flavorSelections = (product: State['selection']['product']): Array<{id: string, display: string}> => {
   const result: Array<{id: string, display: string}> = []
   for (const flavorId in product.flavors) {
-    result.push({id: flavorId, display: product.flavors[flavorId].display})
+    result.push({ id: flavorId, display: product.flavors[flavorId].display })
   }
   result.sort((a, b) => a.id.localeCompare(b.id))
   return result

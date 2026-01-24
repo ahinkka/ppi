@@ -38,6 +38,7 @@ export default tseslint.config(
       'linebreak-style': ['error', 'unix'],
       'quotes': ['error', 'single'],
       'semi': ['warn', 'never'],
+      'object-curly-spacing': ['warn', 'always'],
       'no-console': ['error', { allow: ['warn', 'error'] }],
       'max-len': ['warn', {
         code: 98,

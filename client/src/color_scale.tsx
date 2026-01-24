@@ -19,11 +19,11 @@ type ColorScaleProps = {
 function SolidColorRange(props: SolidColorRangeProps) {
   // TODO: handle open ranges
   return (
-    <div style={{display: 'flex', flexDirection: 'row'}}>
-      <div style={{width: '5em', fontSize: '0.8em', textAlign: 'center',
-        paddingRight: '0.2em'}}>{props.start.value} &ndash; {props.end.value}</div>
-      <div style={{width: '2em',
-        backgroundColor: 'rgb(' + props.color.join(', ') + ')'}}></div>
+    <div style={{ display: 'flex', flexDirection: 'row' }}>
+      <div style={{ width: '5em', fontSize: '0.8em', textAlign: 'center',
+        paddingRight: '0.2em' }}>{props.start.value} &ndash; {props.end.value}</div>
+      <div style={{ width: '2em',
+        backgroundColor: 'rgb(' + props.color.join(', ') + ')' }}></div>
     </div>
   )
 }

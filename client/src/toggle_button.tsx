@@ -1,5 +1,5 @@
 import { Dispatch } from 'react'
-import {OverlayTrigger, Tooltip} from 'react-bootstrap'
+import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 import { NoPayloadAction, Action } from './action'
 
 type Props<T extends NoPayloadAction['type']> = {

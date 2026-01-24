@@ -14,7 +14,7 @@ const times = ['2019-04-19T18:10:00+00:00', '2019-04-19T19:10:00+00:00',
 describe('Selects correct animation time', () => {
   const flavor: Flavor = {
     display: 'test',
-    times: times.map((t) => { return {time: t, url: ''} })
+    times: times.map((t) => { return { time: t, url: '' } })
   }
   const dates = times.map((t) => Date.parse(t))
 
@@ -43,20 +43,20 @@ describe('On catalog update', () => {
 
   const flavorBefore: Flavor = {
     display: 'test',
-    times: timesBefore.map((t) => { return {time: t, url: ''} })
+    times: timesBefore.map((t) => { return { time: t, url: '' } })
   }
   const before = {
-    catalog: { radarProducts: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorBefore }}}}}},
+    catalog: { radarProducts: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorBefore } } } } } },
     selection: { flavor: flavorBefore },
     animation: { currentProductTime: datesBefore[3] }
   } as unknown as State
 
   const flavorAfter: Flavor = {
     display: 'test',
-    times: timesAfter.map((t) => { return {time: t, url: ''} })
+    times: timesAfter.map((t) => { return { time: t, url: '' } })
   }
   const after = {
-    catalog: { radarProducts: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorAfter }}}}}},
+    catalog: { radarProducts: { vantaa: { products: { dbzh: { flavors: { '0.5': flavorAfter } } } } } },
     selection: { flavor: flavorAfter }
   } as unknown as State
 
