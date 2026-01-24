@@ -385,13 +385,15 @@ function cycleProductReducer(state: State): State {
 
   const newProductId = options[newIndex]
   const newProduct = state.selection.site.products[options[newIndex]]
-  state = pipe(
+
+
+  return pipe(
     state,
     O.set(selectedProductL)(newProduct),
-    O.set(selectedProductIdL)(newProductId)
+    O.set(selectedProductIdL)(newProductId),
+    reduceValidSelection,
+    reduceValidAnimationTime
   )
-
-  return reduceValidAnimationTime(reduceValidSelection(state))
 }
 
 
@@ -404,9 +406,13 @@ function cycleFlavorReducer(state: State): State {
 
   const newFlavorId = options[newIndex]
   const newFlavor = state.selection.product.flavors[options[newIndex]]
-  state = pipe(state, O.set(selectedFlavorL)(newFlavor), O.set(selectedFlavorIdL)(newFlavorId))
 
-  return reduceValidAnimationTime(state)
+  return pipe(
+    state,
+    O.set(selectedFlavorL)(newFlavor),
+    O.set(selectedFlavorIdL)(newFlavorId),
+    reduceValidAnimationTime
+  )
 }
 
 
