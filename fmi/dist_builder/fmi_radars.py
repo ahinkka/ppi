@@ -17,6 +17,11 @@ _radar_list = [
         "lat": 60.9039, "lon": 27.1081, "altitude": 139
     },
     {
+        "name": "Inari",
+        "id": "fikau",
+        "lat": 68.4343, "lon": 27.4428, "altitude": 437
+    },
+    {
         "name": "Kankaanpää",
         "id": "fikan",
         "lat": 61.8108, "lon": 23.4997, "altitude": 174
