@@ -38,13 +38,13 @@ export function productExtent(
   width: number,
   height: number
 ): Extent {
-  const origin = [affineTransform[0], affineTransform[3]]
-  const extreme = transform(affineTransform, width, height)
+  const topLeftCenter = transform(affineTransform, 0.5, 0.5)
+  const bottomRightCenter = transform(affineTransform, width - 0.5, height - 0.5)
   return [
-    Math.min(origin[0], extreme[0]),
-    Math.min(origin[1], extreme[1]),
-    Math.max(origin[0], extreme[0]),
-    Math.max(origin[1], extreme[1])
+    Math.min(topLeftCenter[0], bottomRightCenter[0]),
+    Math.min(topLeftCenter[1], bottomRightCenter[1]),
+    Math.max(topLeftCenter[0], bottomRightCenter[0]),
+    Math.max(topLeftCenter[1], bottomRightCenter[1])
   ]
 }
 
@@ -219,7 +219,10 @@ export function canvasPxToProductPx(
 
     const propX = (productXY[0] - productExtent_[0]) / (productExtent_[2] - productExtent_[0])
     const propY = 1 - (productXY[1] - productExtent_[1]) / (productExtent_[3] - productExtent_[1])
-    return [Math.floor(propX * productWidth), Math.floor(propY * productHeight)]
+    // With pixel centers: extent bounds are the geographic positions of the outermost pixel centers.
+    // For width pixels (indices 0 to width-1), centers span from 0.5 to width-0.5.
+    // So propX=0 maps to pixel 0, propX=1 maps to pixel (width-1).
+    return [Math.round(propX * (productWidth - 1)), Math.round(propY * (productHeight - 1))]
   }
 }
 
@@ -245,8 +248,11 @@ export function wgs84ToProductPx(
 
     const propX = (productXY[0] - productExtent_[0]) / (productExtent_[2] - productExtent_[0])
     const propY = 1 - (productXY[1] - productExtent_[1]) / (productExtent_[3] - productExtent_[1])
-    const pxX = Math.floor(propX * productWidth)
-    const pxY = Math.floor(propY * productHeight)
+    // With pixel centers: extent bounds are the geographic positions of the outermost pixel centers.
+    // For width pixels (indices 0 to width-1), centers span from 0.5 to width-0.5.
+    // So propX=0 maps to pixel 0, propX=1 maps to pixel (width-1).
+    const pxX = Math.round(propX * (productWidth - 1))
+    const pxY = Math.round(propY * (productHeight - 1))
     return [pxX, pxY]
   }
 }
