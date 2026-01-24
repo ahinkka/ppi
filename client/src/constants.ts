@@ -1,28 +1,6 @@
 import { Dispatch } from 'react'
 import { Catalog } from './catalog'
 
-export type ActionType =
-  | 'prime'
-  | 'catalog updated'
-  | 'geointerests updated'
-  | 'site selected'
-  | 'product selected'
-  | 'flavor selected'
-  | 'cycle site'
-  | 'cycle product'
-  | 'cycle flavor'
-  | 'map center changed'
-  | 'map moved'
-  | 'make current site intended'
-  | 'pointer moved'
-  | 'pointer left map'
-  | 'animation tick'
-  | 'toggle animation'
-  | 'tick clicked'
-  | 'tick forward'
-  | 'tick backward'
-  | 'product load update'
-
 export type LonLatPayload = {
   lon: number
   lat: number
