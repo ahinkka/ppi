@@ -73,7 +73,7 @@ _radar_list = [
     },
     {
         "name": "Finland composite",
-        "id": "finradfast",
+        "id": "finrad",
         "lat": 64.180708, "lon": 25.803222, "altitude": 0, "composite": True
     },
 ]

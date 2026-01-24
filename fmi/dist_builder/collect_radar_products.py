@@ -73,11 +73,13 @@ def read_product(path):
                 "no_echo": 0
             }
         }
-        if 'elevation' in product:
+        if 'height' in product:
             result['product_type'] = 'CAPPI'
+        elif 'elevation' in product:
+            result['product_type'] = 'PPI'
             result['elevation'] = product['elevation']
         else:
-            result['product_type'] = 'PPI'
+            err(f"Unknown product type, no height nor elevation: {product=}")
 
         if product_name == 'dbzh':
             result['polarization'] = 'HORIZONTAL'

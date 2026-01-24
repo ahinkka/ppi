@@ -32,7 +32,7 @@ SITE_NAMES = {
     'fivan': 'Vantaa',
     'fivih': 'Vihti',
     'fivim': 'Vimpeli',
-    'finradfast': 'Finland composite'
+    'finrad': 'Finland composite radar'
 }
 DEFAULT_SITES = sorted(SITE_NAMES.keys())
 
@@ -96,13 +96,19 @@ def parse_datetime_from_filename(key):
         return parsed.replace(tzinfo=timezone.utc)
 
 
-def fetch_latest_composite_product(client, site):
+def fetch_latest_finrad_product(client, site):
+    """Fetch latest finrad composite CAPPI product.
+
+    finrad products have format: {timestamp}_composite_cappi_{height}_{product}_{site}_qc.tif
+    Example: 202601240000_composite_cappi_600_dbzh_finrad_qc.tif
+    """
     date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
-    product_name = 'acrr1h'
-    prefix = f'{date_prefix}/{site}'
+    product_name = 'dbzh'
+    prefix = f'{date_prefix}/{site}/'
+
     raw_entries = [
         o for o in list_objects(client, _product_bucket, prefix)
-        if product_name in o['Key'] # there's also acrr3h products in the directory
+        if 'composite_cappi' in o['Key'] and product_name in o['Key']
     ]
 
     latest = sorted(
@@ -111,11 +117,16 @@ def fetch_latest_composite_product(client, site):
         reverse=True
     )[0]
 
+    # Extract height from filename (e.g., "600" from "composite_cappi_600_dbzh")
+    filename = latest['Key'].split('/')[-1]
+    parts = filename.split('_')
+    cappi_index = parts.index('cappi')
+    height = parts[cappi_index + 1] + 'm'
+
     # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
-    #  radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
+    # radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
     linear_transformation_gain = 0.5
     linear_transformation_offset = -32
-    height = '250m'
     product_time = parse_datetime_from_filename(latest['Key'])
 
     return Product(site, product_name, product_time, latest['Key'],
@@ -191,8 +202,8 @@ def fetch_product_list(sites=DEFAULT_SITES):
     result = []
     for site in sites:
         try:
-            if 'finrad' in site:
-                product = fetch_latest_composite_product(client, site)
+            if site == 'finrad':
+                product = fetch_latest_finrad_product(client, site)
             else:
                 product = fetch_latest_product(client, site, 'dbzh')
             result.append(product)
