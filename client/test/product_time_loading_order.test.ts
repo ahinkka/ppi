@@ -5,7 +5,7 @@ describe('Should order more recent products first', () => {
   const startTime = moment.utc('2019-04-19T00:00:00+00:00')
   const times = Array.from({ length: 24 * 4 }, (_, i) =>
     startTime.clone().add(moment.duration(i * 15, 'minutes'))
-  )
+  ).map(m => m.valueOf())
   const sorted = orderForLoading(times)
 
   const threeHourProductCount = 3 * 4 + 1
@@ -31,10 +31,14 @@ describe('Should order more recent products first', () => {
 
   test('remaining products in descending order', () => {
     const remaining = [...sorted.slice(twelveHourProductCount + 12, sorted.length - 1)].reverse()
-    expect(remaining.reduce(
-      (previousOrFalse, current) => previousOrFalse.valueOf() < current.valueOf() ? current : false,
-      new Date(0)
-    )).toBeTruthy()
+    const result = remaining.reduce<number | boolean>(
+      (previousOrFalse: number | boolean, current: number) => {
+        if (typeof previousOrFalse === 'boolean') return previousOrFalse
+        return previousOrFalse < current ? current : false
+      },
+      0
+    )
+    expect(result).toBeTruthy()
   })
 
   test('all products are included', () => {
