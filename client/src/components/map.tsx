@@ -1,6 +1,6 @@
 // -*- indent-tabs-mode: nil; -*-
 import React from 'react'
-import $ from 'jquery'
+import { Popover } from 'bootstrap'
 import { LRUCache } from 'lru-cache'
 
 import stringify from 'json-stable-stringify'
@@ -41,6 +41,12 @@ import {
   resolveColorGeneric
 } from './coloring'
 
+// Augment HTMLElement to include _popover property
+declare global {
+  interface HTMLElement {
+    _popover?: Popover
+  }
+}
 
 // https://24ways.org/2010/calculating-color-contrast
 const yiqColorContrast = (r: number, g: number, b: number) =>
@@ -218,12 +224,21 @@ const updateCursorTool = (
   conversionFn: (lon: number, lat: number) => [number, number]
 ) => {
   const element = overlay.getElement()
-  // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-  $(element).popover('dispose') // eslint-disable-line @typescript-eslint/no-unsafe-call
+
+  if (element._popover) {
+    try {
+      element._popover.dispose()
+    } catch (e) {
+      // Popover might already be disposed
+      console.warn('Popover disposal error (safe to ignore):', e)
+    }
+    element._popover = undefined
+  }
 
   const effectivePosition =
     (newPosition ? newPosition : overlay.getPosition()) as [number, number]
   if (newPosition) overlay.setPosition(effectivePosition)
+
   const [content, backgroundColor, textColor] = resolveTemplateAndColors(
     product,
     vectorSource,
@@ -231,27 +246,30 @@ const updateCursorTool = (
     conversionFn
   )
 
-  // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-  $(element).popover({ // eslint-disable-line @typescript-eslint/no-unsafe-call
+  const popover = new Popover(element, {
     container: element,
     placement: 'auto',
-    offset: '0.5vh, 2vw',
+    offset: [8, 32], // Convert from '0.5vh, 2vw' to pixels (approximate)
     animation: false,
     html: true,
     content: content,
   })
 
-  $(element)
-    .on('inserted.bs.popover', () => {
-      $('#cursor-tool-overlay .popover')
-        .css('background-color', backgroundColor)
+  // Apply custom styling after popover is shown
+  element.addEventListener('inserted.bs.popover', function styleHandler() {
+    const popoverEl = element.querySelector('.popover')
+    if (popoverEl) {
+      (popoverEl as HTMLElement).style.backgroundColor = backgroundColor
+      const allElements = popoverEl.querySelectorAll('*')
+      allElements.forEach(el => {
+        (el as HTMLElement).style.color = textColor
+      })
+    }
+    element.removeEventListener('inserted.bs.popover', styleHandler)
+  }, { once: true })
 
-      $('#cursor-tool-overlay .popover *')
-        .css('color', textColor)
-    })
-
-  // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-  $(element).popover('show') // eslint-disable-line @typescript-eslint/no-unsafe-call
+  popover.show()
+  element._popover = popover // Store for disposal
 }
 
 type Props = {
@@ -348,8 +366,17 @@ export class Map extends React.Component<Props> {
 
   __onMouseLeave() {
     this.props.dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
-    // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-    $(this.cursorToolOverlayRef.current).popover('dispose'); // eslint-disable-line @typescript-eslint/no-unsafe-call
+    const element = this.cursorToolOverlayRef.current
+    if (element && element._popover) {
+      try {
+        element._popover.hide()
+        element._popover.dispose()
+        element._popover = undefined
+      } catch (e) {
+        // Popover might already be disposed or in an inconsistent state
+        console.warn('Popover disposal error (safe to ignore):', e)
+      }
+    }
     this.cursorToolVisible = false
   }
 

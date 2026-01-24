@@ -19,7 +19,7 @@ export function ToggleButton(props: Props) {
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <button type="button" className="btn btn-primary"
-          data-toggle="button" aria-pressed="false"
+          data-bs-toggle="button" aria-pressed="false"
           onClick={() => props.dispatch({type: props.action})}>{props.offSymbol}
         </button>
       </OverlayTrigger>
@@ -28,7 +28,7 @@ export function ToggleButton(props: Props) {
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <button type="button" className="btn btn-primary active"
-          data-toggle="button" aria-pressed="true"
+          data-bs-toggle="button" aria-pressed="true"
           onClick={() => props.dispatch({type: props.action})}>{props.onSymbol}
         </button>
       </OverlayTrigger>

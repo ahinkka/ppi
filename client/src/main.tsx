@@ -1,5 +1,4 @@
-// Force the loading order for jQuery and Bootstrap
-import 'jquery'
+// Import Bootstrap 5 JS for popover functionality
 import 'bootstrap'
 
 import React from 'react'

@@ -45,7 +45,7 @@ const DropdownSelector = (props: DropdownSelectorProps) => {
           htmlFor={`${props.legend}-select`}
           title={props.legend}>{props.legend}</label>
       </OverlayTrigger>
-      <select id={`${props.legend}-select`} className="form-control dropdown-selector__select"
+      <select id={`${props.legend}-select`} className="form-select dropdown-selector__select"
         value={props.currentValue} onChange={handleChange}
         disabled={props.disabled} title={selectTitle}>
         {options}
