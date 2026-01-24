@@ -1,7 +1,7 @@
 import { pipe } from 'fp-ts/function'
 import * as O from 'optics-ts'
 
-import { ObserverActions } from './constants'
+import { ActionType } from './constants'
 import { Catalog, CatalogProduct, Flavor, RadarProducts, Site } from './catalog'
 
 export type State = {
@@ -38,7 +38,7 @@ export type State = {
   geoInterests: unknown
 }
 
-export type Action = { type: ObserverActions, payload?: unknown }
+export type Action = { type: ActionType, payload?: unknown }
 
 // Lenses into state
 const catalogL = O.optic_<State>().prop('catalog')
@@ -509,7 +509,7 @@ function productLoadUpdateReducer(state: State, action: Action): State {
 
 
 export function reducer(state: State, action: Action): State {
-  if (state === undefined || action.type === ObserverActions.PRIME) {
+  if (state === undefined || action.type === 'prime') {
     return {
       selection: {
         siteId: null,
@@ -544,43 +544,43 @@ export function reducer(state: State, action: Action): State {
         stayOnLastTime: true
       }
     }
-  } else if (action.type === ObserverActions.CATALOG_UPDATED) {
+  } else if (action.type === 'catalog updated') {
     return catalogUpdatedReducer(state, action);
-  } else if (action.type === ObserverActions.GEOINTERESTS_UPDATED) {
+  } else if (action.type === 'geointerests updated') {
     return O.set(geoInterestsL)(action.payload)(state)
-  } else if (action.type === ObserverActions.SITE_SELECTED) {
+  } else if (action.type === 'site selected') {
     return siteSelectedReducer(state, action);
-  } else if (action.type === ObserverActions.CYCLE_SITE) {
+  } else if (action.type === 'cycle site') {
     return cycleSiteReducer(state);
-  } else if (action.type === ObserverActions.CYCLE_PRODUCT) {
+  } else if (action.type === 'cycle product') {
     return cycleProductReducer(state);
-  } else if (action.type === ObserverActions.CYCLE_FLAVOR) {
+  } else if (action.type === 'cycle flavor') {
     return cycleFlavorReducer(state);
-  } else if (action.type === ObserverActions.PRODUCT_SELECTED) {
+  } else if (action.type === 'product selected') {
     return productSelectedReducer(state, action);
-  } else if (action.type === ObserverActions.FLAVOR_SELECTED) {
+  } else if (action.type === 'flavor selected') {
     return flavorSelectedReducer(state, action);
-  } else if (action.type === ObserverActions.MAP_CENTER_CHANGED) {
+  } else if (action.type === 'map center changed') {
     return mapCenterChangedReducer(state, action)
-  } else if (action.type === ObserverActions.MAP_MOVED) {
+  } else if (action.type === 'map moved') {
     return mapMovedReducer(state, action)
-  } else if (action.type === ObserverActions.MAKE_CURRENT_SITE_INTENDED) {
+  } else if (action.type === 'make current site intended') {
     return makeCurrentSiteIntendedReducer(state)
-  } else if (action.type === ObserverActions.POINTER_MOVED) {
+  } else if (action.type === 'pointer moved') {
     return pointerLocationReducer(state, action.payload)
-  } else if (action.type === ObserverActions.POINTER_LEFT_MAP) {
+  } else if (action.type === 'pointer left map') {
     return pointerLocationReducer(state, null)
-  } else if (action.type === ObserverActions.ANIMATION_TICK) {
+  } else if (action.type === 'animation tick') {
     return animationTickReducer(state);
-  } else if (action.type === ObserverActions.TICK_CLICKED) {
+  } else if (action.type === 'tick clicked') {
     return tickClickedReducer(state, action);
-  } else if (action.type === ObserverActions.TICK_FORWARD) {
+  } else if (action.type === 'tick forward') {
     return tickForwardReducer(state);
-  } else if (action.type === ObserverActions.TICK_BACKWARD) {
+  } else if (action.type === 'tick backward') {
     return tickBackwardReducer(state);
-  } else if (action.type === ObserverActions.TOGGLE_ANIMATION) {
+  } else if (action.type === 'toggle animation') {
     return toggleAnimationReducer(state)
-  } else if (action.type === ObserverActions.PRODUCT_LOAD_UPDATE) {
+  } else if (action.type === 'product load update') {
     return productLoadUpdateReducer(state, action);
   } else {
     console.error(state)

@@ -1,6 +1,6 @@
 import { Component } from 'react'
 
-import { ObserverActions, ObserverDispatch } from './constants'
+import { ObserverDispatch } from './constants'
 
 type Props = { dispatch: ObserverDispatch, url: string }
 
@@ -12,7 +12,7 @@ class GeoInterestsProvider extends Component<Props> {
     fetch(url)
       .then((response) => response.json())
       .then((obj) => {
-        dispatch({ type: ObserverActions.GEOINTERESTS_UPDATED, payload: obj })
+        dispatch({ type: 'geointerests updated', payload: obj })
       })
   }
 

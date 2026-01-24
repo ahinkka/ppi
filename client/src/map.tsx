@@ -31,7 +31,7 @@ import { fromLonLat, toLonLat } from 'ol/proj'
 import { getDistance } from 'ol/sphere'
 import GeoJSON from 'ol/format/GeoJSON'
 
-import { ObserverActions, ObserverDispatch } from './constants'
+import { ObserverDispatch } from './constants'
 import { canvasPxToProductPx, wgs84ToProductPx, Extent } from './reprojection'
 import { LoadedProduct } from './product_loader'
 import { State } from './state'
@@ -364,7 +364,7 @@ export class Map extends React.Component<Props> {
   }
 
   __onMouseLeave() {
-    this.props.dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
+    this.props.dispatch({ type: 'pointer left map' })
     const element = this.cursorToolOverlayRef.current
     if (element && element._popover) {
       try {
@@ -441,10 +441,9 @@ export class Map extends React.Component<Props> {
       const lonLatCenter = toLonLat(center, projection)
 
       dispatch({
-        type: ObserverActions.MAP_MOVED,
+        type: 'map moved',
         payload: { lon: lonLatCenter[0], lat: lonLatCenter[1] }
-      }
-      )
+      })
     })
 
     // https://openlayers.org/en/latest/examples/overlay.html
@@ -469,7 +468,7 @@ export class Map extends React.Component<Props> {
       )
       this.cursorToolVisible = true
 
-      dispatch({ type: ObserverActions.POINTER_MOVED, payload: evt.coordinate })
+      dispatch({ type: 'pointer moved', payload: evt.coordinate })
       // const pixel = this.map.getEventPixel(evt.originalEvent)
       // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
     })

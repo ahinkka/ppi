@@ -13,7 +13,6 @@ import GeoInterestsProvider from './geointerests_provider'
 import ObserverApp from './app'
 import { ProductLoader, LoadedProduct } from './product_loader'
 import UrlStateAdapter from './url_state_adapter'
-import {ObserverActions} from './constants'
 import { State, reducer } from './state'
 
 const debugRedux = false
@@ -21,7 +20,7 @@ const debugRedux = false
 // @ts-expect-error Redux debugging facilities
 const store = !debugRedux ? createStore(reducer) : createStore(reducer, window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__({ serialize: true, trace: true })) // eslint-disable-line max-len,@typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
 
-store.dispatch({type: ObserverActions.PRIME})
+store.dispatch({ type: 'prime' })
 
 
 const ReduxConnectedProductLoader = connect(
@@ -74,7 +73,7 @@ const renderApp = () => {
     <React.StrictMode>
       <CatalogProvider
         onCatalogUpdate={(catalog: Catalog) => store.dispatch({
-          type: ObserverActions.CATALOG_UPDATED,
+          type: 'catalog updated',
           payload: catalog
         })}
         url={url}
@@ -85,7 +84,7 @@ const renderApp = () => {
           productUrlResolver={productUrlResolver}
           setProductRepositoryObject={setProductRepositoryObject}
           onProductLoadUpdate={(payload) => store.dispatch({
-            type: ObserverActions.PRODUCT_LOAD_UPDATE,
+            type: 'product load update',
             payload: payload
           })}
         />

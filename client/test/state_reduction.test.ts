@@ -5,7 +5,6 @@ import {
   type State
 } from '../src/state'
 import { type Flavor } from '../src/catalog'
-import { ObserverActions } from '../src/constants'
 
 const times = ['2019-04-19T18:10:00+00:00', '2019-04-19T19:10:00+00:00',
 	       '2019-04-19T20:10:00+00:00', '2019-04-19T21:10:00+00:00',
@@ -77,7 +76,7 @@ describe('On catalog update', () => {
       ...before,
       animation: { currentProductTime: datesBefore[2] }
     } as State
-    const reduced = catalogUpdatedReducer(state, { type: ObserverActions.CATALOG_UPDATED, payload: after.catalog })
+    const reduced = catalogUpdatedReducer(state, { type: 'catalog updated', payload: after.catalog })
 
     expect(reduced.animation.currentProductTime).not.toEqual(state.animation.currentProductTime)
     expect(reduced.animation.currentProductTime).toBeGreaterThan(state.animation.currentProductTime)

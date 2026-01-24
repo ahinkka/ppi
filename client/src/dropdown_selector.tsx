@@ -2,7 +2,7 @@ import React from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
-import { ObserverActions, ObserverDispatch } from './constants'
+import { ActionType, ObserverDispatch } from './constants'
 
 
 type DropdownSelectorOptionProps = {
@@ -20,7 +20,7 @@ type DropdownSelectorProps = {
   legend: string
   currentValue: string,
   disabled: boolean,
-  action: ObserverActions,
+  action: ActionType,
   dispatch: ObserverDispatch
 }
 

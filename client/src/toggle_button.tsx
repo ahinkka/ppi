@@ -1,12 +1,12 @@
 import {OverlayTrigger, Tooltip} from 'react-bootstrap'
-import { ObserverActions, ObserverDispatch } from './constants'
+import { ActionType, ObserverDispatch } from './constants'
 
 type Props = {
   tooltip: string,
   onSymbol: string,
   offSymbol: string,
   toggleStatus: boolean,
-  action: ObserverActions,
+  action: ActionType,
   dispatch: ObserverDispatch
 }
 

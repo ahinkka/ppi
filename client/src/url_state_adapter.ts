@@ -5,7 +5,7 @@ import { batch, connect } from 'react-redux'
 import { UrlState, makeHashFromState, parseHash } from './state_hash'
 import { State } from './state'
 import { Catalog } from './catalog'
-import { ObserverActions, ObserverDispatch } from './constants'
+import { ActionType, ObserverDispatch } from './constants'
 
 
 type Props = UrlState & {
@@ -14,7 +14,7 @@ type Props = UrlState & {
 }
 
 class UrlStateAdapter extends Component<Props> {
-  private updates: { type: ObserverActions, payload?: unknown }[] | null
+  private updates: { type: ActionType, payload?: unknown }[] | null
 
   constructor(props: Readonly<Props> | Props) {
     super(props)
@@ -48,24 +48,24 @@ class UrlStateAdapter extends Component<Props> {
     this.updates = []    
     if (window.location.hash != '') {
       const parsed = parseHash(window.location.hash)
-      this.updates.push({type: ObserverActions.SITE_SELECTED, payload: parsed.site})
-      this.updates.push({type: ObserverActions.PRODUCT_SELECTED, payload: parsed.product})
-      this.updates.push({type: ObserverActions.FLAVOR_SELECTED, payload: parsed.flavor})
-      this.updates.push({type: ObserverActions.FLAVOR_SELECTED, payload: parsed.flavor})
+      this.updates.push({ type: 'site selected', payload: parsed.site })
+      this.updates.push({ type: 'product selected', payload: parsed.product })
+      this.updates.push({ type: 'flavor selected', payload: parsed.flavor })
+      this.updates.push({ type: 'flavor selected', payload: parsed.flavor })
 
       const animationRunning = parsed.animationRunning == 'true' ? true : false
       if (this.props.animationRunning != animationRunning) {
-        this.updates.push({type: ObserverActions.TOGGLE_ANIMATION})
+        this.updates.push({ type: 'toggle animation' })
       }
 
       const [lon, lat] = [parseFloat(parsed.lon), parseFloat(parsed.lat)]
       if (!isNaN(lon) && !isNaN(lat)) {
         this.updates.push({
-          type: ObserverActions.MAP_CENTER_CHANGED,
+          type: 'map center changed',
           payload: { lon: lon, lat: lat }
         })
       } else {
-        this.updates.push({type: ObserverActions.MAKE_CURRENT_SITE_INTENDED})
+        this.updates.push({ type: 'make current site intended' })
       }
     }
   }

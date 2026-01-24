@@ -2,7 +2,7 @@ import React from 'react'
 import moment from 'moment';
 import { connect } from 'react-redux'
 
-import { ObserverActions, ObserverDispatch } from './constants'
+import { ObserverDispatch } from './constants'
 import { State } from './state'
 import { Flavor } from './catalog'
 import { LoadedProduct } from './product_loader'
@@ -48,13 +48,13 @@ const flavorSelections = (product: State['selection']['product']): Array<{id: st
 const handleKeyPress = (dispatch: ObserverDispatch, event: KeyboardEvent): void => {
   const key = String.fromCharCode(event.charCode)
   if (key == 's' || key == 'S') {
-    dispatch({type: ObserverActions.CYCLE_SITE})
+    dispatch({ type: 'cycle site' })
   } else if (key == 'p' || key == 'P') {
-    dispatch({type: ObserverActions.CYCLE_PRODUCT})
+    dispatch({ type: 'cycle product' })
   } else if (key == 'f' || key == 'F') {
-    dispatch({type: ObserverActions.CYCLE_FLAVOR})
+    dispatch({ type: 'cycle flavor' })
   } else if (event.keyCode == 32) {
-    dispatch({type: ObserverActions.TOGGLE_ANIMATION})
+    dispatch({ type: 'toggle animation' })
   }
 
   // TODO: bind shift + arrows for navigating the map
@@ -65,9 +65,9 @@ const handleKeyPress = (dispatch: ObserverDispatch, event: KeyboardEvent): void 
 const handleKeyDown = (dispatch: ObserverDispatch, event: KeyboardEvent): void => {
   const key = event.key
   if (key == 'ArrowRight') {
-    dispatch({type: ObserverActions.TICK_FORWARD})
+    dispatch({ type: 'tick forward' })
   } else if (key == 'ArrowLeft') {
-    dispatch({type: ObserverActions.TICK_BACKWARD})
+    dispatch({ type: 'tick backward' })
   }
 }
 
@@ -102,7 +102,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
   componentDidMount() {
     this._animationTick = () =>
       this.props.animation.running
-        ? this.props.dispatch({ type: ObserverActions.ANIMATION_TICK })
+        ? this.props.dispatch({ type: 'animation tick' })
         : undefined
 
     this.initialAnimationTimerToken = setTimeout(this._animationTick, 500)
@@ -133,7 +133,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
     const productUrl = props.productUrlResolver(flavor, currentProductTime)
 
     const tickClickCallback = (time: number) => {
-      return () =>  props.dispatch({ type: ObserverActions.TICK_CLICKED, payload: time })
+      return () =>  props.dispatch({ type: 'tick clicked', payload: time })
     }
 
     const keyBase = [siteId, productId, flavorId]
@@ -161,7 +161,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               items={siteSelections(props.catalog.radarProducts)}
               tooltip="Press S to cycle sites"
               tooltipId="site-tooltip"
-              action={ObserverActions.SITE_SELECTED}
+              action={'site selected'}
               disabled={false}
               dispatch={props.dispatch} />
             <DropdownSelector
@@ -170,7 +170,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               items={productSelections(site)}
               tooltip="Press P to cycle products"
               tooltipId="product-tooltip"
-              action={ObserverActions.PRODUCT_SELECTED}
+              action={'product selected'}
               disabled={false}
               dispatch={props.dispatch} />
             <DropdownSelector
@@ -179,14 +179,14 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               items={flavorSelections(product)}
               tooltip="Press F to cycle flavors"
               tooltipId="flavor-tooltip"
-              action={ObserverActions.FLAVOR_SELECTED}
+              action={'flavor selected'}
               disabled={false}
               dispatch={props.dispatch} />
           </div>
           <div id="play-controls">
             <ToggleButton toggleStatus={props.animation.running} dispatch={props.dispatch}
               onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
-              action={ObserverActions.TOGGLE_ANIMATION}
+              action={'toggle animation'}
               tooltip="Press SPACE to toggle animation" />
             <ProductSlider ticks={tickItems} dispatch={props.dispatch} />
           </div>
