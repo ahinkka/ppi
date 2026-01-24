@@ -96,7 +96,7 @@ const renderCursorToolContentAndColors = (
   }
 
   if (
-    nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined &&
+    nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined && // eslint-disable-line max-len
     nearestTownName && distanceToNearestTown !== undefined && bearingToNearestTown !== undefined
   ) {
     return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km ${bearingToCompassRoseReading(bearingToNearestCity)}<br>${nearestTownName} ${distanceToNearestTown} km ${bearingToCompassRoseReading(bearingToNearestTown)}</small></div>`, bgColor, textColor]
@@ -140,7 +140,7 @@ function resolveNearestCityAndTown(
   )
   const nearestCityLonLat =
     // @ts-expect-error OL is hard to type
-    toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
+    toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number] // eslint-disable-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
   const distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
   const bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
 
@@ -151,13 +151,17 @@ function resolveNearestCityAndTown(
   )
   const nearestTownLonLat =
     // @ts-expect-error OL is hard to type
-    toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
+    toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number] // eslint-disable-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
   const distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
   const bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
 
   return {
-    nearestCityName: nearestCity?.get('name'), distanceToNearestCity, bearingToNearestCity,
-    nearestTownName: nearestTown?.get('name'), distanceToNearestTown, bearingToNearestTown
+    nearestCityName: nearestCity?.get('name') as string | undefined,
+    distanceToNearestCity,
+    bearingToNearestCity,
+    nearestTownName: nearestTown?.get('name') as string | undefined,
+    distanceToNearestTown,
+    bearingToNearestTown
   }
 }
 
@@ -215,7 +219,7 @@ const updateCursorTool = (
 ) => {
   const element = overlay.getElement()
   // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-  $(element).popover('dispose')
+  $(element).popover('dispose') // eslint-disable-line @typescript-eslint/no-unsafe-call
 
   const effectivePosition =
     (newPosition ? newPosition : overlay.getPosition()) as [number, number]
@@ -228,7 +232,7 @@ const updateCursorTool = (
   )
 
   // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-  $(element).popover({
+  $(element).popover({ // eslint-disable-line @typescript-eslint/no-unsafe-call
     container: element,
     placement: 'auto',
     offset: '0.5vh, 2vw',
@@ -247,7 +251,7 @@ const updateCursorTool = (
     })
 
   // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-  $(element).popover('show')
+  $(element).popover('show') // eslint-disable-line @typescript-eslint/no-unsafe-call
 }
 
 type Props = {
@@ -317,7 +321,7 @@ export class Map extends React.Component<Props> {
       source: this.__vectorSource,
       // @ts-expect-error OL is hard to type
       style: (feature: Feature) => {
-        const osmPlace = feature.get('osmPlace')
+        const osmPlace = feature.get('osmPlace') as string
         if (osmPlace === 'city') {
           return cityStyle
         } else if (osmPlace === 'town') {
@@ -345,7 +349,7 @@ export class Map extends React.Component<Props> {
   __onMouseLeave() {
     this.props.dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
     // @ts-expect-error Revisit when cursor tool is touched on Bootstrap removal
-    $(this.cursorToolOverlayRef.current).popover('dispose');
+    $(this.cursorToolOverlayRef.current).popover('dispose'); // eslint-disable-line @typescript-eslint/no-unsafe-call
     this.cursorToolVisible = false
   }
 
