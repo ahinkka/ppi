@@ -120,7 +120,8 @@ export function convertCoordinateWithLut(
 
   // These counts + 2, in reality
   const xStepCount = Math.max(3, Math.floor(xDegrees) / 2)
-  const yStepCount = Math.max(3, Math.floor(yDegrees) / 2)
+  // Use finer Y step resolution to avoid vertical interpolation errors
+  const yStepCount = Math.max(3, Math.floor(yDegrees * 4))
   const xStepSize = xDegrees / xStepCount
   const yStepSize = yDegrees / yStepCount
   const xSteps = new Float32Array(xStepCount + 2)
