@@ -110,8 +110,8 @@ lint: ## Run TS typecheck and ESLint
 lint-watch: ## Run typechecker and ESLint continuously
 	find src -type f | entr make lint
 
-.PHONY: fix-lint
-fix-lint: ## Fix lint using ESLint
+.PHONY: lint-fix
+lint-fix: ## Fix lint using ESLint
 	npx eslint --fix $(find src -type d)
 
 .PHONY: typecheck-watch
