@@ -506,79 +506,83 @@ function productLoadUpdateReducer(state: State, action: Extract<Action, { type: 
 }
 
 
-export function reducer(state: State, action: Action): State {
-  if (state === undefined || action.type === 'prime') {
-    return {
-      selection: {
-        siteId: null,
-        site: null,
-        productId: null,
-        product: null,
-        flavorId: null,
-        flavor: null
-      },
-      catalog: {
-        radarProducts: {}
-      },
-      geoInterests: {},
-      loadedProducts: {}, // urls as keys, null values
-      map: {
-        current: { // the map element controls this
-          centerLon: 0,
-          centerLat: 0,
-          pointerLocation: null
-        },
-        intended: { // the app controls this; whenever this changes, map centers on it
-          centerLon: 0,
-          centerLat: 0,
-        }
-      },
-      animation: {
-        currentProductTime: null, // the product time we are currently showing
-        running: false,
-        stayOnLastTime: true
-      }
+const initialState: State = {
+  selection: {
+    siteId: null,
+    site: null,
+    productId: null,
+    product: null,
+    flavorId: null,
+    flavor: null
+  },
+  catalog: {
+    radarProducts: {}
+  },
+  geoInterests: {},
+  loadedProducts: {},
+  map: {
+    current: {
+      centerLon: 0,
+      centerLat: 0,
+      pointerLocation: null
+    },
+    intended: {
+      centerLon: 0,
+      centerLat: 0,
     }
-  } else if (action.type === 'catalog updated') {
-    return catalogUpdatedReducer(state, action as Extract<Action, { type: 'catalog updated' }>);
-  } else if (action.type === 'geointerests updated') {
-    return O.set(geoInterestsL)(action.payload)(state)
-  } else if (action.type === 'site selected') {
-    return siteSelectedReducer(state, action as Extract<Action, { type: 'site selected' }>);
-  } else if (action.type === 'cycle site') {
-    return cycleSiteReducer(state);
-  } else if (action.type === 'cycle product') {
-    return cycleProductReducer(state);
-  } else if (action.type === 'cycle flavor') {
-    return cycleFlavorReducer(state);
-  } else if (action.type === 'product selected') {
-    return productSelectedReducer(state, action as Extract<Action, { type: 'product selected' }>);
-  } else if (action.type === 'flavor selected') {
-    return flavorSelectedReducer(state, action as Extract<Action, { type: 'flavor selected' }>);
-  } else if (action.type === 'map center changed') {
-    return mapCenterChangedReducer(state, action as Extract<Action, { type: 'map center changed' }>)
-  } else if (action.type === 'map moved') {
-    return mapMovedReducer(state, action as Extract<Action, { type: 'map moved' }>)
-  } else if (action.type === 'make current site intended') {
-    return makeCurrentSiteIntendedReducer(state)
-  } else if (action.type === 'pointer moved') {
-    return pointerLocationReducer(state, action.payload)
-  } else if (action.type === 'pointer left map') {
-    return pointerLocationReducer(state, null)
-  } else if (action.type === 'animation tick') {
-    return animationTickReducer(state);
-  } else if (action.type === 'tick clicked') {
-    return tickClickedReducer(state, action as Extract<Action, { type: 'tick clicked' }>);
-  } else if (action.type === 'tick forward') {
-    return tickForwardReducer(state);
-  } else if (action.type === 'tick backward') {
-    return tickBackwardReducer(state);
-  } else if (action.type === 'toggle animation') {
-    return toggleAnimationReducer(state)
-  } else if (action.type === 'product load update') {
-    return productLoadUpdateReducer(state, action as Extract<Action, { type: 'product load update' }>);
-  } else {
-    console.error(state)
-    throw Error(`no reducer match: ${action}`)
+  },
+  animation: {
+    currentProductTime: null,
+    running: false,
+    stayOnLastTime: true
+  }
+}
+
+export function reducer(state: State | undefined, action: Action): State {
+  if (state === undefined) {
+    state = initialState
+  }
+
+  switch (action.type) {
+    case 'prime':
+      return initialState
+    case 'catalog updated':
+      return catalogUpdatedReducer(state, action as Extract<Action, { type: 'catalog updated' }>)
+    case 'geointerests updated':
+      return O.set(geoInterestsL)(action.payload)(state)
+    case 'site selected':
+      return siteSelectedReducer(state, action as Extract<Action, { type: 'site selected' }>)
+    case 'cycle site':
+      return cycleSiteReducer(state)
+    case 'cycle product':
+      return cycleProductReducer(state)
+    case 'cycle flavor':
+      return cycleFlavorReducer(state)
+    case 'product selected':
+      return productSelectedReducer(state, action as Extract<Action, { type: 'product selected' }>)
+    case 'flavor selected':
+      return flavorSelectedReducer(state, action as Extract<Action, { type: 'flavor selected' }>)
+    case 'map center changed':
+      return mapCenterChangedReducer(state, action as Extract<Action, { type: 'map center changed' }>)
+    case 'map moved':
+      return mapMovedReducer(state, action as Extract<Action, { type: 'map moved' }>)
+    case 'make current site intended':
+      return makeCurrentSiteIntendedReducer(state)
+    case 'pointer moved':
+      return pointerLocationReducer(state, action.payload)
+    case 'pointer left map':
+      return pointerLocationReducer(state, null)
+    case 'animation tick':
+      return animationTickReducer(state)
+    case 'tick clicked':
+      return tickClickedReducer(state, action as Extract<Action, { type: 'tick clicked' }>)
+    case 'tick forward':
+      return tickForwardReducer(state)
+    case 'tick backward':
+      return tickBackwardReducer(state)
+    case 'toggle animation':
+      return toggleAnimationReducer(state)
+    case 'product load update':
+      return productLoadUpdateReducer(state, action as Extract<Action, { type: 'product load update' }>)
   }
 }
