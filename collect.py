@@ -175,41 +175,6 @@ def collect_radar_rasters(input_products):
     return result, sources_dests_infos
 
 
-def collect_points_of_interest(input_products):
-    """Collects points of interests from the list of all products.
-
-    Args:
-        List of product dicts. Each dict contains the field 'type'. This
-        function works with dicts with type 'POINT OF INTEREST'. Discards
-        everything else.
-
-    Returns:
-        A dict with keys "towns" and "cities". These contain lists of dicts
-        with keys "lon", "lat" and "name".  Coordinates are in WGS84.
-    """
-    pois = [product
-            for product in input_products
-            if product['type'] == 'POINT OF INTEREST']
-
-    result = {'towns': [], 'cities': []}
-    sources_dests_infos = []
-    for product in pois:
-        if product['locality_type'] == 'town':
-            result['towns'].append({
-                'lon': product['lon'],
-                'lat': product['lat'],
-                'name': product['name']
-            })
-        elif product['locality_type'] == 'city':
-            result['cities'].append({
-                'lon': product['lon'],
-                'lat': product['lat'],
-                'name': product['name']
-            })
-
-    return result
-
-
 def iload_json(buff, decoder=None, _w=json.decoder.WHITESPACE.match):
     """Generate a sequence of top-level JSON values declared in the
     buffer.
@@ -242,12 +207,10 @@ def collect(infile, exporter, directory):
     input_products = list(iload_json(input_data))
 
     sites, sources_dests_infos = collect_radar_rasters(input_products)
-    points_of_interest = collect_points_of_interest(input_products)
 
     with open(os.path.join(directory, "catalog.json"), "w") as f:
         catalog = {
-            'radarProducts': copy.deepcopy(sites),
-            'pointsOfInterest': copy.deepcopy(points_of_interest)
+            'radarProducts': copy.deepcopy(sites)
         }
         json.dump(catalog, f)
 
