@@ -1,8 +1,8 @@
-import { Component } from 'react'
+import { Component, Dispatch } from 'react'
 
-import { ObserverDispatch } from './constants'
+import { Action } from './action'
 
-type Props = { dispatch: ObserverDispatch, url: string }
+type Props = { dispatch: Dispatch<Action>, url: string }
 
 class GeoInterestsProvider extends Component<Props> {
   componentDidMount() {

@@ -1,5 +1,6 @@
+import { Dispatch } from 'react'
 import {OverlayTrigger, Tooltip} from 'react-bootstrap'
-import { NoPayloadAction, ObserverDispatch } from './constants'
+import { NoPayloadAction, Action } from './action'
 
 type Props<T extends NoPayloadAction['type']> = {
   tooltip: string,
@@ -7,7 +8,7 @@ type Props<T extends NoPayloadAction['type']> = {
   offSymbol: string,
   toggleStatus: boolean,
   action: T,
-  dispatch: ObserverDispatch
+  dispatch: Dispatch<Action>
 }
 
 export function ToggleButton<T extends NoPayloadAction['type']>(props: Props<T>) {

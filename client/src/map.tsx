@@ -1,5 +1,5 @@
 // -*- indent-tabs-mode: nil; -*-
-import React from 'react'
+import React, { Dispatch } from 'react'
 import { Popover } from 'bootstrap'
 import { LRUCache } from 'lru-cache'
 
@@ -31,7 +31,7 @@ import { fromLonLat, toLonLat } from 'ol/proj'
 import { getDistance } from 'ol/sphere'
 import GeoJSON from 'ol/format/GeoJSON'
 
-import { ObserverDispatch } from './constants'
+import { Action } from './action'
 import { canvasPxToProductPx, wgs84ToProductPx, Extent } from './reprojection'
 import { LoadedProduct } from './product_loader'
 import { State } from './state'
@@ -279,7 +279,7 @@ type Props = {
   geoInterests: State['geoInterests'],
   productTime: number | null,
   productSelection: [string, string, string],
-  dispatch: ObserverDispatch
+  dispatch: Dispatch<Action>
 }
 
 const cacheOpts = {

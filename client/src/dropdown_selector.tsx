@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { Dispatch } from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
-import { StringPayloadAction, ObserverDispatch } from './constants'
+import { StringPayloadAction, Action } from './action'
 
 
 type DropdownSelectorOptionProps = {
@@ -21,7 +21,7 @@ type DropdownSelectorProps<T extends StringPayloadAction['type']> = {
   currentValue: string,
   disabled: boolean,
   action: T,
-  dispatch: ObserverDispatch
+  dispatch: Dispatch<Action>
 }
 
 const DropdownSelector = <T extends StringPayloadAction['type']>(

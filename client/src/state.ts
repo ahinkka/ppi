@@ -1,7 +1,7 @@
 import { pipe } from 'fp-ts/function'
 import * as O from 'optics-ts'
 
-import { Action } from './constants'
+import { Action } from './action'
 import { Catalog, CatalogProduct, Flavor, RadarProducts, Site } from './catalog'
 
 export type State = {

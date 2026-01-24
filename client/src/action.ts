@@ -1,4 +1,3 @@
-import { Dispatch } from 'react'
 import { Catalog } from './catalog'
 
 export type LonLatPayload = {
@@ -40,5 +39,3 @@ export type Action =
 export type StringPayloadAction = Extract<Action, { payload: string }>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type NoPayloadAction = Exclude<Action, { payload: any }>
-
-export type ObserverDispatch = Dispatch<Action>

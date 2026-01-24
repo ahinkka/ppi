@@ -1,11 +1,11 @@
-import { Component, WheelEvent } from 'react'
+import { Component, WheelEvent, Dispatch } from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
 import moment from 'moment'
 import { LRUCache } from 'lru-cache'
 
-import { ObserverDispatch } from './constants'
+import { Action } from './action'
 
 
 const minAnimationTime = (times: number[]): Date => {
@@ -105,7 +105,7 @@ type TickItem = {
 
 type ProductSliderProps = {
   ticks: TickItem[]
-  dispatch: ObserverDispatch
+  dispatch: Dispatch<Action>
 }
 
 function ProductSlider(props: ProductSliderProps) {

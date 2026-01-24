@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { Dispatch } from 'react'
 import moment from 'moment';
 import { connect } from 'react-redux'
 
-import { ObserverDispatch } from './constants'
+import { Action } from './action'
 import { State } from './state'
 import { Flavor } from './catalog'
 import { LoadedProduct } from './product_loader'
@@ -45,7 +45,7 @@ const flavorSelections = (product: State['selection']['product']): Array<{id: st
 }
 
 
-const handleKeyPress = (dispatch: ObserverDispatch, event: KeyboardEvent): void => {
+const handleKeyPress = (dispatch: Dispatch<Action>, event: KeyboardEvent): void => {
   const key = String.fromCharCode(event.charCode)
   if (key == 's' || key == 'S') {
     dispatch({ type: 'cycle site' })
@@ -62,7 +62,7 @@ const handleKeyPress = (dispatch: ObserverDispatch, event: KeyboardEvent): void 
 }
 
 
-const handleKeyDown = (dispatch: ObserverDispatch, event: KeyboardEvent): void => {
+const handleKeyDown = (dispatch: Dispatch<Action>, event: KeyboardEvent): void => {
   const key = event.key
   if (key == 'ArrowRight') {
     dispatch({ type: 'tick forward' })
@@ -82,7 +82,7 @@ const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement
 
 
 export type ObserverAppProps = State & {
-  dispatch: ObserverDispatch,
+  dispatch: Dispatch<Action>,
   productUrlResolver: (flavor: Flavor, currentProductTime: State['animation']['currentProductTime']) => string | null,
   getProductByUrl: (url: string | null) => unknown
 }

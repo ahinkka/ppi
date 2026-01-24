@@ -1,15 +1,15 @@
-import { Component } from 'react'
+import { Component, Dispatch } from 'react'
 
 import { batch, connect } from 'react-redux'
 
 import { UrlState, makeHashFromState, parseHash } from './state_hash'
 import { State } from './state'
 import { Catalog } from './catalog'
-import { Action, ObserverDispatch } from './constants'
+import { Action } from './action'
 
 
 type Props = UrlState & {
-  dispatch: ObserverDispatch,
+  dispatch: Dispatch<Action>,
   catalog: Catalog,
 }
 
