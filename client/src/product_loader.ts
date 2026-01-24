@@ -131,7 +131,7 @@ type Props = {
   onProductLoadUpdate: (payload: { loaded: string[], unloaded: string[] }) => void
 }
 
-class ProductLoader extends Component<Props> {
+export class ProductLoader extends Component<Props> {
   private loadedProducts: { [key: string]: null | undefined } = {}
   private loadingProducts: { [key: string]: Date } = {}
 
@@ -163,5 +163,3 @@ class ProductLoader extends Component<Props> {
     return null
   }
 }
-
-export default ProductLoader

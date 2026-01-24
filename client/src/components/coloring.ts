@@ -1,18 +1,36 @@
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 
+export type RGBColor = [number, number, number]
+export type RGBAColor = [number, number, number, number]
+
 // Global not scanned color; see fillWithNotScanned before changing this
-export const NOT_SCANNED_COLOR: [number, number, number, number] = [211, 211, 211, 76]
+export const NOT_SCANNED_COLOR: RGBAColor = [211, 211, 211, 76]
 // Global no echo color (transparent black)
-export const NO_ECHO_COLOR: [number, number, number, number] = [0, 0, 0, 0]
+export const NO_ECHO_COLOR: RGBAColor = [0, 0, 0, 0]
 
 export const ScaleRangeType = {
   STEP: 'step',
 }
 
+export type RangeBoundary = {
+  value: number
+  open: boolean
+}
+
+
+type StepScaleRange = {
+  type: typeof ScaleRangeType.STEP | 'step'
+  color: RGBColor
+  start: RangeBoundary
+  end: RangeBoundary
+}
+
+export type ScaleRange = StepScaleRange
+
 // TODO: the actual colors might not be completely correct. This is the scale
 //       as described in Wikipedia.  This is a discrete scale for reflectivity
 //       ranges.
-const NOAALowRedGreenBlue: [number, number, number, number][] = [
+const NOAALowRedGreenBlue: RGBAColor[] = [
   // ND  96  101 97
   [-30, 208, 255, 255],
   [-25, 198, 152, 189],
@@ -38,7 +56,7 @@ const NOAALowRedGreenBlue: [number, number, number, number][] = [
   [75,  248, 246, 247]]
 
 const _reflectivityValueToNOAAColor =
-  (reflectivityValue: number): [number, number, number] | [null, null, null] => {
+  (reflectivityValue: number): RGBColor | [null, null, null] => {
     for (let index=0; index<NOAALowRedGreenBlue.length; index++) {
       const [low, red, green, blue] = NOAALowRedGreenBlue[index]
       if (index == NOAALowRedGreenBlue.length - 1) {
@@ -54,7 +72,7 @@ const _reflectivityValueToNOAAColor =
     return [null, null, null]
   }
 
-const _reflectivityValueToNOAAColorCache: Record<number, [number, number, number] | [null, null, null]> = {}
+const _reflectivityValueToNOAAColorCache: Record<number, RGBColor | [null, null, null]> = {}
 export const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
   if (!(reflectivityValue in _reflectivityValueToNOAAColorCache)) {
     _reflectivityValueToNOAAColorCache[reflectivityValue] =
@@ -63,10 +81,8 @@ export const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
   return _reflectivityValueToNOAAColorCache[reflectivityValue]
 }
 
-
-// TODO: rendering on screen
-export const NOAAScaleToScaleDescription = () => {
-  const result = []
+export function NOAAScaleToScaleDescription(): StepScaleRange[] {
+  const result: StepScaleRange[] = []
   for (let rowIndex=0; rowIndex<NOAALowRedGreenBlue.length; rowIndex++) {
     const nextRowIndex = rowIndex + 1
     const [low, red, green, blue] = NOAALowRedGreenBlue[rowIndex]
@@ -77,14 +93,14 @@ export const NOAAScaleToScaleDescription = () => {
         type: ScaleRangeType.STEP,
         start: { value: low, open: false },
         end: { value: nextLow, open: false },
-        color: [red, green, blue]
+        color: [red, green, blue] as RGBColor
       })
     } else {
       result.push({
         type: ScaleRangeType.STEP,
         start: { value: low, open: false },
         end: { value: low + 1, open: true },
-        color: [red, green, blue]
+        color: [red, green, blue] as RGBColor
       })
     }
   }
@@ -93,7 +109,7 @@ export const NOAAScaleToScaleDescription = () => {
 }
 
 export const resolveColorForReflectivity =
-  (dataScale: DataScale, value: number): [number, number, number, number] => {
+  (dataScale: DataScale, value: number): RGBAColor => {
     const [valueType, dataValue] = integerToDataValue(dataScale, value)
     if (valueType == DataValueType.NOT_SCANNED) {
       return NOT_SCANNED_COLOR
@@ -108,7 +124,7 @@ export const resolveColorForReflectivity =
   }
 
 export const resolveColorGeneric =
-  (dataScale: DataScale, value: number): [number, number, number, number] => {
+  (dataScale: DataScale, value: number): RGBAColor => {
     if (value == dataScale.notScanned) {
       return NOT_SCANNED_COLOR
     } else {

@@ -1,21 +1,7 @@
 import React from 'react'
 import Draggable from 'react-draggable'
 
-import {ScaleRangeType} from './coloring'
-
-type RangeBoundary = {
-  value: number;
-  open: boolean;
-}
-
-type RGBColor = [number, number, number];
-
-type ScaleRange = {
-  type: typeof ScaleRangeType.STEP | 'step';
-  color: RGBColor;
-  start: RangeBoundary;
-  end: RangeBoundary;
-}
+import { ScaleRangeType, RangeBoundary, RGBColor, ScaleRange } from './coloring'
 
 type SolidColorRangeProps = {
   color: RGBColor;

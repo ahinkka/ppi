@@ -9,10 +9,10 @@ import { Provider } from 'react-redux'
 
 import { connect } from 'react-redux'
 
-import CatalogProvider from './catalog'
+import { Catalog, CatalogProvider, Flavor } from './catalog'
 import GeoInterestsProvider from './components/geointerests_provider'
 import ObserverApp from './components/app'
-import ProductLoaderComponent from './product_loader'
+import { ProductLoader, LoadedProduct } from './product_loader'
 import UrlStateAdapter from './components/url_state_adapter'
 import {ObserverActions} from './constants'
 import { State, reducer } from './state'
@@ -35,10 +35,10 @@ const ReduxConnectedProductLoader = connect(
     selectedFlavor: state.selection.flavor,
     loadedProducts: state.loadedProducts
   })
-)(ProductLoaderComponent)
+)(ProductLoader)
 
 
-const productUrlResolver = (flavor, time) => {
+const productUrlResolver = (flavor:Flavor, time: number) => {
   const urlPrefix = 'data/'
 
   if (flavor === undefined || flavor == null || time == null) {
@@ -58,12 +58,12 @@ const productUrlResolver = (flavor, time) => {
 
 
 const [getProductByUrl, setProductRepositoryObject] = (() => {
-  let loadedProducts = null
-  const getProductByUrl = (url) => {
+  let loadedProducts: Record<string, LoadedProduct> | null = null
+  const getProductByUrl = (url: string) => {
     // console.log('loadedProducts[url]', loadedProducts, url)
     return loadedProducts[url]
   }
-  const setProductRepositoryObject = (obj) => {
+  const setProductRepositoryObject = (obj: Record<string, LoadedProduct>) => {
     // console.log('loadedProducts = obj', loadedProducts, obj)
     loadedProducts = obj
   }
@@ -79,7 +79,7 @@ const renderApp = () => {
   root.render(
     <React.StrictMode>
       <CatalogProvider
-        onCatalogUpdate={(catalog) => store.dispatch({
+        onCatalogUpdate={(catalog: Catalog) => store.dispatch({
           type: ObserverActions.CATALOG_UPDATED,
           payload: catalog
         })}

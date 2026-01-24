@@ -5,6 +5,7 @@ import { LRUCache } from 'lru-cache'
 
 import stringify from 'json-stable-stringify'
 
+import { Extent as OlExtent } from 'ol/extent'
 import ImageCanvas from 'ol/source/ImageCanvas'
 import Image from 'ol/layer/Image'
 import View from 'ol/View'
@@ -114,6 +115,47 @@ const bearingBetweenCoordinates = (source: [number, number], destination: [numbe
   return (o * 180 / Math.PI + 360) % 360
 }
 
+function resolveNearestCityAndTown(
+  vectorSource: VectorSource,
+  coords: [number, number],
+  coordsLonLat: [number, number]
+): {
+  nearestCityName?: string,
+  distanceToNearestCity?: number,
+  bearingToNearestCity?: number,
+  nearestTownName?: string,
+  distanceToNearestTown?: number,
+  bearingToNearestTown?: number
+} {
+  if (vectorSource.getFeatures().length == 0) {
+    return {}
+  }
+
+  const nearestCity: Feature = vectorSource.getClosestFeatureToCoordinate(
+    coords,
+    // @ts-ignore
+    (feature: Feature) => feature.get('osmPlace') === 'city'
+  )
+  // @ts-ignore
+  const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
+  const distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
+  const bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
+
+  const nearestTown: Feature = vectorSource.getClosestFeatureToCoordinate(
+    coords,
+    // @ts-ignore
+    (feature: Feature<never>) => feature.get('osmPlace') === 'town'
+  )
+  // @ts-ignore
+  const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
+  const distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
+  const bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
+
+  return {
+    nearestCityName: nearestCity?.get('name'), distanceToNearestCity, bearingToNearestCity,
+    nearestTownName: nearestTown?.get('name'), distanceToNearestTown, bearingToNearestTown
+  }
+}
 
 const resolveCursorToolContentAndColors = (
   product: LoadedProduct,
@@ -129,26 +171,6 @@ const resolveCursorToolContentAndColors = (
   const metadata = product.metadata
   const coordsLonLat = toLonLat(coords) as [number, number]
 
-  let [nearestCity, distanceToNearestCity, bearingToNearestCity, nearestTown, distanceToNearestTown, bearingToNearestTown] =
-    [undefined, undefined, undefined, undefined, undefined, undefined]
-  if (vectorSource && vectorSource.getFeatures().length > 0) {
-    nearestCity = vectorSource.getClosestFeatureToCoordinate(
-      coords,
-      (feature: Feature<never>) => feature.get('osmPlace') === 'city'
-    )
-    const nearestCityLonLat = toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number]
-    distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
-    bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
-
-    nearestTown = vectorSource.getClosestFeatureToCoordinate(
-      coords,
-      (feature: Feature<never>) => feature.get('osmPlace') === 'town'
-    )
-    const nearestTownLonLat = toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number]
-    distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
-    bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
-  }
-
   const dataPxXY = wgs84ToProductPxFn(coordsLonLat[0], coordsLonLat[1])
 
   let effectiveValue = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
@@ -158,15 +180,20 @@ const resolveCursorToolContentAndColors = (
     resolveColorForReflectivity(metadata.productInfo.dataScale, effectiveValue) :
     resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
 
+  const {
+      nearestCityName, distanceToNearestCity, bearingToNearestCity,
+      nearestTownName, distanceToNearestTown, bearingToNearestTown
+    } = resolveNearestCityAndTown(vectorSource, coords, coordsLonLat)
+
   return renderCursorToolContentAndColors(
     effectiveValue,
     metadata.productInfo.dataScale,
     metadata.productInfo.dataUnit,
     color,
-    nearestCity ? nearestCity.get('name') : undefined,
+    nearestCityName,
     distanceToNearestCity,
     bearingToNearestCity,
-    nearestTown ? nearestTown.get('name') : undefined,
+    nearestTownName,
     distanceToNearestTown,
     bearingToNearestTown,
   )
@@ -183,12 +210,14 @@ const updateCursorTool = (
   conversionFn: (lon: number, lat: number) => [number, number]
 ) => {
   const element = overlay.getElement()
+  // @ts-ignore
   $(element).popover('dispose')
 
   const effectivePosition = (newPosition ? newPosition : overlay.getPosition()) as [number, number]
   if (newPosition) overlay.setPosition(effectivePosition)
   const [content, backgroundColor, textColor] = resolveTemplateAndColors(product, vectorSource, effectivePosition, conversionFn)
 
+  // @ts-ignore
   $(element).popover({
     container: element,
     placement: 'auto',
@@ -207,6 +236,7 @@ const updateCursorTool = (
         .css('color', textColor)
     })
 
+  // @ts-ignore
   $(element).popover('show')
 }
 
@@ -275,7 +305,8 @@ export class Map extends React.Component<Props> {
 
     this.__vectorLayer = new VectorLayer({
       source: this.__vectorSource,
-      style: (feature: Feature<never>) => {
+      // @ts-ignore
+      style: (feature: Feature) => {
         const osmPlace = feature.get('osmPlace')
         if (osmPlace === 'city') {
           return cityStyle
@@ -303,6 +334,7 @@ export class Map extends React.Component<Props> {
 
   __onMouseLeave() {
     this.props.dispatch({ type: ObserverActions.POINTER_LEFT_MAP })
+    // @ts-ignore
     $(this.cursorToolOverlayRef.current).popover('dispose');
     this.cursorToolVisible = false
   }
@@ -352,6 +384,7 @@ export class Map extends React.Component<Props> {
     })
 
     this.imageCanvas = new ImageCanvas({
+      // @ts-ignore
       canvasFunction: this.__canvasFunction,
       // Ratio of 1 means the underlying canvas size is exactly the size of
       // the viewport. By default the canvas is larger to make panning
@@ -403,11 +436,15 @@ export class Map extends React.Component<Props> {
   }
 
   __canvasFunction(
-    extent: Extent,
-    _resolution: never,
-    _pixelRatio: never,
+    // @ts-ignore
+    extent: OlExtent,
+    // @ts-ignore
+    resolution: never,
+    // @ts-ignore
+    pixelRatio: never,
     size: [number, number],
-    _projection: never
+    // @ts-ignore
+    projection: never
   ) {
     const startRender = new Date().getTime();
 
@@ -481,7 +518,7 @@ export class Map extends React.Component<Props> {
         metadata.affineTransform,
         metadata.width, metadata.height,
         'EPSG:3857',
-        extent,
+        extent as Extent,
         this.canvas.width, this.canvas.height,
       )
 

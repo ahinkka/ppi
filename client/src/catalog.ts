@@ -35,7 +35,7 @@ type CatalogProviderProps = {
   url: string
 }
 
-class CatalogProvider extends Component<CatalogProviderProps> {
+export class CatalogProvider extends Component<CatalogProviderProps> {
   private intervalId: number | null
   private initialTimeoutId: number | null
 
@@ -70,5 +70,3 @@ class CatalogProvider extends Component<CatalogProviderProps> {
     return null
   }
 }
-
-export default CatalogProvider
