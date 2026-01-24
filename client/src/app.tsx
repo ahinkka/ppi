@@ -2,10 +2,10 @@ import React from 'react'
 import moment from 'moment';
 import { connect } from 'react-redux'
 
-import { ObserverActions, ObserverDispatch } from '../constants'
-import { State } from '../state'
-import { Flavor } from '../catalog'
-import { LoadedProduct } from '../product_loader'
+import { ObserverActions, ObserverDispatch } from './constants'
+import { State } from './state'
+import { Flavor } from './catalog'
+import { LoadedProduct } from './product_loader'
 
 import DropdownSelector from './dropdown_selector'
 import {Map} from './map'

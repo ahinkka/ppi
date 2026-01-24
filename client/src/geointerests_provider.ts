@@ -1,6 +1,6 @@
 import { Component } from 'react'
 
-import { ObserverActions, ObserverDispatch } from '../constants'
+import { ObserverActions, ObserverDispatch } from './constants'
 
 type Props = { dispatch: ObserverDispatch, url: string }
 

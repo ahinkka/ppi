@@ -5,7 +5,7 @@ import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 import moment from 'moment'
 import { LRUCache } from 'lru-cache'
 
-import { ObserverActions, ObserverDispatch } from '../constants'
+import { ObserverActions, ObserverDispatch } from './constants'
 
 
 const minAnimationTime = (times: number[]): Date => {

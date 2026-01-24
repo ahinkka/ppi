@@ -5,7 +5,7 @@ import { Component } from 'react'
 import { twoDtoUint8Array } from './utils'
 import { orderForLoading } from './product_time_loading_order'
 import { Flavor } from './catalog'
-import { DataValueType } from './components/datavalue'
+import { DataValueType } from './datavalue'
 import { AffineTransform } from './reprojection'
 
 

@@ -9,10 +9,10 @@ import { Provider } from 'react-redux'
 import { connect } from 'react-redux'
 
 import { Catalog, CatalogProvider, Flavor } from './catalog'
-import GeoInterestsProvider from './components/geointerests_provider'
-import ObserverApp from './components/app'
+import GeoInterestsProvider from './geointerests_provider'
+import ObserverApp from './app'
 import { ProductLoader, LoadedProduct } from './product_loader'
-import UrlStateAdapter from './components/url_state_adapter'
+import UrlStateAdapter from './url_state_adapter'
 import {ObserverActions} from './constants'
 import { State, reducer } from './state'
 

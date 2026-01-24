@@ -31,10 +31,10 @@ import { fromLonLat, toLonLat } from 'ol/proj'
 import { getDistance } from 'ol/sphere'
 import GeoJSON from 'ol/format/GeoJSON'
 
-import { ObserverActions, ObserverDispatch } from '../constants'
-import { canvasPxToProductPx, wgs84ToProductPx, Extent } from '../reprojection'
-import { LoadedProduct } from '../product_loader'
-import { State } from '../state'
+import { ObserverActions, ObserverDispatch } from './constants'
+import { canvasPxToProductPx, wgs84ToProductPx, Extent } from './reprojection'
+import { LoadedProduct } from './product_loader'
+import { State } from './state'
 
 import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 import {

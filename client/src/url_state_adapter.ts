@@ -2,10 +2,10 @@ import { Component } from 'react'
 
 import { batch, connect } from 'react-redux'
 
-import { UrlState, makeHashFromState, parseHash } from '../state_hash'
-import { State } from '../state'
-import { Catalog } from '../catalog'
-import { ObserverActions, ObserverDispatch } from '../constants'
+import { UrlState, makeHashFromState, parseHash } from './state_hash'
+import { State } from './state'
+import { Catalog } from './catalog'
+import { ObserverActions, ObserverDispatch } from './constants'
 
 
 type Props = UrlState & {
