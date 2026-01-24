@@ -66,7 +66,7 @@ class CatalogProvider extends Component<CatalogProviderProps> {
     if (this.initialTimeoutId) window.clearTimeout(this.initialTimeoutId)
   }
 
-  render() {
+  render(): null {
     return null
   }
 }

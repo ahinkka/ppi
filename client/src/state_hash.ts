@@ -37,11 +37,12 @@ export const makeHashFromState = (urlState: UrlState) => {
 }
 
 
-export const parseHash = (hash: string): { [key: string]: string } => {
+export const parseHash = (hash: string): Record<string, string> => {
   const parts = hash.slice(1).split('&')
   const result = {}
   for (const part of parts) {
     const [key, value] = part.split('=')
+    // @ts-ignore
     result[key] = value
   }
   return result

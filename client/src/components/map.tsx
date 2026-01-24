@@ -404,10 +404,10 @@ export class Map extends React.Component<Props> {
 
   __canvasFunction(
     extent: Extent,
-    resolution: never,
-    pixelRatio: never,
+    _resolution: never,
+    _pixelRatio: never,
     size: [number, number],
-    projection: never // eslint-disable-line @typescript-eslint/no-unused-vars
+    _projection: never
   ) {
     const startRender = new Date().getTime();
 

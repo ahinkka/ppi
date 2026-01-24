@@ -16,6 +16,7 @@ import {
   geoInterestsL
 } from '../state'
 import { Flavor } from '../catalog'
+import { LoadedProduct } from '../product_loader'
 
 import DropdownSelector from './dropdown_selector'
 import {Map} from './map'
@@ -159,9 +160,9 @@ class ObserverApp extends React.Component<ObserverAppProps> {
       return { time, callback, isCurrent, isLoaded, key }
     })
 
-    let product = null
+    let product: LoadedProduct | null = null
     if (productUrl in props.loadedProducts) {
-      product = props.getProductByUrl(productUrl)
+      product = props.getProductByUrl(productUrl) as LoadedProduct
     }
 
     return (

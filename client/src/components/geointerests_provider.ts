@@ -16,7 +16,7 @@ class GeoInterestsProvider extends Component<Props> {
       })
   }
 
-  render() {
+  render(): null {
     return null
   }
 }

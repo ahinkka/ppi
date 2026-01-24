@@ -1,4 +1,4 @@
-import React, { Component, WheelEvent } from 'react'
+import { Component, WheelEvent } from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 

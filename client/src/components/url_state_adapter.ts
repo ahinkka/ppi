@@ -14,7 +14,7 @@ type Props = UrlState & {
 }
 
 class UrlStateAdapter extends Component<Props> {
-  private updates: { type: string, payload?: unknown }[] | null
+  private updates: { type: ObserverActions, payload?: unknown }[] | null
 
   constructor(props: Readonly<Props> | Props) {
     super(props)
@@ -27,7 +27,7 @@ class UrlStateAdapter extends Component<Props> {
     this.loadHash()
   }
 
-  render() {
+  render(): null {
     if (this.updates) {
       const dispatch = this.props.dispatch
       const updates = this.updates

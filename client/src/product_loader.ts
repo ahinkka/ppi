@@ -14,6 +14,7 @@ function inflate(input: Uint8Array): string {
     return pako.inflate(input, { to: 'string' })
   } catch (err) {
     console.error('Failed to decompress product file:', err)
+    throw err
   }
 }
 
@@ -142,7 +143,7 @@ class ProductLoader extends Component<Props> {
     this.props.setProductRepositoryObject(this.loadedProducts)
   }
 
-  render() {
+  render(): null {
     const props = this.props
     const flavor = props.selectedFlavor
 
