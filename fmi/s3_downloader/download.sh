@@ -1,8 +1,8 @@
 #!/bin/bash
-exit 1 # needs to be configured
+#exit 1 # needs to be configured
 
 set -euo pipefail
-# CODE_ROOT="$HOME/Projects/ppi"
+CODE_ROOT="$HOME/Projects/ppi"
 
 # First download
 pushd "$CODE_ROOT/fmi/s3_downloader" > /dev/null
