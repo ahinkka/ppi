@@ -19,13 +19,8 @@ import { State, reducer } from './state'
 
 const debugRedux = false
 // const debugRedux = true
-const store = !debugRedux ? createStore(reducer) : createStore(
-  reducer,
-  // @ts-expect-error Redux debugging facilities
-  window.__REDUX_DEVTOOLS_EXTENSION__ &&
-    // @ts-expect-error Redux debugging facilities
-    window.__REDUX_DEVTOOLS_EXTENSION__({ serialize: true, trace: true })
-)
+// @ts-expect-error Redux debugging facilities
+const store = !debugRedux ? createStore(reducer) : createStore(reducer, window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__({ serialize: true, trace: true })) // eslint-disable-line max-len,@typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
 
 store.dispatch({type: ObserverActions.PRIME})
 

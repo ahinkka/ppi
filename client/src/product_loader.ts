@@ -44,7 +44,10 @@ async function parseProduct(input: Uint8Array): Promise<LoadedProduct> {
   let inflated = null
   try {
     inflated = inflate(input)
-    const { data: twoDimensionalArray, metadata } = JSON.parse(inflated)
+    const { data: twoDimensionalArray, metadata } = JSON.parse(inflated) as {
+      data: number[][]
+      metadata: LoadedProduct['metadata']
+    }
     const [_cols, _rows, data] = twoDtoUint8Array(twoDimensionalArray)
     return {
       data,
