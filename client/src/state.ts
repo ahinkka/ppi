@@ -17,10 +17,7 @@ export type State = {
   },
   map: {
     current: { // the map element controls this
-      pointerLocation: {
-        x: number,
-        y: number
-      },
+      pointerLocation: [number, number] | null,
       centerLon: number,
       centerLat: number
     },
@@ -351,10 +348,11 @@ function makeCurrentSiteIntendedReducer(state: State): State {
 }
 
 
-const pointerLocationReducer = (state: State, newLocation: unknown): State => {
-  // TODO: Type mismatch - payload is number[] but State.map.current.pointerLocation expects {x: number, y: number}. Needs manual verification and fix.
-  return O.set(currentPointerLocationL)(newLocation as State['map']['current']['pointerLocation'])(state)
-}
+const pointerLocationReducer = (state: State, newLocation: [number, number] | null) =>
+  pipe(
+    state,
+    O.set(currentPointerLocationL)(newLocation)
+  )
 
 
 function cycleSiteReducer(state: State): State {
@@ -528,10 +526,7 @@ export function reducer(state: State, action: Action): State {
         current: { // the map element controls this
           centerLon: 0,
           centerLat: 0,
-          pointerLocation: {
-            x: 0,
-            y: 0
-          }
+          pointerLocation: null
         },
         intended: { // the app controls this; whenever this changes, map centers on it
           centerLon: 0,

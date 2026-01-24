@@ -10,7 +10,7 @@ export type ProductLoadPayload = {
   unloaded: string[]
 }
 
-export type PointerCoordinate = number[]
+export type PointerCoordinate = [number, number]
 
 export type Action =
   | { type: 'prime' }
