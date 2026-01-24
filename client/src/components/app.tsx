@@ -1,20 +1,9 @@
 import React from 'react'
 import moment from 'moment';
 import { connect } from 'react-redux'
-import * as O from 'optics-ts'
 
 import { ObserverActions, ObserverDispatch } from '../constants'
 import { State } from '../state'
-import {
-  animationRunningL,
-  selectedSiteIdL,
-  selectedProductIdL,
-  selectedFlavorIdL,
-  selectedFlavorL,
-  currentProductTimeL,
-  radarProductsL,
-  geoInterestsL
-} from '../state'
 import { Flavor } from '../catalog'
 import { LoadedProduct } from '../product_loader'
 
@@ -112,7 +101,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
 
   componentDidMount() {
     this._animationTick = () =>
-      O.get(animationRunningL)(this.props) ? this.props.dispatch({type: ObserverActions.ANIMATION_TICK}) : undefined
+      this.props.animation.running ? this.props.dispatch({ type: ObserverActions.ANIMATION_TICK }) : undefined
 
     this.initialAnimationTimerToken = setTimeout(this._animationTick, 500)
     this.animationTimerToken = setInterval(this._animationTick, 1500)
@@ -132,18 +121,14 @@ class ObserverApp extends React.Component<ObserverAppProps> {
 
   render() {
     const props = this.props
-    const [siteId, productId, flavorId] = [
-      O.get(selectedSiteIdL)(props),
-      O.get(selectedProductIdL)(props),
-      O.get(selectedFlavorIdL)(props)
-    ]
 
+    const { siteId, productId, flavorId } = props.selection
     if (!siteId || !productId || !flavorId) {
       return (<div></div>)
     }
 
-    const flavor = O.get(selectedFlavorL)(props)
-    const currentProductTime = O.get(currentProductTimeL)(props)
+    const flavor = props.selection.flavor
+    const currentProductTime = props.animation.currentProductTime
     const productUrl = props.productUrlResolver(flavor, currentProductTime)
 
     const tickClickCallback = (time: number) => {
@@ -172,7 +157,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
             <DropdownSelector
               currentValue={props.selection.siteId}
               legend="Site"
-              items={siteSelections(O.get(radarProductsL)(props))}
+              items={siteSelections(props.catalog.radarProducts)}
               tooltip="Press S to cycle sites"
               tooltipId="site-tooltip"
               action={ObserverActions.SITE_SELECTED}
@@ -208,7 +193,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
         </div>
         <Map headerElementId="header-row"
           intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
-          geoInterests={O.get(geoInterestsL)(props)}
+          geoInterests={props.geoInterests}
           dispatch={props.dispatch}
           product={product}
           productTime={props.animation.currentProductTime}

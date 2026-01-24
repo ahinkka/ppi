@@ -44,34 +44,32 @@ export type Action = { type: ObserverActions, payload?: unknown }
 const compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x)
 
 // Lenses into state
-export const catalogL = O.optic_<State>().prop('catalog')
-export const radarProductsL = catalogL.prop('radarProducts')
-export const geoInterestsL = O.optic_<State>().prop('geoInterests')
+const catalogL = O.optic_<State>().prop('catalog')
+const radarProductsL = catalogL.prop('radarProducts')
+const geoInterestsL = O.optic_<State>().prop('geoInterests')
 
-export const selectionL = O.optic_<State>().prop('selection')
-export const selectedSiteIdL = selectionL.prop('siteId')
-export const selectedProductIdL = selectionL.prop('productId')
-export const selectedFlavorIdL = selectionL.prop('flavorId')
+const selectionL = O.optic_<State>().prop('selection')
+const selectedSiteIdL = selectionL.prop('siteId')
+const selectedProductIdL = selectionL.prop('productId')
+const selectedFlavorIdL = selectionL.prop('flavorId')
 
-export const selectedSiteL = selectionL.prop('site')
-export const selectedProductL = selectionL.prop('product')
-export const selectedFlavorL = selectionL.prop('flavor')
+const selectedSiteL = selectionL.prop('site')
+const selectedProductL = selectionL.prop('product')
+const selectedFlavorL = selectionL.prop('flavor')
 
 const animationL = O.optic_<State>().prop('animation')
-export const currentProductTimeL = animationL.prop('currentProductTime')
-export const animationRunningL = animationL.prop('running')
-export const stayOnLastTimeL = animationL.prop('stayOnLastTime')
+const currentProductTimeL = animationL.prop('currentProductTime')
+const animationRunningL = animationL.prop('running')
+const stayOnLastTimeL = animationL.prop('stayOnLastTime')
 
 const mapCurrentL = O.optic_<State>().prop('map').prop('current')
-export const currentLonL = mapCurrentL.prop('centerLon')
-export const currentLatL = mapCurrentL.prop('centerLat')
+const currentLonL = mapCurrentL.prop('centerLon')
+const currentLatL = mapCurrentL.prop('centerLat')
 const mapIntendedL = O.optic_<State>().prop('map').prop('intended')
-export const intendedLonL = mapIntendedL.prop('centerLon')
-export const intendedLatL = mapIntendedL.prop('centerLat')
+const intendedLonL = mapIntendedL.prop('centerLon')
+const intendedLatL = mapIntendedL.prop('centerLat')
 
-export const currentPointerLocationL = mapCurrentL.prop('pointerLocation')
-
-export const loadedProductsL = O.optic_<State>().prop('loadedProducts')
+const currentPointerLocationL = mapCurrentL.prop('pointerLocation')
 
 
 function selectSite(
