@@ -35,13 +35,15 @@ client/
 ├── src/                   # TypeScript/React source code
 │   ├── main.tsx           # Application entry point
 │   ├── state.ts           # Redux store and reducers
+│   ├── action.ts          # Action types and payloads (discriminated union)
 │   ├── catalog.ts         # Data catalog management
 │   ├── product_loader.ts  # Async product loading
 │   ├── reprojection.ts    # Geographic projections
-│   └── components/        # React components
-│       ├── app.tsx        # Root ObserverApp component
-│       ├── map.tsx        # OpenLayers map component
-│       └── ...            # UI components
+│   ├── app.tsx            # Root ObserverApp component
+│   ├── map.tsx            # OpenLayers map component
+│   ├── dropdown_selector.tsx # Generic dropdown selector
+│   ├── toggle_button.tsx   # Generic toggle button
+│   └── ...                # Other UI components
 ├── www/                   # HTML templates
 │   └── index.html         # Main page template
 ├── css/                   # Stylesheets
@@ -60,17 +62,27 @@ client/
 - `src/main.tsx` - Bootstraps the application, creates Redux store, renders ObserverApp
 
 ### Core Components
-- **ObserverApp** (`src/components/app.tsx`) - Root component managing animation and layout
-- **Map** (`src/components/map.tsx`) - OpenLayers-based radar visualization
+- **ObserverApp** (`src/app.tsx`) - Root component managing animation and layout
+- **Map** (`src/map.tsx`) - OpenLayers-based radar visualization
 - **ProductLoader** (`src/product_loader.ts`) - Loads and caches radar products
 - **CatalogProvider** (`src/catalog.ts`) - Fetches product catalog every 30 seconds
-- **UrlStateAdapter** (`src/components/url_state_adapter.ts`) - Syncs state with URL
+- **UrlStateAdapter** (`src/url_state_adapter.ts`) - Syncs state with URL
+- **DropdownSelector** (`src/dropdown_selector.tsx`) - Generic dropdown for site/product/flavor selection
+- **ToggleButton** (`src/toggle_button.tsx`) - Generic toggle button for animation control
+- **ProductSlider** (`src/product_slider.tsx`) - Time slider for product animation
+- **GeoInterestsProvider** (`src/geointerests_provider.ts`) - Fetches geographic interest data
 
 ### State Management
 - Redux-based with optics for immutable updates
-- Manages: catalog (site/product selection, map position, animation state, loaded products
+- Manages: catalog, site/product selection, map position, animation state, loaded products
+- Catalog defines what sites, products, flavors and times are available for visualization
 
-Catalog defines what sites, products, flavors and times are available for visualization.
+### Action Type System
+- **Discriminated Union** (`src/action.ts`): `Action` type is a strict discriminated union where each action type has specific payload types
+
+### Generic Components
+- **DropdownSelector** - Generic over `StringPayloadAction` to ensure only actions with string payloads can be dispatched
+- **ToggleButton** - Generic over `NoPayloadAction` to ensure only actions without payloads can be dispatched
 
 ## Development Commands
 
@@ -128,6 +140,20 @@ make clean          # Clean build directory
 - **Styles:** Sass compiles `css/ppi.sass` → `build/css/ppi.css` (includes Bootstrap/OpenLayers CSS)
 - **HTML:** Copies `www/index.html` → `build/index.html`
 - **Dev Server:** esbuild serves on port 8000 with hot reload
+
+## Type Safety & Action System
+
+### Overview
+The action dispatch system uses TypeScript discriminated unions for complete type safety. This ensures:
+- All actions have correctly typed payloads at compile time
+- Components cannot dispatch invalid action/payload combinations
+
+### Generic Components
+Components that need runtime-determined action types use TypeScript generics:
+- `DropdownSelector<T extends StringPayloadAction['type']>` - Ensures payload is always a string
+- `ToggleButton<T extends NoPayloadAction['type']>` - Ensures no payload is required
+
+This approach maintains full type safety while allowing flexible component usage.
 
 ## Configuration Files
 
