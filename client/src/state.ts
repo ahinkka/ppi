@@ -75,51 +75,54 @@ function selectSite(
 ): [string, Site] | [null, null] {
   if (previousSiteId != null) {
     for (const siteId in radarProducts) {
-      if (siteId == previousSiteId) {
+      if (siteId === previousSiteId) {
         return [siteId, radarProducts[siteId]]
       }
     }
-    return [null, null]
-  } else {
-    const options = Object.keys(radarProducts).sort()
-    return options.length > 0 ? [options[0], radarProducts[options[0]]] : [null, null];
   }
+
+  const options = Object.keys(radarProducts).sort()
+  return options.length > 0
+    ? [options[0], radarProducts[options[0]]]
+    : [null, null]
 }
 
 
 function selectProduct(previousProductSelection: string, site: State['selection']['site']): [string, CatalogProduct] {
   if (previousProductSelection != null) {
     for (const productId in site.products) {
-      if (productId == previousProductSelection) {
+      if (productId === previousProductSelection) {
         return [productId, site.products[productId]]
       }
     }
   }
 
-  let options: string[] = []
-  if (site && site.products) {
-    options = Object.keys(site.products)
-  }
-  options.sort()
-  return options.length > 0 ? [options[0], site.products[options[0]]] : [null, null]
+  const options: string[] = site && site.products
+    ? Object.keys(site.products).sort()
+    : []
+
+  return options.length > 0
+    ? [options[0], site.products[options[0]]]
+    : [null, null]
 }
 
 
 function selectFlavor(previousFlavor: string, product: CatalogProduct): [string, Flavor] {
   if (previousFlavor != null) {   
     for (const flavorId in product.flavors) {
-      if (flavorId == previousFlavor) {
-        return [flavorId, product.flavors[flavorId]];
+      if (flavorId === previousFlavor) {
+        return [flavorId, product.flavors[flavorId]]
       }
     }
   }
 
-  let options: string[] = []
-  if (product && product.flavors) {
-    options = Object.keys(product.flavors)
-  }
-  options.sort()
-  return options.length > 0 ? [options[0], product.flavors[options[0]]] : [null, null];
+  const options: string[] = product && product.flavors
+    ? Object.keys(product.flavors).sort()
+    : []
+
+  return options.length > 0
+    ? [options[0], product.flavors[options[0]]]
+    : [null, null]
 }
 
 
