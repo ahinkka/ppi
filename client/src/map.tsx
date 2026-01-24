@@ -309,12 +309,12 @@ export class Map extends React.Component<Props> {
   private __resizeTimeout: number | null = null
 
   constructor(props: Readonly<Props> | Props) {
-    super(props);
+    super(props)
 
-    this.__onResize = this.__onResize.bind(this);
-    this.__onMouseLeave = this.__onMouseLeave.bind(this);
-    this.__updateMap = this.__updateMap.bind(this);
-    this.__canvasFunction = this.__canvasFunction.bind(this);
+    this.__onResize = this.__onResize.bind(this)
+    this.__onMouseLeave = this.__onMouseLeave.bind(this)
+    this.__updateMap = this.__updateMap.bind(this)
+    this.__canvasFunction = this.__canvasFunction.bind(this)
 
     this.__vectorSource = new VectorSource({})
 
@@ -431,7 +431,7 @@ export class Map extends React.Component<Props> {
       ratio: 1
     })
     this.imageLayer = new Image({ source: this.imageCanvas })
-    this.map.getLayers().insertAt(1, this.imageLayer);
+    this.map.getLayers().insertAt(1, this.imageLayer)
 
     const dispatch = this.props.dispatch
     this.map.on('moveend', function (event: MapEvent) {
@@ -486,7 +486,7 @@ export class Map extends React.Component<Props> {
     size: Size,
     _projection: Projection
   ): HTMLCanvasElement {
-    const startRender = new Date().getTime();
+    const startRender = new Date().getTime()
 
     this.canvas = document.createElement('canvas')
     this.canvas.width = Math.floor(size[0])
@@ -593,7 +593,7 @@ export class Map extends React.Component<Props> {
         const color = resolveColor(value)
 
         if (color != NOT_SCANNED_COLOR) {
-          const redIndex = (y * itemsInARow) + (x * 4);
+          const redIndex = (y * itemsInARow) + (x * 4)
           iData[redIndex] = color[0]
           iData[redIndex + 1] = color[1]
           iData[redIndex + 2] = color[2]
@@ -605,11 +605,11 @@ export class Map extends React.Component<Props> {
         }
       }
     }
-    ctx.putImageData(imageData, 0, 0);
+    ctx.putImageData(imageData, 0, 0)
 
     this.__renderedProducts.set(cacheKey, this.canvas)
 
-    const elapsedMs = new Date().getTime() - startRender;
+    const elapsedMs = new Date().getTime() - startRender
     const pixelCount = this.canvas.width * this.canvas.height
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 

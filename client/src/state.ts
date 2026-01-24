@@ -276,7 +276,7 @@ const productSelectedReducer = (state: State, action: Extract<Action, { type: 'p
   ]
 
   if (product == undefined) {
-    [productId, product] = selectProduct(state.selection.productId, state.selection.site);
+    [productId, product] = selectProduct(state.selection.productId, state.selection.site)
   }
 
   return pipe(
@@ -296,7 +296,7 @@ const flavorSelectedReducer = (state: State, action: Extract<Action, { type: 'fl
   ]
 
   if (flavor == undefined) {
-    [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product);
+    [flavorId, flavor] = selectFlavor(state.selection.flavorId, state.selection.product)
   }
 
   return pipe(
@@ -443,7 +443,7 @@ const tickClickedReducer = (state: State, action: Extract<Action, { type: 'tick 
 
 function forwardBackwardReducer(state: State, forward: boolean): State {
   const times = state.selection.flavor.times
-  let previousIndex = null;
+  let previousIndex = null
 
   if (forward) {
     for (let i=times.length-1; i>-1; i--) {

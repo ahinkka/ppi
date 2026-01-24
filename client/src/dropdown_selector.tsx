@@ -42,7 +42,7 @@ const DropdownSelector = <T extends StringPayloadAction['type']>(
       payload: e.target.value
     } as Extract<StringPayloadAction, { type: T }>)
 
-  const selectTitle = 'Select ' + props.legend.toLowerCase();
+  const selectTitle = 'Select ' + props.legend.toLowerCase()
   return (
     <div className="dropdown-selector">
       <OverlayTrigger placement="bottom" overlay={tooltip}>

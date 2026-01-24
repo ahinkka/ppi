@@ -30,7 +30,7 @@ function SolidColorRange(props: SolidColorRangeProps) {
 
 
 const MemoizedColorScale = React.memo(function ColorScale(props: ColorScaleProps) {
-  const nodeRef = React.useRef<HTMLDivElement>(null);
+  const nodeRef = React.useRef<HTMLDivElement>(null)
   // -type: ScaleRangeType.STEP
   // -color [r,g,b]
   // -start
@@ -44,7 +44,7 @@ const MemoizedColorScale = React.memo(function ColorScale(props: ColorScaleProps
   tmp.reverse()
   const ranges = tmp.map(function(item) {
     if (item.type !== ScaleRangeType.STEP) {
-      throw new Error('Unhandled step type: ' + item.type);
+      throw new Error('Unhandled step type: ' + item.type)
     }
 
     return (

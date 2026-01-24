@@ -86,7 +86,7 @@ const loadOneProduct = (
   const currentlyLoaded = new Set(Object.keys(loadedProducts))
   for (const url of currentlyLoaded) {
     if (!intendedUrls.includes(url)) {
-      delete loadedProducts[url];
+      delete loadedProducts[url]
       removedUrls.add(url)
     }
   }

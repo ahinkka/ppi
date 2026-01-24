@@ -1,7 +1,7 @@
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import reactPlugin from 'eslint-plugin-react';
-import globals from 'globals';
+import eslint from '@eslint/js'
+import tseslint from 'typescript-eslint'
+import reactPlugin from 'eslint-plugin-react'
+import globals from 'globals'
 
 export default tseslint.config(
   {
@@ -37,6 +37,7 @@ export default tseslint.config(
       'indent': ['error', 2, { 'SwitchCase': 1 }],
       'linebreak-style': ['error', 'unix'],
       'quotes': ['error', 'single'],
+      'semi': ['warn', 'never'],
       'no-console': ['error', { allow: ['warn', 'error'] }],
       'max-len': ['warn', {
         code: 98,
@@ -77,4 +78,4 @@ export default tseslint.config(
     files: ['**/*.js', '**/*.jsx'],
     extends: [tseslint.configs.disableTypeChecked],
   }
-);
+)

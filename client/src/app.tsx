@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import moment from 'moment';
+import moment from 'moment'
 import { connect } from 'react-redux'
 
 import { Action } from './action'
@@ -77,7 +77,7 @@ const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement
   const title = 'Current displayed product time is ' + display
   return (
     <div title={title} className="h5" id="product-time">{display}</div>
-  );
+  )
 }
 
 
@@ -96,7 +96,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
   private _onKeyDown?: (event: KeyboardEvent) => void
 
   constructor(props: ObserverAppProps) {
-    super(props);
+    super(props)
   }
 
   componentDidMount() {

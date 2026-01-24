@@ -2,7 +2,7 @@ const serializeHash = (contents: { [key: string]: string | number | boolean }) =
   const keys = Object.keys(contents)
   keys.sort()
   let result = '#'
-  let first = true;
+  let first = true
   for (const key of keys) {
     const value = contents[key]
     if (first) {
