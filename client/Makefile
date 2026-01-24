@@ -94,7 +94,7 @@ bundle-and-serve-dev: dirs
 	    --servedir=build
 
 .PHONY: watch
-watch: $(html_files) styles ## Build and watch everything continously
+watch: $(html_files) styles ## Build and watch everything continuously
 	bash watch.bash
 
 
@@ -107,7 +107,7 @@ lint: ## Run TS typecheck and ESLint
 	./node_modules/.bin/eslint src
 
 .PHONY: lint-watch
-lint-watch: ## Run typechecker and ESLint continously
+lint-watch: ## Run typechecker and ESLint continuously
 	find src -type f | entr make lint
 
 .PHONY: fix-lint
