@@ -14,11 +14,11 @@ products on an interactive map using OpenLayers.
 - **Redux 5.x** + React Redux 9.x - State management
 
 ### Key Libraries
-- **OpenLayers 6.x** - Interactive mapping
+- **OpenLayers 10.x** - Interactive mapping
 - **proj4 2.x** - Coordinate projections
 - **fp-ts 2.x** - Functional programming utilities
 - **optics-ts 2.x** - Lens-based state manipulation
-- **Bootstrap 4.x** + React Bootstrap 1.x - UI components
+- **Bootstrap 5.x** + React Bootstrap 2.x - UI components
 - **pako 2.x** - GZIP compression for radar data
 - **moment 2.x** - Date/time handling
 

@@ -22,7 +22,10 @@ import FillStyle from 'ol/style/Fill'
 import StrokeStyle from 'ol/style/Stroke'
 import Style from 'ol/style/Style'
 import { Coordinate } from 'ol/coordinate'
-import Geometry from 'ol/geom/Geometry'
+import Point from 'ol/geom/Point'
+import { Size } from 'ol/size'
+import Projection from 'ol/proj/Projection'
+import { FeatureLike } from 'ol/Feature'
 
 import { fromLonLat, toLonLat } from 'ol/proj'
 import { getDistance } from 'ol/sphere'
@@ -145,19 +148,16 @@ function resolveNearestCityAndTown(
     (feature: Feature) => feature.get('osmPlace') === 'city'
   )
   const nearestCityLonLat =
-    // @ts-expect-error OL is hard to type
-    toLonLat(nearestCity.getGeometry().getCoordinates()) as [number, number] // eslint-disable-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
+    toLonLat((nearestCity.getGeometry() as Point).getCoordinates()) as [number, number]
   const distanceToNearestCity = Math.round(getDistance(nearestCityLonLat, coordsLonLat) / 1000)
   const bearingToNearestCity = bearingBetweenCoordinates(coordsLonLat, nearestCityLonLat)
 
   const nearestTown: Feature = vectorSource.getClosestFeatureToCoordinate(
     coords,
-    // @ts-expect-error OL is hard to type
-    (feature: Feature<never>) => feature.get('osmPlace') === 'town'
+    (feature: Feature) => feature.get('osmPlace') === 'town'
   )
   const nearestTownLonLat =
-    // @ts-expect-error OL is hard to type
-    toLonLat(nearestTown.getGeometry().getCoordinates()) as [number, number] // eslint-disable-line @typescript-eslint/no-unsafe-argument,@typescript-eslint/no-unsafe-call
+    toLonLat((nearestTown.getGeometry() as Point).getCoordinates()) as [number, number]
   const distanceToNearestTown = Math.round(getDistance(nearestTownLonLat, coordsLonLat) / 1000)
   const bearingToNearestTown = bearingBetweenCoordinates(coordsLonLat, nearestTownLonLat)
 
@@ -173,7 +173,7 @@ function resolveNearestCityAndTown(
 
 const resolveCursorToolContentAndColors = (
   product: LoadedProduct,
-  vectorSource: VectorSource<never>,
+  vectorSource: VectorSource,
   coords: [number, number],
   wgs84ToProductPxFn: (lon: number, lat: number) => [number, number]
 ) => {
@@ -218,7 +218,7 @@ const resolveCursorToolContentAndColors = (
 const updateCursorTool = (
   overlay: Overlay,
   product: LoadedProduct,
-  vectorSource: VectorSource<never>,
+  vectorSource: VectorSource,
   newPosition: Coordinate,
   resolveTemplateAndColors: typeof resolveCursorToolContentAndColors,
   conversionFn: (lon: number, lat: number) => [number, number]
@@ -297,8 +297,8 @@ export class Map extends React.Component<Props> {
   private wgs84ToProductConversionFn: (x: number, y: number) => [number, number] | null = null
   private conversionCacheKey: string = ''
   private cursorToolVisible: boolean = false
-  private __vectorSource: VectorSource<never> | null = null
-  private __vectorLayer: VectorLayer<VectorSource<never>> | null = null
+  private __vectorSource: VectorSource | null = null
+  private __vectorLayer: VectorLayer<VectorSource> | null = null
   private map: OlMap | null = null
   private imageCanvas: ImageCanvas | null = null
   private imageLayer: Image<ImageCanvas> | null = null
@@ -337,8 +337,7 @@ export class Map extends React.Component<Props> {
 
     this.__vectorLayer = new VectorLayer({
       source: this.__vectorSource,
-      // @ts-expect-error OL is hard to type
-      style: (feature: Feature) => {
+      style: (feature: FeatureLike) => {
         const osmPlace = feature.get('osmPlace') as string
         if (osmPlace === 'city') {
           return cityStyle
@@ -414,8 +413,7 @@ export class Map extends React.Component<Props> {
         new TileLayer({
           // https://cartodb.com/basemaps
           source: new OSMSource({
-            url: 'https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png',
-            opaque: false
+            url: 'https://a.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}.png'
           })
         }),
 
@@ -425,7 +423,6 @@ export class Map extends React.Component<Props> {
     })
 
     this.imageCanvas = new ImageCanvas({
-      // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
       canvasFunction: this.__canvasFunction,
       // Ratio of 1 means the underlying canvas size is exactly the size of
       // the viewport. By default the canvas is larger to make panning
@@ -485,14 +482,11 @@ export class Map extends React.Component<Props> {
 
   __canvasFunction(
     extent: OlExtent,
-    // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
-    resolution: never,
-    // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
-    pixelRatio: never,
-    size: [number, number],
-    // @ts-expect-error Should be refactored into a standalone function and have FunctionType from ImageCanvas
-    projection: never // eslint-disable-line @typescript-eslint/no-unused-vars
-  ) {
+    _resolution: number,
+    _pixelRatio: number,
+    size: Size,
+    _projection: Projection
+  ): HTMLCanvasElement {
     const startRender = new Date().getTime();
 
     this.canvas = document.createElement('canvas')
@@ -654,9 +648,9 @@ export class Map extends React.Component<Props> {
       Object.keys(this.props.geoInterests).length > 0 &&
       this.__vectorSource.getFeatures().length == 0
     ) {
-      const features: Feature<Geometry>[] = new GeoJSON({ featureProjection: 'EPSG:3857' })
+      const features = new GeoJSON({ featureProjection: 'EPSG:3857' })
         .readFeatures(this.props.geoInterests)
-      this.__vectorSource.addFeatures(features as Feature<never>[])
+      this.__vectorSource.addFeatures(features)
     }
 
     if (this.__previousProduct != this.props.product) {
