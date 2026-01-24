@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import moment from 'moment'
+import { format as formatDate } from 'date-fns'
 import { connect } from 'react-redux'
 
 import { Action } from './action'
@@ -73,7 +73,7 @@ const handleKeyDown = (dispatch: Dispatch<Action>, event: KeyboardEvent): void =
 
 
 const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement => {
-  const display = moment.utc(props.currentValue).format('YYYY-MM-DD HH:mm:ss') + ' UTC'
+  const display = formatDate(new Date(props.currentValue), 'yyyy-MM-dd HH:mm:ss') + ' UTC'
   const title = 'Current displayed product time is ' + display
   return (
     <div title={title} className="h5" id="product-time">{display}</div>

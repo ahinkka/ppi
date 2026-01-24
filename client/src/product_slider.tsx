@@ -2,7 +2,7 @@ import { Component, WheelEvent, Dispatch } from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
-import moment from 'moment'
+import { format as formatDate, differenceInMinutes } from 'date-fns'
 import { LRUCache } from 'lru-cache'
 
 import { Action } from './action'
@@ -72,11 +72,11 @@ class Tick extends Component<TickProps> {
 }
 
 const _renderTooltip = (time: number) => {
-  const utcTime = moment.utc(time)
-  const minutes = moment.duration(moment(new Date()).diff(utcTime)).asMinutes()
+  const utcTime = new Date(time)
+  const minutes = differenceInMinutes(new Date(), utcTime)
   const displayHours = Math.floor(minutes / 60)
   const displayMinutes = Math.floor(minutes - displayHours * 60)
-  return utcTime.format('YYYY-MM-DD HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
+  return formatDate(utcTime, 'yyyy-MM-dd HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
 }
 
 const _renderTooltipCache = new LRUCache<number, string>({

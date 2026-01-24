@@ -20,7 +20,7 @@ products on an interactive map using OpenLayers.
 - **optics-ts 2.x** - Lens-based state manipulation
 - **Bootstrap 5.x** + React Bootstrap 2.x - UI components
 - **pako 2.x** - GZIP compression for radar data
-- **moment 2.x** - Date/time handling
+- **date-fns 3.x** - Date/time handling and formatting
 
 ### Build Tools
 - **esbuild 0.27.x** - Fast bundler

@@ -1,11 +1,11 @@
-import moment from 'moment'
+import { parseISO, addMinutes } from 'date-fns'
 import { orderForLoading, evenIndexed, everyFourthIndexed } from '../src/product_time_loading_order'
 
 describe('Should order more recent products first', () => {
-  const startTime = moment.utc('2019-04-19T00:00:00+00:00')
+  const startTime = parseISO('2019-04-19T00:00:00+00:00')
   const times = Array.from({ length: 24 * 4 }, (_, i) =>
-    startTime.clone().add(moment.duration(i * 15, 'minutes'))
-  ).map(m => m.valueOf())
+    addMinutes(startTime, i * 15)
+  ).map(d => d.valueOf())
   const sorted = orderForLoading(times)
 
   const threeHourProductCount = 3 * 4 + 1
