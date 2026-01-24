@@ -5,7 +5,7 @@ import { batch, connect } from 'react-redux'
 import { UrlState, makeHashFromState, parseHash } from './state_hash'
 import { State } from './state'
 import { Catalog } from './catalog'
-import { ActionType, ObserverDispatch } from './constants'
+import { Action, ObserverDispatch } from './constants'
 
 
 type Props = UrlState & {
@@ -14,7 +14,7 @@ type Props = UrlState & {
 }
 
 class UrlStateAdapter extends Component<Props> {
-  private updates: { type: ActionType, payload?: unknown }[] | null
+  private updates: Action[] | null
 
   constructor(props: Readonly<Props> | Props) {
     super(props)

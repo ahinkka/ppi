@@ -2,7 +2,7 @@ import React from 'react'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
-import { ActionType, ObserverDispatch } from './constants'
+import { StringPayloadAction, ObserverDispatch } from './constants'
 
 
 type DropdownSelectorOptionProps = {
@@ -13,18 +13,20 @@ type DropdownSelectorOptionProps = {
 const DropdownSelectorOption = (props: DropdownSelectorOptionProps) =>
   (<option key={props.id} value={props.id}>{props.display}</option>)
 
-type DropdownSelectorProps = {
+type DropdownSelectorProps<T extends StringPayloadAction['type']> = {
   items: DropdownSelectorOptionProps[]
   tooltipId: string,
   tooltip: string,
   legend: string
   currentValue: string,
   disabled: boolean,
-  action: ActionType,
+  action: T,
   dispatch: ObserverDispatch
 }
 
-const DropdownSelector = (props: DropdownSelectorProps) => {
+const DropdownSelector = <T extends StringPayloadAction['type']>(
+  props: DropdownSelectorProps<T>
+) => {
   const options = props.items.map(
     (item) => (<DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>)
   )
@@ -35,7 +37,10 @@ const DropdownSelector = (props: DropdownSelectorProps) => {
   )
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
-    props.dispatch({ type: props.action, payload: e.target.value })
+    props.dispatch({
+      type: props.action,
+      payload: e.target.value
+    } as Extract<StringPayloadAction, { type: T }>)
 
   const selectTitle = 'Select ' + props.legend.toLowerCase();
   return (

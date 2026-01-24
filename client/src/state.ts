@@ -1,7 +1,7 @@
 import { pipe } from 'fp-ts/function'
 import * as O from 'optics-ts'
 
-import { ActionType } from './constants'
+import { Action } from './constants'
 import { Catalog, CatalogProduct, Flavor, RadarProducts, Site } from './catalog'
 
 export type State = {
@@ -37,8 +37,6 @@ export type State = {
   loadedProducts: { [key: string]: null | undefined },
   geoInterests: unknown
 }
-
-export type Action = { type: ActionType, payload?: unknown }
 
 // Lenses into state
 const catalogL = O.optic_<State>().prop('catalog')
@@ -234,18 +232,18 @@ const reduceIntendedInitialMapCenter = (state: State) => {
 }
 
 
-export const catalogUpdatedReducer = (state: State, action: Action) =>
+export const catalogUpdatedReducer = (state: State, action: Extract<Action, { type: 'catalog updated' }>) =>
   pipe(
     state,
-    O.set(catalogL)(action.payload as Catalog),
+    O.set(catalogL)(action.payload),
     reduceValidSelection,
     reduceValidAnimationTime,
     reduceIntendedInitialMapCenter
   )
 
 
-const siteSelectedReducer = (state: State, action: Action) => {
-  const siteIdFromPayload = action.payload as string
+const siteSelectedReducer = (state: State, action: Extract<Action, { type: 'site selected' }>) => {
+  const siteIdFromPayload = action.payload
   let [siteId, site]: [string | null, Site | null] = [
     siteIdFromPayload,
     O.get(radarProductsL)(state)[siteIdFromPayload]
@@ -274,10 +272,10 @@ const siteSelectedReducer = (state: State, action: Action) => {
 }
 
 
-const productSelectedReducer = (state: State, action: Action) => {
+const productSelectedReducer = (state: State, action: Extract<Action, { type: 'product selected' }>) => {
   let [productId, product]: [string, CatalogProduct] = [
-    action.payload as string,
-    (O.get(selectedSiteL.prop('products'))(state) ?? {})[action.payload as string]
+    action.payload,
+    (O.get(selectedSiteL.prop('products'))(state) ?? {})[action.payload]
   ]
 
   if (product == undefined) {
@@ -294,10 +292,10 @@ const productSelectedReducer = (state: State, action: Action) => {
 }
 
 
-const flavorSelectedReducer = (state: State, action: Action) => {
+const flavorSelectedReducer = (state: State, action: Extract<Action, { type: 'flavor selected' }>) => {
   let [flavorId, flavor]: [string, Flavor] = [
-    action.payload as string,
-    (O.get(selectedProductL.prop('flavors'))(state) ?? {})[action.payload as string]
+    action.payload,
+    (O.get(selectedProductL.prop('flavors'))(state) ?? {})[action.payload]
   ]
 
   if (flavor == undefined) {
@@ -314,8 +312,8 @@ const flavorSelectedReducer = (state: State, action: Action) => {
 }
 
 
-const mapCenterChangedReducer = (state: State, action: Action) => {
-  const { lon: centerLon, lat: centerLat } = (action.payload as { lon: number, lat: number })
+const mapCenterChangedReducer = (state: State, action: Extract<Action, { type: 'map center changed' }>) => {
+  const { lon: centerLon, lat: centerLat } = action.payload
   return {
     ...state,
     map: {
@@ -326,8 +324,8 @@ const mapCenterChangedReducer = (state: State, action: Action) => {
 }
 
 
-const mapMovedReducer = (state: State, action: Action) => {
-  const { lon: centerLon, lat: centerLat } = (action.payload as { lon: number, lat: number })
+const mapMovedReducer = (state: State, action: Extract<Action, { type: 'map moved' }>) => {
+  const { lon: centerLon, lat: centerLat } = action.payload
   return {
     ...state,
     map: {
@@ -353,8 +351,10 @@ function makeCurrentSiteIntendedReducer(state: State): State {
 }
 
 
-const pointerLocationReducer = (state: State, newLocation: unknown): State =>
-  O.set(currentPointerLocationL)(newLocation as State['map']['current']['pointerLocation'])(state)
+const pointerLocationReducer = (state: State, newLocation: unknown): State => {
+  // TODO: Type mismatch - payload is number[] but State.map.current.pointerLocation expects {x: number, y: number}. Needs manual verification and fix.
+  return O.set(currentPointerLocationL)(newLocation as State['map']['current']['pointerLocation'])(state)
+}
 
 
 function cycleSiteReducer(state: State): State {
@@ -435,10 +435,10 @@ function reduceStayOnLastTime(state: State): State {
 }
 
 
-const tickClickedReducer = (state: State, action: Action): State =>
+const tickClickedReducer = (state: State, action: Extract<Action, { type: 'tick clicked' }>): State =>
   pipe(
     state,
-    O.set(currentProductTimeL)(action.payload as number),
+    O.set(currentProductTimeL)(action.payload),
     reduceStayOnLastTime
   )
 
@@ -492,15 +492,15 @@ const toggleAnimationReducer = (state: State): State =>
   )
 
 
-function productLoadUpdateReducer(state: State, action: Action): State {
+function productLoadUpdateReducer(state: State, action: Extract<Action, { type: 'product load update' }>): State {
   // TODO: implement properly to handle removes
   const loadedProducts = { ...state.loadedProducts }
 
-  for (const url of (action.payload as { loaded: string[] }).loaded) {
+  for (const url of action.payload.loaded) {
     loadedProducts[url] = null
   }
 
-  for (const url of (action.payload as { unloaded: string[] }).unloaded) {
+  for (const url of action.payload.unloaded) {
     delete loadedProducts[url]
   }
 
@@ -545,11 +545,11 @@ export function reducer(state: State, action: Action): State {
       }
     }
   } else if (action.type === 'catalog updated') {
-    return catalogUpdatedReducer(state, action);
+    return catalogUpdatedReducer(state, action as Extract<Action, { type: 'catalog updated' }>);
   } else if (action.type === 'geointerests updated') {
     return O.set(geoInterestsL)(action.payload)(state)
   } else if (action.type === 'site selected') {
-    return siteSelectedReducer(state, action);
+    return siteSelectedReducer(state, action as Extract<Action, { type: 'site selected' }>);
   } else if (action.type === 'cycle site') {
     return cycleSiteReducer(state);
   } else if (action.type === 'cycle product') {
@@ -557,13 +557,13 @@ export function reducer(state: State, action: Action): State {
   } else if (action.type === 'cycle flavor') {
     return cycleFlavorReducer(state);
   } else if (action.type === 'product selected') {
-    return productSelectedReducer(state, action);
+    return productSelectedReducer(state, action as Extract<Action, { type: 'product selected' }>);
   } else if (action.type === 'flavor selected') {
-    return flavorSelectedReducer(state, action);
+    return flavorSelectedReducer(state, action as Extract<Action, { type: 'flavor selected' }>);
   } else if (action.type === 'map center changed') {
-    return mapCenterChangedReducer(state, action)
+    return mapCenterChangedReducer(state, action as Extract<Action, { type: 'map center changed' }>)
   } else if (action.type === 'map moved') {
-    return mapMovedReducer(state, action)
+    return mapMovedReducer(state, action as Extract<Action, { type: 'map moved' }>)
   } else if (action.type === 'make current site intended') {
     return makeCurrentSiteIntendedReducer(state)
   } else if (action.type === 'pointer moved') {
@@ -573,7 +573,7 @@ export function reducer(state: State, action: Action): State {
   } else if (action.type === 'animation tick') {
     return animationTickReducer(state);
   } else if (action.type === 'tick clicked') {
-    return tickClickedReducer(state, action);
+    return tickClickedReducer(state, action as Extract<Action, { type: 'tick clicked' }>);
   } else if (action.type === 'tick forward') {
     return tickForwardReducer(state);
   } else if (action.type === 'tick backward') {
@@ -581,7 +581,7 @@ export function reducer(state: State, action: Action): State {
   } else if (action.type === 'toggle animation') {
     return toggleAnimationReducer(state)
   } else if (action.type === 'product load update') {
-    return productLoadUpdateReducer(state, action);
+    return productLoadUpdateReducer(state, action as Extract<Action, { type: 'product load update' }>);
   } else {
     console.error(state)
     throw Error(`no reducer match: ${action}`)

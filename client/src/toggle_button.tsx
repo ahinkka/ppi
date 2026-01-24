@@ -1,26 +1,30 @@
 import {OverlayTrigger, Tooltip} from 'react-bootstrap'
-import { ActionType, ObserverDispatch } from './constants'
+import { NoPayloadAction, ObserverDispatch } from './constants'
 
-type Props = {
+type Props<T extends NoPayloadAction['type']> = {
   tooltip: string,
   onSymbol: string,
   offSymbol: string,
   toggleStatus: boolean,
-  action: ActionType,
+  action: T,
   dispatch: ObserverDispatch
 }
 
-export function ToggleButton(props: Props) {
+export function ToggleButton<T extends NoPayloadAction['type']>(props: Props<T>) {
   const tooltip = (
     <Tooltip id="pause-tooltip">{props.tooltip}</Tooltip>
   )
+
+  const handleClick = () => {
+    props.dispatch({ type: props.action } as Extract<NoPayloadAction, { type: T }>)
+  }
 
   if (props.toggleStatus == false) {
     return (
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <button type="button" className="btn btn-primary"
           data-bs-toggle="button" aria-pressed="false"
-          onClick={() => props.dispatch({type: props.action})}>{props.offSymbol}
+          onClick={handleClick}>{props.offSymbol}
         </button>
       </OverlayTrigger>
     )
@@ -29,7 +33,7 @@ export function ToggleButton(props: Props) {
       <OverlayTrigger placement="bottom" overlay={tooltip}>
         <button type="button" className="btn btn-primary active"
           data-bs-toggle="button" aria-pressed="true"
-          onClick={() => props.dispatch({type: props.action})}>{props.onSymbol}
+          onClick={handleClick}>{props.onSymbol}
         </button>
       </OverlayTrigger>
     )

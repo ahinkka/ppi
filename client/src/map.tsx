@@ -468,6 +468,7 @@ export class Map extends React.Component<Props> {
       )
       this.cursorToolVisible = true
 
+      // TODO: Type mismatch - State expects {x, y} but we're sending number[] from OpenLayers Coordinate
       dispatch({ type: 'pointer moved', payload: evt.coordinate })
       // const pixel = this.map.getEventPixel(evt.originalEvent)
       // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
