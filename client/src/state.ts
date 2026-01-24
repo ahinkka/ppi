@@ -40,9 +40,6 @@ export type State = {
 
 export type Action = { type: ObserverActions, payload?: unknown }
 
-// @ts-expect-error TODO replace usage with pipe later
-const compose = (...fns) => (x) => fns.reduceRight((acc, fn) => fn(acc), x)
-
 // Lenses into state
 const catalogL = O.optic_<State>().prop('catalog')
 const radarProductsL = catalogL.prop('radarProducts')
@@ -182,30 +179,33 @@ export const selectFlavorTime = (
 
 const reduceValidSelection = (state: State) => {
   const [siteId, site] = selectSite(O.get(selectedSiteIdL)(state), O.get(radarProductsL)(state))
-  const withValidSite = compose(
-    O.set(selectedSiteIdL)(siteId),
-    O.set(selectedSiteL)(site)
-  )(state)
+  const withValidSite = pipe(
+    state,
+    O.set(selectedSiteL)(site),
+    O.set(selectedSiteIdL)(siteId)
+  )
 
   const [productId, product] = selectProduct(
     O.get(selectedProductIdL)(withValidSite),
     O.get(selectedSiteL)(withValidSite)
   )
-  const withValidProduct = compose(
-    O.set(selectedProductIdL)(productId),
-    O.set(selectedProductL)(product)
-  )(withValidSite)
+  const withValidProduct = pipe(
+    withValidSite,
+    O.set(selectedProductL)(product),
+    O.set(selectedProductIdL)(productId)
+  )
 
   const [flavorId, flavor] = selectFlavor(
     O.get(selectedFlavorIdL)(withValidProduct),
     O.get(selectedProductL)(withValidProduct)
   )
 
-  return compose(
-    O.set(selectedFlavorIdL)(flavorId),
-    O.set(selectedFlavorL)(flavor),
+  return pipe(
+    withValidProduct,
     reduceStayOnLastTime,
-  )(withValidProduct)
+    O.set(selectedFlavorL)(flavor),
+    O.set(selectedFlavorIdL)(flavorId)
+  )
 }
 
 
@@ -242,13 +242,17 @@ export const catalogUpdatedReducer = (state: State, action: Action) =>
 
 
 const siteSelectedReducer = (state: State, action: Action) => {
-  let [siteId, site] = [action.payload, O.get(radarProductsL)(state)[action.payload as string]]
+  const siteIdFromPayload = action.payload as string
+  let [siteId, site]: [string | null, Site | null] = [
+    siteIdFromPayload,
+    O.get(radarProductsL)(state)[siteIdFromPayload]
+  ]
   if (site == undefined) {
     [siteId, site] = selectSite(state.selection.siteId, O.get(radarProductsL)(state))
   }
   const siteChanged = state.selection.siteId != siteId
 
-  const withSiteSet = compose(O.set(selectedSiteIdL)(siteId), O.set(selectedSiteL)(site))(state)
+  const withSiteSet = pipe(state, O.set(selectedSiteL)(site), O.set(selectedSiteIdL)(siteId))
 
   if (siteChanged) {
     return pipe(
@@ -361,13 +365,14 @@ function cycleSiteReducer(state: State): State {
   const newSite = O.get(radarProductsL)(state)[options[newIndex]]
   const siteChanged = state.selection.siteId != newSiteId
 
-  state = compose(O.set(selectedSiteIdL)(newSiteId), O.set(selectedSiteL)(newSite))(state)
-
-  if (siteChanged) {
-    state = makeCurrentSiteIntendedReducer(state)
-  }
-
-  return reduceValidAnimationTime(reduceValidSelection(state))
+  return pipe(
+    state,
+    O.set(selectedSiteL)(newSite),
+    O.set(selectedSiteIdL)(newSiteId),
+    siteChanged ? makeCurrentSiteIntendedReducer : (s) => s,
+    reduceValidSelection,
+    reduceValidAnimationTime
+  )
 }
 
 
@@ -380,10 +385,11 @@ function cycleProductReducer(state: State): State {
 
   const newProductId = options[newIndex]
   const newProduct = state.selection.site.products[options[newIndex]]
-  state = compose(
-    O.set(selectedProductIdL)(newProductId),
-    O.set(selectedProductL)(newProduct)
-  )(state)
+  state = pipe(
+    state,
+    O.set(selectedProductL)(newProduct),
+    O.set(selectedProductIdL)(newProductId)
+  )
 
   return reduceValidAnimationTime(reduceValidSelection(state))
 }
@@ -398,7 +404,7 @@ function cycleFlavorReducer(state: State): State {
 
   const newFlavorId = options[newIndex]
   const newFlavor = state.selection.product.flavors[options[newIndex]]
-  state = compose(O.set(selectedFlavorIdL)(newFlavorId), O.set(selectedFlavorL)(newFlavor))(state)
+  state = pipe(state, O.set(selectedFlavorL)(newFlavor), O.set(selectedFlavorIdL)(newFlavorId))
 
   return reduceValidAnimationTime(state)
 }
