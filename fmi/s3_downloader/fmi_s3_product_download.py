@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import traceback
+import dataclasses
 
 from os import getcwd, unlink, makedirs
 from os.path import join as path_join
@@ -22,6 +23,7 @@ import dateutil.parser
 SITE_NAMES = {
     'fianj': 'Anjalankoski',
     'fikan': 'Kankaanpää',
+    'fikau': 'Inari Kaunispää',
     'fikes': 'Kesälahti',
     'fikor': 'Korpo',
     'fikuo': 'Kuopio',
@@ -32,7 +34,8 @@ SITE_NAMES = {
     'fivan': 'Vantaa',
     'fivih': 'Vihti',
     'fivim': 'Vimpeli',
-    'finrad': 'Finland composite radar'
+    'finrad': 'Finland composite',
+    'finradfast': 'Finland composite'
 }
 DEFAULT_SITES = sorted(SITE_NAMES.keys())
 
@@ -48,132 +51,178 @@ output-directory = %s
 """ % (", ".join(DEFAULT_SITES), 1000, os.getcwd())
 
 
-class Product(object):
-    def __init__(self, site, product, time, key, height=None, elevation=None,
-                 linear_transformation_gain=None, linear_transformation_offset=None):
-        self.site = site
-        self.product = product
-        self.time = time
-        self.key = key
-        self.height = height
-        self.elevation = elevation
-        self.linear_transformation_gain = linear_transformation_gain
-        self.linear_transformation_offset = linear_transformation_offset
+@dataclasses.dataclass
+class DataScale:
+    linear_transformation_gain: float
+    linear_transformation_offset: float
 
-    def file_name(self):
-        if self.elevation:
-            return u"{0}--{1}--{2}--{3}".format(self.site, self.product, self.elevation, self.time)
-        elif self.height:
-            return u"{0}--{1}--{2}--{3}".format(self.site, self.product, self.height, self.time)
-        else:
-            return u"{0}--{1}--{2}".format(self.site, self.product, self.time)
 
-    def metadata(self):
-        result = {
-            'site': self.site,
-            'product': self.product,
-            'time': self.time,
-            'linear_transformation_gain': self.linear_transformation_gain,
-            'linear_transformation_offset': self.linear_transformation_offset
+# https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
+# radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
+_dbzh_datascale = DataScale(
+    linear_transformation_gain=0.5,
+    linear_transformation_offset=-32
+)
+
+
+@dataclasses.dataclass
+class Product:
+    """Parsed radar product structure for radar radar product files in S3.
+
+    Given product names like:
+    202601240000_fikau_cappi_600_dbzh_qc.tif
+    202601240000_fikau_ppi_0.3_dbzh_qc.tif
+    202601240000_fikau_ppi_0.7_dbzh_qc.tif
+    202601240000_fikau_ppi_0.3_hclass_qc.tif
+    202601240000_fikau_ppi_0.3_vrad_qc.tif
+    202601240000_fikau_etop_-10_dbzh_qc.tif
+    202601240000_fikau_etop_20_dbzh_qc.tif
+    202601240000_fikau_etop_45_dbzh_qc.tif
+    202601240000_fikau_etop_50_dbzh_qc.tif
+    202601240000_composite_cappi_600_dbzh_finrad_qc.tif
+    202601240000_composite_cappi_600_acrr1h_finradfast_qc.tif
+    202601240000_composite_cappi_600_acrr3h_finradfast_qc.tif
+    202601240000_composite_cappi_600_acrr6h_finradfast_qc.tif
+    202601240000_composite_cappi_600_acrr12h_finradfast_qc.tif
+    202601240000_composite_cappi_600_acrr24h_finradfast_qc.tif
+
+    See docs at https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3 and
+    view file listings at e.g. http://fmi-opendata-radar-geotiff.s3-website-eu-west-1.amazonaws.com/?prefix=2026/01/24/.
+    """
+    timestamp: dt
+    filename: str
+    site: str             # fikau / finrad / finradfast
+    product_type: str     # PPI dbZh / CAPPI dbZh / PPI hclass / ETOP dbZh / ACRR mm
+    product_subtype: str  # EL 0.3°, EL 0.7° / H 600 m / THR 20, THR 40 / 1h, 3h
+    data_type: str        # Z / hclass / rr
+    data_unit: str        # dbZ / hclass / mm
+    height: float         # CAPPI height
+    elevation: float      # PPI sweep elevation
+    data_scale: DataScale # How integer numbers are translated into actual values.
+    composite: bool       # Is this a composite product, i.e. not a single radar.
+
+    @staticmethod
+    def _normalize_data_type(raw_datatype: str) -> str:
+        """Convert raw datatype string to normalized data_type.
+        Examples: 'dbzh' -> 'Z', 'hclass' -> 'hclass', 'vrad' -> 'V', 'acrr' -> 'rr'
+        """
+        mapping = {
+            'dbzh': 'Z',
+            'hclass': 'hclass',
+            'vrad': 'V',
+            'acrr': 'rr'
         }
+        return mapping.get(raw_datatype, raw_datatype)
 
-        if self.elevation:
-            result['elevation'] = self.elevation
-        elif self.height:
-            result['height'] = self.height
+    @staticmethod
+    def _resolve_data_unit(data_type: str) -> str:
+        """Get data unit from normalized data_type.
+        Examples: 'Z' -> 'dbZ', 'hclass' -> 'hclass', 'V' -> 'm/s', 'rr' -> 'mm'
+        """
+        mapping = {
+            'Z': 'dbZ',
+            'hclass': 'hclass',
+            'V': 'm/s',
+            'rr': 'mm'
+        }
+        return mapping.get(data_type, data_type)
 
+    @staticmethod
+    def from_filename(filename):
+        filename_without_extension = '.'.join(filename.split('.')[:-1])
+        parts = filename_without_extension.split('_')
+
+        timestamp_part = parts[0]
+        parsed_dt = dt.strptime(timestamp_part, '%Y%m%d%H%M')
+        if not parsed_dt.tzinfo:
+            parsed_dt = parsed_dt.replace(tzinfo=timezone.utc)
+
+        # Initialize all optional fields to None
+        data_type = None
+        data_unit = None
+        height = None
+        elevation = None
+        data_scale = None
+        composite = None
+
+        if 'composite' in filename:
+            site = parts[5]
+            composite = True
+
+            if 'composite_cappi' in filename and 'acrr' in filename:
+                # 202601240000_composite_cappi_600_acrr1h_finradfast_qc.tif
+                datatype_part = parts[4]
+                duration = datatype_part.replace('acrr', '')
+                product_type = "ACRR mm"
+                product_subtype = duration
+                height = float(parts[3])
+                data_type = 'rr'
+                data_unit = 'mm'
+            elif 'composite_cappi' in filename and 'dbzh' in filename:
+                # 202601240000_composite_cappi_600_dbzh_finrad_qc.tif
+                height = float(parts[3])
+                product_type = "CAPPI dbZh"
+                product_subtype = f"H {int(height)} m"
+                data_type = 'Z'
+                data_unit = 'dbZ'
+            else:
+                raise ValueError(f"Unhandled composite product filename: {filename=}")
+        else:
+            site = parts[1]
+            product = parts[2]
+            value = parts[3]
+            datatype = parts[4]
+            composite = False
+
+            if product == "ppi":
+                # 202601240000_fikau_ppi_0.3_dbzh_qc.tif
+                product_type = f"PPI {datatype.replace('dbzh', 'dbZh')}"
+                product_subtype = f"EL {value}°"
+                elevation = float(value)
+                data_type = Product._normalize_data_type(datatype)
+                data_unit = Product._resolve_data_unit(data_type)
+            elif product == "cappi":
+                # 202601240000_fikau_cappi_600_dbzh_qc.tif
+                height = float(value)
+                product_type = f"CAPPI {datatype.replace('dbzh', 'dbZh')}"
+                product_subtype = f"H {int(height)} m"
+                data_type = Product._normalize_data_type(datatype)
+                data_unit = Product._resolve_data_unit(data_type)
+            elif product == "etop":
+                # 202601240000_fikau_etop_-10_dbzh_qc.tif
+                product_type = f"ETOP"
+                product_subtype = f"THR {value}"
+                data_type = "height"
+                data_unit = "km"
+            else:
+                raise ValueError(f"Unhandled non-composite product filename: {filename=}")
+
+        if data_unit == 'dbZ':
+            data_scale = _dbzh_datascale
+
+        return Product(
+            timestamp=parsed_dt,
+            filename=filename,
+            site=site,
+            product_type=product_type,
+            product_subtype=product_subtype,
+            data_type=data_type,
+            data_unit=data_unit,
+            height=height,
+            elevation=elevation,
+            data_scale=data_scale,
+            composite=composite
+        )
+
+    def as_dict(self):
+        result = dataclasses.asdict(self)
+        if self.data_scale is not None:
+            result['data_scale'] = dataclasses.asdict(self.data_scale)
+        del result['filename']
         return result
 
-
-def parse_datetime_from_filename(key):
-    filename = key.split('/')[-1]
-    timestamp_part = filename.split('_')[0]
-    parsed = dt.strptime(timestamp_part, '%Y%m%d%H%M')
-
-    if parsed.tzinfo:
-        return parsed
-    else:
-        return parsed.replace(tzinfo=timezone.utc)
-
-
-def fetch_latest_finrad_product(client, site):
-    """Fetch latest finrad composite CAPPI product.
-
-    finrad products have format: {timestamp}_composite_cappi_{height}_{product}_{site}_qc.tif
-    Example: 202601240000_composite_cappi_600_dbzh_finrad_qc.tif
-    """
-    date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
-    product_name = 'dbzh'
-    prefix = f'{date_prefix}/{site}/'
-
-    raw_entries = [
-        o for o in list_objects(client, _product_bucket, prefix)
-        if 'composite_cappi' in o['Key'] and product_name in o['Key']
-    ]
-
-    latest = sorted(
-        raw_entries,
-        key=lambda d: parse_datetime_from_filename(d['Key']),
-        reverse=True
-    )[0]
-
-    # Extract height from filename (e.g., "600" from "composite_cappi_600_dbzh")
-    filename = latest['Key'].split('/')[-1]
-    parts = filename.split('_')
-    cappi_index = parts.index('cappi')
-    height = parts[cappi_index + 1] + 'm'
-
-    # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
-    # radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
-    linear_transformation_gain = 0.5
-    linear_transformation_offset = -32
-    product_time = parse_datetime_from_filename(latest['Key'])
-
-    return Product(site, product_name, product_time, latest['Key'],
-                   height=height,
-                   linear_transformation_gain=linear_transformation_gain,
-                   linear_transformation_offset=linear_transformation_offset)
-
-
-def fetch_latest_cappi_product(client, site, product_name='dbzh'):
-    """Fetch latest CAPPI product for regular radar sites.
-
-    Regular radar CAPPI products have format: {timestamp}_{site}_cappi_{height}_{product}_qc.tif
-    Example: 202601240000_fikau_cappi_600_dbzh_qc.tif
-    """
-    date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
-    prefix = f'{date_prefix}/{site}/'
-
-    raw_entries = [
-        o for o in list_objects(client, _product_bucket, prefix)
-        if f'_{site}_cappi_' in o['Key'] and product_name in o['Key']
-    ]
-
-    if not raw_entries:
-        return None  # No CAPPI products available
-
-    latest = sorted(
-        raw_entries,
-        key=lambda d: parse_datetime_from_filename(d['Key']),
-        reverse=True
-    )[0]
-
-    # Extract height from filename (e.g., "600" from "fikau_cappi_600_dbzh")
-    filename = latest['Key'].split('/')[-1]
-    parts = filename.split('_')
-    cappi_index = parts.index('cappi')
-    height = parts[cappi_index + 1] + 'm'
-
-    linear_transformation_gain = 0.5
-    linear_transformation_offset = -32
-    product_time = parse_datetime_from_filename(latest['Key'])
-
-    return Product(
-        site, product_name, product_time, latest['Key'],
-        height=height,
-        linear_transformation_gain=linear_transformation_gain,
-        linear_transformation_offset=linear_transformation_offset
-    )
+    def extensionless_filename(self):
+        return '.'.join(self.filename.split('.')[:-1])
 
 
 def list_objects(client, bucket, prefix):
@@ -203,69 +252,38 @@ def list_objects(client, bucket, prefix):
     return result
 
 
-def with_datetime_and_product_name(entry):
-    result = dict(entry)
-    result['filename_datetime'] = parse_datetime_from_filename(entry['Key'])
-    filename = entry['Key'].split('/')[-1]
-    filename_without_extension = '.'.join(filename.split('.')[:-1]) # 202501201930_fivih_ppi_0.7_dbzh_qc
-    result['product_name'] = filename_without_extension.split('_')[4]
-    return result
-
-
-def fetch_latest_product(client, site, product_name):
-    date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
-    site_suffix = f'{site}'
-    prefix = f'{date_prefix}/{site_suffix}'
-    raw_entries = list_objects(client, _product_bucket, prefix)
-    entries = [with_datetime_and_product_name(f) for f in raw_entries]
-
-    latest = sorted(
-        [e for e in entries if e['product_name'] == product_name],
-        key=operator.itemgetter('filename_datetime'),
-        reverse=True
-    )[0]
-
-    # Extract elevation from filename (e.g., "0.7" from "202601240000_fikau_ppi_0.3_dbzh_qc.tif")
-    filename = latest['Key'].split('/')[-1]
-    parts = filename.split('_')
-    ppi_index = parts.index('ppi')
-    elevation = parts[ppi_index + 1]
-
-    # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
-    #  radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
-    linear_transformation_gain = 0.5
-    linear_transformation_offset = -32
-    product_time = parse_datetime_from_filename(latest['Key'])
-
-    return Product(
-        site, product_name, product_time, latest['Key'],
-        elevation=elevation,
-        linear_transformation_gain=linear_transformation_gain,
-        linear_transformation_offset=linear_transformation_offset
-    )
-
-
 def fetch_product_list(sites=DEFAULT_SITES):
     client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
     result = []
     for site in sites:
         try:
-            if site == 'finrad':
-                product = fetch_latest_finrad_product(client, site)
-                result.append(product)
-            else:
-                ppi_product = fetch_latest_product(client, site, 'dbzh')
-                if ppi_product:
-                    result.append(ppi_product)
-                else:
-                    print(f'Failed to download PPI product for site {site}, continuing...', file=sys.stderr)
+            date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
+            prefix = f'{date_prefix}/{site}/'
+            raw_entries = list_objects(client, _product_bucket, prefix)
 
-                cappi_product = fetch_latest_cappi_product(client, site, 'dbzh')
-                if cappi_product:
-                    result.append(cappi_product)
-                else:
-                    print(f'Failed to download CAPPI product for site {site}, continuing...', file=sys.stderr)
+            entries_by_filename = { entry['Key'].split('/')[-1]: entry['Key'] for entry in raw_entries }
+            entries = { p: Product.from_filename(p) for p in entries_by_filename.keys() }
+
+            # Let's limit everything first to reflectivity, then make this more generic
+            supported_data_scale = [p for p in entries.values() if p.data_scale is not None]
+
+            # Collect PPIs
+            desired_elevations = sorted(list(set([p.elevation for p in supported_data_scale if p.elevation])))
+            for elevation in desired_elevations:
+                elevation_ppis = [p for p in supported_data_scale if p.elevation == elevation]
+                latest = sorted(elevation_ppis, key=lambda e: e.timestamp, reverse=True)[0]
+                s3_key = entries_by_filename[latest.filename]
+                result.append([s3_key, latest])
+
+            # Collect CAPPIs
+            desired_heights = sorted(list(set([p.height for p in supported_data_scale if p.height])))
+            for height in desired_heights:
+                height_cappis = [p for p in supported_data_scale if p.height == height]
+                latest = sorted(height_cappis, key=lambda e: e.timestamp, reverse=True)[0]
+                s3_key = entries_by_filename[latest.filename]
+                result.append([s3_key, latest])
+
         except Exception as e:
             traceback.print_exc()
             print(f'Failed to resolve latest product for site {site}, continuing...', file=sys.stderr)
@@ -299,58 +317,38 @@ def default(obj):
         raise Exception("Unknown type")
 
 
-def main():
-    from argparse import ArgumentParser
-
-    parser = ArgumentParser()
-    parser.add_argument("-d", "--dry-run", dest="dry_run", help="Don't actually download anything",
-                        action="store_true", default=False)
-    parser.add_argument("-c", "--config", dest="config", help="read configuration from FILE", metavar="FILE")
-    args = parser.parse_args()
-
-    try:
-        configuration = read_configuration(args.config)
-        print(configuration, file=sys.stderr)
-    except:
-        traceback.print_exc()
-        print()
-        print("Sample configuration:")
-        print("---")
-        print(sample_config)
-        print("---")
-        print("Note that the path above may not be correct - should most likely be the dir called data one dir above this script!")
-        parser.error("Couldn't read configuration file passed in")
-
-    products = fetch_product_list(sites=configuration['sites'])
+def download(dry_run, configuration):
+    s3_keys_and_products = fetch_product_list(sites=configuration['sites'])
 
     newest_products = {}
-    for p in products:
-        key = p.site, p.product, p.elevation, p.height
-        newest_currently = newest_products.get(key)
-        if newest_currently is None or newest_currently.time < p.time:
-            newest_products[key] = p
+    for [s3_key, p] in s3_keys_and_products:
+        key = p.site, p.product_type, p.product_subtype
+        _, newest_currently = newest_products.get(key, [None, None])
+        if newest_currently is None or newest_currently.timestamp < p.timestamp:
+            newest_products[key] = [s3_key, p]
 
     client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
 
-    for index, product in enumerate(newest_products.values()):
-        if not args.dry_run:
+    for index, s3_key_and_product in enumerate(newest_products.values()):
+        s3_key, product = s3_key_and_product
+        if not dry_run:
             now = dt.now(datetime.UTC)
             dir_part = [configuration['output-directory'], str(now.year), str(now.month), str(now.day)]
             if not path_exists(path_join(*dir_part)):
                 makedirs(path_join(*dir_part))
 
-            json_dest_path = path_join(*(dir_part + [product.file_name() + ".json"]))
-            orig_tiff_dest_path = path_join(*(dir_part + [product.file_name() + ".orig.tiff"]))
-            reproj_tiff_dest_path = path_join(*(dir_part + [product.file_name() + ".tiff"]))
+            json_dest_path = path_join(*(dir_part + [product.extensionless_filename() + ".json"]))
+            orig_tiff_dest_path = path_join(*(dir_part + [product.extensionless_filename() + ".orig.tiff"]))
+            reproj_tiff_dest_path = path_join(*(dir_part + [product.extensionless_filename() + ".tiff"]))
 
             if path_exists(json_dest_path):
-                print("%s already exists, not downloading %s" % (json_dest_path, product.key),
+                print("%s already exists, not downloading %s" % (json_dest_path, s3_key),
                       file=sys.stderr)
             else:
                 if path_exists(orig_tiff_dest_path):
                     unlink(orig_tiff_dest_path)
                 with open(orig_tiff_dest_path, 'wb') as f:
-                    client.download_fileobj(_product_bucket, product.key, f)
+                    client.download_fileobj(_product_bucket, s3_key, f)
                 print(orig_tiff_dest_path, file=sys.stderr)
 
                 info = json.loads(subprocess.check_output([
@@ -376,12 +374,36 @@ def main():
                 print(reproj_tiff_dest_path)
 
                 with open(json_dest_path, 'w', encoding='utf-8') as f:
-                    json.dump(product.metadata(), f, default=default, ensure_ascii=False, indent=4)
+                    json.dump(product.as_dict(), f, default=default, ensure_ascii=False, indent=4)
 
-        json.dump(product.metadata(), sys.stderr, default=default, ensure_ascii=False, indent=4)
+        json.dump(product.as_dict(), sys.stderr, default=default, ensure_ascii=False, indent=4)
         print(file=sys.stderr)
         print("%i/%i" % (index + 1, len(newest_products)), file=sys.stderr)
 
+
+def main():
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument("-d", "--dry-run", dest="dry_run", help="Don't actually download anything",
+                        action="store_true", default=False)
+    parser.add_argument("-c", "--config", dest="config", help="read configuration from FILE", metavar="FILE")
+    args = parser.parse_args()
+
+    try:
+        configuration = read_configuration(args.config)
+        print(configuration, file=sys.stderr)
+    except:
+        traceback.print_exc()
+        print()
+        print("Sample configuration:")
+        print("---")
+        print(sample_config)
+        print("---")
+        print("Note that the path above may not be correct - should most likely be the dir called data one dir above this script!")
+        parser.error("Couldn't read configuration file passed in")
+
+    download(args.dry_run, configuration)
 
 if __name__ == '__main__':
     main()

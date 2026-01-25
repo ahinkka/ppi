@@ -133,13 +133,7 @@ def collect_radar_rasters(input_products):
         product_dict = products_dict[product_id]
 
         flavors_dict = product_dict["flavors"]
-
-        if product.get('elevation') is not None:
-            flavor_key = str(product['elevation'])
-        elif product.get('height') is not None:
-            flavor_key = str(product['height'])
-        else:
-            flavor_key = "default"
+        flavor_key = product['product_flavor']
 
         if flavor_key not in flavors_dict:
             flavors_dict[flavor_key] = {

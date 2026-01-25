@@ -38,11 +38,13 @@ def read_product(path):
     result["type"] = "RADAR RASTER"
     result["metadata_file"] = path
     result["site_name"] = radars[result["site_id"]]["name"]
-    result["site_location"] = {"lon": radars[result["site_id"]]["lon"],
-                               "lat": radars[result["site_id"]]["lat"]}
-    result['composite'] = radars[result['site_id']].get('compositeSite', False)
+    result["site_location"] = {
+        "lon": radars[result["site_id"]]["lon"],
+        "lat": radars[result["site_id"]]["lat"]
+    }
+    result['composite'] = product["composite"]
 
-    result['time'] = product['time']
+    result['time'] = product['timestamp']
     for key in ['elevation', 'height']:
         value = product.get(key)
         if value:
@@ -58,17 +60,18 @@ def read_product(path):
     else:
         raise Exception(u'File {}(.gz) not found'.format(tiff))
 
-    product_name = product["product"]
+    product_name = product["product_type"]
     result["product_name"] = product_name
+    result["product_flavor"] = product["product_subtype"]
     result["product_id"] = product_name
-    if product_name in ('dbzh', 'dbz', 'DBZH'):
+    if 'dbZ' in product_name:
         result["radar_product_info"] = {
             "data_type": "REFLECTIVITY",
             "data_unit": "dBZ",
             "data_scale": {
                 # (dBZ = step * pixval - offset)
-                "offset": product["linear_transformation_offset"],
-                "step": product["linear_transformation_gain"],
+                "offset": product["data_scale"]["linear_transformation_offset"],
+                "step": product["data_scale"]["linear_transformation_gain"],
                 "not_scanned": 255,
                 "no_echo": 0
             }
@@ -81,7 +84,7 @@ def read_product(path):
         else:
             err(f"Unknown product type, no height nor elevation: {product=}")
 
-        if product_name == 'dbzh':
+        if 'dbZh' in product_name:
             result['polarization'] = 'HORIZONTAL'
     else:
         err("Unhandled product name: {}".format(product_name))
