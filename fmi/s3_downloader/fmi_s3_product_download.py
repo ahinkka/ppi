@@ -135,6 +135,47 @@ def fetch_latest_finrad_product(client, site):
                    linear_transformation_offset=linear_transformation_offset)
 
 
+def fetch_latest_cappi_product(client, site, product_name='dbzh'):
+    """Fetch latest CAPPI product for regular radar sites.
+
+    Regular radar CAPPI products have format: {timestamp}_{site}_cappi_{height}_{product}_qc.tif
+    Example: 202601240000_fikau_cappi_600_dbzh_qc.tif
+    """
+    date_prefix = dt.now(datetime.UTC).strftime('%Y/%m/%d')
+    prefix = f'{date_prefix}/{site}/'
+
+    raw_entries = [
+        o for o in list_objects(client, _product_bucket, prefix)
+        if f'_{site}_cappi_' in o['Key'] and product_name in o['Key']
+    ]
+
+    if not raw_entries:
+        return None  # No CAPPI products available
+
+    latest = sorted(
+        raw_entries,
+        key=lambda d: parse_datetime_from_filename(d['Key']),
+        reverse=True
+    )[0]
+
+    # Extract height from filename (e.g., "600" from "fikau_cappi_600_dbzh")
+    filename = latest['Key'].split('/')[-1]
+    parts = filename.split('_')
+    cappi_index = parts.index('cappi')
+    height = parts[cappi_index + 1] + 'm'
+
+    linear_transformation_gain = 0.5
+    linear_transformation_offset = -32
+    product_time = parse_datetime_from_filename(latest['Key'])
+
+    return Product(
+        site, product_name, product_time, latest['Key'],
+        height=height,
+        linear_transformation_gain=linear_transformation_gain,
+        linear_transformation_offset=linear_transformation_offset
+    )
+
+
 def list_objects(client, bucket, prefix):
     result = []
     continuation_token = None
@@ -184,16 +225,24 @@ def fetch_latest_product(client, site, product_name):
         reverse=True
     )[0]
 
+    # Extract elevation from filename (e.g., "0.7" from "202601240000_fikau_ppi_0.3_dbzh_qc.tif")
+    filename = latest['Key'].split('/')[-1]
+    parts = filename.split('_')
+    ppi_index = parts.index('ppi')
+    elevation = parts[ppi_index + 1]
+
     # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
     #  radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
     linear_transformation_gain = 0.5
     linear_transformation_offset = -32
-    height = '250m'
     product_time = parse_datetime_from_filename(latest['Key'])
 
-    return Product(site, product_name, product_time, latest['Key'],
-                   linear_transformation_gain=linear_transformation_gain,
-                   linear_transformation_offset=linear_transformation_offset)
+    return Product(
+        site, product_name, product_time, latest['Key'],
+        elevation=elevation,
+        linear_transformation_gain=linear_transformation_gain,
+        linear_transformation_offset=linear_transformation_offset
+    )
 
 
 def fetch_product_list(sites=DEFAULT_SITES):
@@ -204,9 +253,19 @@ def fetch_product_list(sites=DEFAULT_SITES):
         try:
             if site == 'finrad':
                 product = fetch_latest_finrad_product(client, site)
+                result.append(product)
             else:
-                product = fetch_latest_product(client, site, 'dbzh')
-            result.append(product)
+                ppi_product = fetch_latest_product(client, site, 'dbzh')
+                if ppi_product:
+                    result.append(ppi_product)
+                else:
+                    print(f'Failed to download PPI product for site {site}, continuing...', file=sys.stderr)
+
+                cappi_product = fetch_latest_cappi_product(client, site, 'dbzh')
+                if cappi_product:
+                    result.append(cappi_product)
+                else:
+                    print(f'Failed to download CAPPI product for site {site}, continuing...', file=sys.stderr)
         except Exception as e:
             traceback.print_exc()
             print(f'Failed to resolve latest product for site {site}, continuing...', file=sys.stderr)
@@ -266,7 +325,7 @@ def main():
 
     newest_products = {}
     for p in products:
-        key = p.site, p.product, p.elevation
+        key = p.site, p.product, p.elevation, p.height
         newest_currently = newest_products.get(key)
         if newest_currently is None or newest_currently.time < p.time:
             newest_products[key] = p
