@@ -289,16 +289,16 @@ const cacheOpts = {
 }
 
 export class Map extends React.Component<Props> {
-  private __previousProduct: LoadedProduct | null = null
-  private __previousIntendedCenter: [number, number] = [0, 0]
-  private __renderedProducts: LRUCache<string, HTMLCanvasElement> = new LRUCache(cacheOpts)
-  private __colorCaches: Record<string, Record<number, [number, number, number, number]>> = {}
+  private previousProduct: LoadedProduct | null = null
+  private previousIntendedCenter: [number, number] = [0, 0]
+  private renderedProducts: LRUCache<string, HTMLCanvasElement> = new LRUCache(cacheOpts)
+  private colorCaches: Record<string, Record<number, [number, number, number, number]>> = {}
   private mapToProductConversionFn: (x: number, y: number) => [number, number] | null = null
   private wgs84ToProductConversionFn: (x: number, y: number) => [number, number] | null = null
   private conversionCacheKey: string = ''
   private cursorToolVisible: boolean = false
-  private __vectorSource: VectorSource | null = null
-  private __vectorLayer: VectorLayer<VectorSource> | null = null
+  private vectorSource: VectorSource | null = null
+  private vectorLayer: VectorLayer<VectorSource> | null = null
   private map: OlMap | null = null
   private imageCanvas: ImageCanvas | null = null
   private imageLayer: Image<ImageCanvas> | null = null
@@ -306,17 +306,17 @@ export class Map extends React.Component<Props> {
   private canvas: HTMLCanvasElement | null = null
   private mapElementRef = React.createRef<HTMLDivElement>()
   private cursorToolOverlayRef = React.createRef<HTMLDivElement>()
-  private __resizeTimeout: number | null = null
+  private resizeTimeout: number | null = null
 
   constructor(props: Readonly<Props> | Props) {
     super(props)
 
-    this.__onResize = this.__onResize.bind(this)
-    this.__onMouseLeave = this.__onMouseLeave.bind(this)
-    this.__updateMap = this.__updateMap.bind(this)
-    this.__canvasFunction = this.__canvasFunction.bind(this)
+    this.onResize = this.onResize.bind(this)
+    this.onMouseLeave = this.onMouseLeave.bind(this)
+    this.updateMap = this.updateMap.bind(this)
+    this.canvasFunction = this.canvasFunction.bind(this)
 
-    this.__vectorSource = new VectorSource({})
+    this.vectorSource = new VectorSource({})
 
     const cityStyle = new Style({
       image: new CircleStyle({
@@ -335,8 +335,8 @@ export class Map extends React.Component<Props> {
       })
     })
 
-    this.__vectorLayer = new VectorLayer({
-      source: this.__vectorSource,
+    this.vectorLayer = new VectorLayer({
+      source: this.vectorSource,
       style: (feature: FeatureLike) => {
         const osmPlace = feature.get('osmPlace') as string
         if (osmPlace === 'city') {
@@ -350,7 +350,7 @@ export class Map extends React.Component<Props> {
     })
   }
 
-  __onResize() {
+  onResize() {
     const elem = document.getElementById(this.props.headerElementId)
     const mapElem = this.mapElementRef.current
     if (elem && mapElem) {
@@ -363,7 +363,7 @@ export class Map extends React.Component<Props> {
     }
   }
 
-  __onMouseLeave() {
+  onMouseLeave() {
     this.props.dispatch({ type: 'pointer left map' })
     const element = this.cursorToolOverlayRef.current
     if (element && element._popover) {
@@ -379,16 +379,16 @@ export class Map extends React.Component<Props> {
     this.cursorToolVisible = false
   }
 
-  __updateMap() {
+  updateMap() {
     if (this.map == undefined) {
       return
     }
-    if (this.__previousIntendedCenter[0] != this.props.intendedCenter[0] ||
-      this.__previousIntendedCenter[1] != this.props.intendedCenter[1]) {
+    if (this.previousIntendedCenter[0] != this.props.intendedCenter[0] ||
+      this.previousIntendedCenter[1] != this.props.intendedCenter[1]) {
       const mapProjection = this.map.getView().getProjection()
       this.map.getView().setCenter(fromLonLat(this.props.intendedCenter, mapProjection))
     }
-    this.__previousIntendedCenter = this.props.intendedCenter
+    this.previousIntendedCenter = this.props.intendedCenter
   }
 
   componentDidMount() {
@@ -417,13 +417,13 @@ export class Map extends React.Component<Props> {
           })
         }),
 
-        this.__vectorLayer,
+        this.vectorLayer,
       ],
       target: this.mapElementRef.current,
     })
 
     this.imageCanvas = new ImageCanvas({
-      canvasFunction: this.__canvasFunction,
+      canvasFunction: this.canvasFunction,
       // Ratio of 1 means the underlying canvas size is exactly the size of
       // the viewport. By default the canvas is larger to make panning
       // seamless. As reprojection is so slow, it makes sense for us to not
@@ -461,7 +461,7 @@ export class Map extends React.Component<Props> {
       updateCursorTool(
         cursorToolOverlay,
         this.props.product,
-        this.__vectorSource,
+        this.vectorSource,
         evt.coordinate,
         resolveCursorToolContentAndColors,
         this.wgs84ToProductConversionFn
@@ -472,14 +472,14 @@ export class Map extends React.Component<Props> {
       // const pixel = this.map.getEventPixel(evt.originalEvent)
       // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
     })
-    this.mapElementRef.current.addEventListener('mouseleave', this.__onMouseLeave)
+    this.mapElementRef.current.addEventListener('mouseleave', this.onMouseLeave)
 
-    this.__resizeTimeout = window.setTimeout(this.__onResize, 200)
-    window.addEventListener('resize', this.__onResize)
-    this.__updateMap()
+    this.resizeTimeout = window.setTimeout(this.onResize, 200)
+    window.addEventListener('resize', this.onResize)
+    this.updateMap()
   }
 
-  __canvasFunction(
+  canvasFunction(
     extent: OlExtent,
     _resolution: number,
     _pixelRatio: number,
@@ -495,14 +495,14 @@ export class Map extends React.Component<Props> {
     // Short-circuit for cached rendering
     const cacheKey = stringify([this.props.productSelection, this.props.productTime,
       extent, this.canvas.width, this.canvas.height])
-    const cached = this.__renderedProducts.get(cacheKey)
+    const cached = this.renderedProducts.get(cacheKey)
     if (cached !== undefined) {
       this.canvas = cached
       if (this.cursorToolVisible)
         updateCursorTool(
           this.cursorToolOverlay,
           this.props.product,
-          this.__vectorSource,
+          this.vectorSource,
           undefined,
           resolveCursorToolContentAndColors,
           this.wgs84ToProductConversionFn
@@ -511,7 +511,7 @@ export class Map extends React.Component<Props> {
     }
 
     if (!this.props.product) {
-      console.warn('__canvasFunction not rendering because of null currentProduct')
+      console.warn('canvasFunction not rendering because of null currentProduct')
       return this.canvas
     }
 
@@ -531,10 +531,10 @@ export class Map extends React.Component<Props> {
     // Use the same color cache between calls
     const colorCacheKey =
       stringify([metadata.productInfo.dataType, metadata.productInfo.dataScale])
-    if (!(colorCacheKey in this.__colorCaches)) {
-      this.__colorCaches[colorCacheKey] = {}
+    if (!(colorCacheKey in this.colorCaches)) {
+      this.colorCaches[colorCacheKey] = {}
     }
-    const colorCache = this.__colorCaches[colorCacheKey]
+    const colorCache = this.colorCaches[colorCacheKey]
     const resolveColor = (value: number) => {
       if (!(value in colorCache)) {
         colorCache[value] = _resolveColor(metadata.productInfo.dataScale, value)
@@ -607,7 +607,7 @@ export class Map extends React.Component<Props> {
     }
     ctx.putImageData(imageData, 0, 0)
 
-    this.__renderedProducts.set(cacheKey, this.canvas)
+    this.renderedProducts.set(cacheKey, this.canvas)
 
     const elapsedMs = new Date().getTime() - startRender
     const pixelCount = this.canvas.width * this.canvas.height
@@ -617,7 +617,7 @@ export class Map extends React.Component<Props> {
       updateCursorTool(
         this.cursorToolOverlay,
         this.props.product,
-        this.__vectorSource,
+        this.vectorSource,
         undefined,
         resolveCursorToolContentAndColors,
         this.wgs84ToProductConversionFn
@@ -626,18 +626,18 @@ export class Map extends React.Component<Props> {
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.__onResize)
+    window.removeEventListener('resize', this.onResize)
     if (this.mapElementRef.current) {
-      this.mapElementRef.current.removeEventListener('mouseleave', this.__onMouseLeave)
+      this.mapElementRef.current.removeEventListener('mouseleave', this.onMouseLeave)
     }
-    if (this.__resizeTimeout) {
-      window.clearTimeout(this.__resizeTimeout)
-      this.__resizeTimeout = null
+    if (this.resizeTimeout) {
+      window.clearTimeout(this.resizeTimeout)
+      this.resizeTimeout = null
     }
     if (this.map) {
       this.map.setTarget(null)
       this.map = null
-      this.__previousIntendedCenter = [0, 0]
+      this.previousIntendedCenter = [0, 0]
     }
   }
 
@@ -645,21 +645,21 @@ export class Map extends React.Component<Props> {
     if (
       this.props.geoInterests &&
       Object.keys(this.props.geoInterests).length > 0 &&
-      this.__vectorSource.getFeatures().length == 0
+      this.vectorSource.getFeatures().length == 0
     ) {
       const features = new GeoJSON({ featureProjection: 'EPSG:3857' })
         .readFeatures(this.props.geoInterests)
-      this.__vectorSource.addFeatures(features)
+      this.vectorSource.addFeatures(features)
     }
 
-    if (this.__previousProduct != this.props.product) {
-      this.__previousProduct = this.props.product
+    if (this.previousProduct != this.props.product) {
+      this.previousProduct = this.props.product
       if (this.imageCanvas) {
         this.imageCanvas.changed()
       }
     }
 
-    this.__updateMap()
+    this.updateMap()
 
     return (
       <React.Fragment>

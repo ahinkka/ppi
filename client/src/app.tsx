@@ -91,34 +91,34 @@ export type ObserverAppProps = State & {
 class ObserverApp extends React.Component<ObserverAppProps> {
   private initialAnimationTimerToken?: ReturnType<typeof setTimeout>
   private animationTimerToken?: ReturnType<typeof setInterval>
-  private _animationTick?: () => void | undefined
-  private _onKeyPress?: (event: KeyboardEvent) => void
-  private _onKeyDown?: (event: KeyboardEvent) => void
+  private animationTick?: () => void | undefined
+  private onKeyPress?: (event: KeyboardEvent) => void
+  private onKeyDown?: (event: KeyboardEvent) => void
 
   constructor(props: ObserverAppProps) {
     super(props)
   }
 
   componentDidMount() {
-    this._animationTick = () =>
+    this.animationTick = () =>
       this.props.animation.running
         ? this.props.dispatch({ type: 'animation tick' })
         : undefined
 
-    this.initialAnimationTimerToken = setTimeout(this._animationTick, 500)
-    this.animationTimerToken = setInterval(this._animationTick, 1500)
+    this.initialAnimationTimerToken = setTimeout(this.animationTick, 500)
+    this.animationTimerToken = setInterval(this.animationTick, 1500)
 
-    this._onKeyPress = (event) => handleKeyPress(this.props.dispatch, event)
-    this._onKeyDown = (event) => handleKeyDown(this.props.dispatch, event)
-    document.addEventListener('keypress', this._onKeyPress)
-    document.addEventListener('keydown', this._onKeyDown)
+    this.onKeyPress = (event) => handleKeyPress(this.props.dispatch, event)
+    this.onKeyDown = (event) => handleKeyDown(this.props.dispatch, event)
+    document.addEventListener('keypress', this.onKeyPress)
+    document.addEventListener('keydown', this.onKeyDown)
   }
 
   componentWillUnmount() {
     if (this.initialAnimationTimerToken) clearTimeout(this.initialAnimationTimerToken)
     if (this.animationTimerToken) clearInterval(this.animationTimerToken)
-    document.removeEventListener('keypress', this._onKeyPress)
-    document.removeEventListener('keydown', this._onKeyDown)
+    document.removeEventListener('keypress', this.onKeyPress)
+    document.removeEventListener('keydown', this.onKeyDown)
   }
 
   render() {
