@@ -6,6 +6,7 @@ import subprocess
 import sys
 import traceback
 import dataclasses
+import typing
 
 from os import getcwd, unlink, makedirs
 from os.path import join as path_join
@@ -52,16 +53,39 @@ output-directory = %s
 
 
 @dataclasses.dataclass
-class DataScale:
+class LinearDataScale:
     linear_transformation_gain: float
     linear_transformation_offset: float
 
 
+@dataclasses.dataclass
+class HydroClassDataScale:
+    no_signal: int
+    non_met: int
+    rain: int
+    wet_snow: int
+    dry_snow: int
+    graupel: int
+    hail: int
+
+
 # https://en.ilmatieteenlaitos.fi/radar-data-on-aws-s3
 # radar reflectivity (dbz), conversion: Z[dBZ] = 0.5 * pixel value - 32
-_dbzh_datascale = DataScale(
+_dbzh_datascale = LinearDataScale(
     linear_transformation_gain=0.5,
     linear_transformation_offset=-32
+)
+
+
+# rain classification (hclass), conversion: 0=no signal, 1=non met, 2=rain, 3=wet snow, 4=dry snow, 5=graupel, 6=hail
+_hclass_datascale = HydroClassDataScale(
+    no_signal=0,
+    non_met=1,
+    rain=2,
+    wet_snow=3,
+    dry_snow=4,
+    graupel=5,
+    hail=6
 )
 
 
@@ -98,7 +122,8 @@ class Product:
     data_unit: str        # dbZ / hclass / mm
     height: float         # CAPPI height
     elevation: float      # PPI sweep elevation
-    data_scale: DataScale # How integer numbers are translated into actual values.
+    # How integer numbers are translated into actual values.
+    data_scale: typing.Union[LinearDataScale, HydroClassDataScale]
     composite: bool       # Is this a composite product, i.e. not a single radar.
 
     @staticmethod
@@ -199,6 +224,8 @@ class Product:
 
         if data_unit == 'dbZ':
             data_scale = _dbzh_datascale
+        elif data_unit == 'hclass':
+            data_scale = _hclass_datascale
 
         return Product(
             timestamp=parsed_dt,
@@ -265,16 +292,21 @@ def fetch_product_list(sites=DEFAULT_SITES):
             entries_by_filename = { entry['Key'].split('/')[-1]: entry['Key'] for entry in raw_entries }
             entries = { p: Product.from_filename(p) for p in entries_by_filename.keys() }
 
-            # Let's limit everything first to reflectivity, then make this more generic
             supported_data_scale = [p for p in entries.values() if p.data_scale is not None]
 
             # Collect PPIs
             desired_elevations = sorted(list(set([p.elevation for p in supported_data_scale if p.elevation])))
             for elevation in desired_elevations:
                 elevation_ppis = [p for p in supported_data_scale if p.elevation == elevation]
-                latest = sorted(elevation_ppis, key=lambda e: e.timestamp, reverse=True)[0]
-                s3_key = entries_by_filename[latest.filename]
-                result.append([s3_key, latest])
+                unique_data_types = set([p.data_type for p in elevation_ppis])
+                for data_type in unique_data_types:
+                    latest = sorted(
+                        [p for p in elevation_ppis if p.data_type == data_type],
+                        key=lambda e: e.timestamp,
+                        reverse=True
+                    )[0]
+                    s3_key = entries_by_filename[latest.filename]
+                    result.append([s3_key, latest])
 
             # Collect CAPPIs
             desired_heights = sorted(list(set([p.height for p in supported_data_scale if p.height])))
