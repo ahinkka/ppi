@@ -13,6 +13,7 @@ import { ToggleButton } from './toggle_button'
 import ProductSlider from './product_slider'
 import ColorScale from './color_scale'
 import { NOAAScaleToScaleDescription } from './coloring'
+import HclassColorScale from './hclass_color_scale'
 
 const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
@@ -151,6 +152,13 @@ class ObserverApp extends React.Component<ObserverAppProps> {
       loadedProduct = props.getProductByUrl(productUrl) as LoadedProduct
     }
 
+    let colorScale: React.ReactElement = (<React.Fragment />)
+    if (loadedProduct?.metadata.productInfo.dataType === 'REFLECTIVITY') {
+      colorScale = (<ColorScale name={'NOAA Reflectivity Scale'} unit={'dBZ'} type={'Reflectivity'} ranges={_NOAAReflectivityColorScale} />)
+    } else if (loadedProduct?.metadata.productInfo.dataType === 'hclass') {
+      colorScale = (<HclassColorScale />)
+    }
+
     return (
       <div>
         <div id="header-row">
@@ -200,8 +208,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
           productTime={currentProductTime}
           productSelection={[siteId, productId, flavorId]}
         />
-        <ColorScale name={'NOAA Reflectivity Scale'} unit={'dBZ'} type={'Reflectivity'}
-          ranges={_NOAAReflectivityColorScale} />
+        {colorScale}
       </div>
     )
   }

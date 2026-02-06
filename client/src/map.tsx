@@ -36,11 +36,19 @@ import { canvasPxToProductPx, wgs84ToProductPx, Extent } from './reprojection'
 import { LoadedProduct } from './product_loader'
 import { State } from './state'
 
-import { DataScale, DataValueType, integerToDataValue } from './datavalue'
 import {
+  DataScale,
+  DataValueType,
+  integerToDataValue,
+  LinearInterpolationDataScale,
+  HclassDataScale
+} from './datavalue'
+import {
+  RGBAColor,
   fillWithNotScanned,
   NOT_SCANNED_COLOR,
   resolveColorForReflectivity,
+  resolveColorForHclass,
   resolveColorGeneric
 } from './coloring'
 
@@ -87,21 +95,33 @@ const renderCursorToolContentAndColors = (
   nearestCityName: string, distanceToNearestCity: number, bearingToNearestCity: number,
   nearestTownName: string, distanceToNearestTown: number, bearingToNearestTown: number
 ) => {
-  const [valueType, dataValue] = integerToDataValue(dataScale, value)
-
   let textContent = null
   let bgColor = 'white'
   let textColor = 'black'
-  if (valueType == DataValueType.NOT_SCANNED) {
-    textContent = 'NOT SCANNED'
-    bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.75)`
-  } else if (valueType == DataValueType.NO_ECHO) {
-    textContent = 'NO ECHO'
-    bgColor = 'rgba(255, 255, 255, 0.75)'
-  } else if (valueType == DataValueType.VALUE) {
-    textContent = `${dataValue} <small>${dataUnit}</small>`
-    bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255.0})`
-    textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
+
+  if (dataScale.tag === 'LinearInterpolationDataScale') {
+    const [valueType, dataValue] = integerToDataValue(dataScale, value)
+    if (valueType == DataValueType.NOT_SCANNED) {
+      textContent = 'NOT SCANNED'
+      bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, 0.75)`
+    } else if (valueType == DataValueType.NO_ECHO) {
+      textContent = 'NO ECHO'
+      bgColor = 'rgba(255, 255, 255, 0.75)'
+    } else if (valueType == DataValueType.VALUE) {
+      textContent = `${dataValue} <small>${dataUnit}</small>`
+      bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255.0})`
+      textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
+    }
+  } else if (dataScale.tag === 'HclassDataScale') {
+    const enumValue = dataScale.mapping[value]
+    textContent = enumValue.replace('_', ' ')
+
+    if (enumValue === 'NO_SIGNAL') {
+      bgColor = 'rgba(255, 255, 255, 0.75)'
+    } else {
+      bgColor = `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255.0})`
+      textColor = !yiqColorContrast(color[0], color[1], color[2]) ? 'white' : 'black'
+    }
   }
 
   if (
@@ -190,9 +210,20 @@ const resolveCursorToolContentAndColors = (
   let effectiveValue = dataView[dataPxXY[0] * dataRows + dataPxXY[1]]
   if (effectiveValue === undefined) effectiveValue = metadata.productInfo.dataScale.notScanned
 
-  const color: [number, number, number, number] = metadata.productInfo.dataType == 'REFLECTIVITY' ?
-    resolveColorForReflectivity(metadata.productInfo.dataScale, effectiveValue) :
-    resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
+  let color: RGBAColor | undefined = undefined
+  if (metadata.productInfo.dataType == 'REFLECTIVITY') {
+    color = resolveColorForReflectivity(
+      metadata.productInfo.dataScale as LinearInterpolationDataScale,
+      effectiveValue
+    )
+  } else if (metadata.productInfo.dataType == 'hclass') {
+    color = resolveColorForHclass(
+      metadata.productInfo.dataScale as HclassDataScale,
+      effectiveValue
+    )
+  } else {
+    color = resolveColorGeneric(metadata.productInfo.dataScale, effectiveValue)
+  }
 
   const {
     nearestCityName, distanceToNearestCity, bearingToNearestCity,
@@ -520,14 +551,6 @@ export class Map extends React.Component<Props> {
     const dataRows = this.props.product._rows
     const metadata = this.props.product.metadata
 
-    // Coloring
-    let _resolveColor = null
-    if (metadata.productInfo.dataType == 'REFLECTIVITY') {
-      _resolveColor = resolveColorForReflectivity
-    } else {
-      _resolveColor = resolveColorGeneric
-    }
-
     // Use the same color cache between calls
     const colorCacheKey =
       stringify([metadata.productInfo.dataType, metadata.productInfo.dataScale])
@@ -537,7 +560,19 @@ export class Map extends React.Component<Props> {
     const colorCache = this.colorCaches[colorCacheKey]
     const resolveColor = (value: number) => {
       if (!(value in colorCache)) {
-        colorCache[value] = _resolveColor(metadata.productInfo.dataScale, value)
+        if (metadata.productInfo.dataType == 'REFLECTIVITY') {
+          colorCache[value] = resolveColorForReflectivity(
+            metadata.productInfo.dataScale as LinearInterpolationDataScale,
+            value
+          )
+        } else if (metadata.productInfo.dataType == 'hclass') {
+          colorCache[value] = resolveColorForHclass(
+            metadata.productInfo.dataScale as HclassDataScale,
+            value
+          )
+        } else {
+          colorCache[value] = resolveColorGeneric(metadata.productInfo.dataScale, value)
+        }
       }
       return colorCache[value]
     }

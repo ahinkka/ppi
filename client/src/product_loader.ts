@@ -5,7 +5,7 @@ import { Component } from 'react'
 import { twoDtoUint8Array } from './utils'
 import { orderForLoading } from './product_time_loading_order'
 import { Flavor } from './catalog'
-import { DataValueType } from './datavalue'
+import { DataValueType, DataScale } from './datavalue'
 import { AffineTransform } from './reprojection'
 
 
@@ -26,12 +26,7 @@ export type LoadedProduct = {
     productInfo: {
       dataType: string,
       dataUnit: DataValueType,
-      dataScale: {
-	step: number,
-	offset: number
-	notScanned: number,
-	noEcho: number
-      }
+      dataScale: DataScale
     },
     projectionRef: string,
     width: number,

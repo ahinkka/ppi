@@ -1,4 +1,11 @@
-import { DataScale, DataValueType, integerToDataValue } from './datavalue'
+import {
+  DataScale,
+  LinearInterpolationDataScale,
+  HydroMeteorType,
+  HclassDataScale,
+  DataValueType,
+  integerToDataValue
+} from './datavalue'
 
 export type RGBColor = [number, number, number]
 export type RGBAColor = [number, number, number, number]
@@ -109,7 +116,7 @@ export function NOAAScaleToScaleDescription(): StepScaleRange[] {
 }
 
 export const resolveColorForReflectivity =
-  (dataScale: DataScale, value: number): RGBAColor => {
+  (dataScale: LinearInterpolationDataScale, value: number): RGBAColor => {
     const [valueType, dataValue] = integerToDataValue(dataScale, value)
     if (valueType == DataValueType.NOT_SCANNED) {
       return NOT_SCANNED_COLOR
@@ -122,6 +129,31 @@ export const resolveColorForReflectivity =
       throw new Error('Unknown DataValueType: ' + valueType)
     }
   }
+
+export const HclassColors: Record<HydroMeteorType, RGBAColor> = {
+  'NON_MET': [46, 47, 51, 255],
+  'RAIN': [78, 94, 160, 255],
+  'WET_SNOW': [60, 38, 129, 255],
+  'DRY_SNOW': [181, 216, 234, 255],
+  'GRAUPEL': [233, 235, 72, 255],
+  'HAIL': [182, 2 ,36, 255],
+}
+
+export function resolveColorForHclass(dataScale: HclassDataScale, value: number): RGBAColor {
+  const hclass = dataScale.mapping[value]
+  if (hclass === 'NO_SIGNAL') {
+    return NO_ECHO_COLOR
+  } else if (hclass === 'NOT_SCANNED') {
+    return NOT_SCANNED_COLOR
+  } else {
+    const resolved = HclassColors[hclass]
+    if (resolved) {
+      return HclassColors[hclass]
+    }
+    console.warn(`Unknown color: ${value}`)
+    return [128, 128, 128, 128]
+  }
+}
 
 export const resolveColorGeneric =
   (dataScale: DataScale, value: number): RGBAColor => {

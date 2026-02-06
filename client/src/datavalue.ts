@@ -1,30 +1,32 @@
-// {
-//     "productType": "PPI",
-//     "polarization": "HORIZONTAL",
-//     "dataUnit": "dBZ",
-//     "dataType": "REFLECTIVITY",
-//     "dataScale": {
-//         "step": 0.5,
-//         "offset": -32,
-//         "notScanned": 252,
-//         "noEcho": 0
-//     }
-// }
 export enum DataValueType {
   NO_ECHO = 'no echo',
   NOT_SCANNED = 'not scanned',
   VALUE = 'value'
 }
 
-export type DataScale = {
+export type LinearInterpolationDataScale = {
+  readonly tag: 'LinearInterpolationDataScale',
   step: number,
   offset: number,
   notScanned: number,
   noEcho: number,
 }
 
+export type HydroMeteorType = 'NON_MET' | 'RAIN' | 'WET_SNOW' | 'DRY_SNOW' | 'GRAUPEL' | 'HAIL'
+
+export type Hclass = HydroMeteorType | 'NO_SIGNAL' | 'NOT_SCANNED'
+
+export type HclassDataScale = {
+  readonly tag: 'HclassDataScale',
+  mapping: Record<number, Hclass>,
+  notScanned: number,
+  noEcho: number
+}
+
+export type DataScale = LinearInterpolationDataScale | HclassDataScale
+
 export function integerToDataValue(
-  dataScale: DataScale,
+  dataScale: LinearInterpolationDataScale,
   intValue: number
 ): [string, number | null] {
   if (intValue == dataScale.noEcho) {

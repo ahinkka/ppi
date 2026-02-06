@@ -69,6 +69,7 @@ def read_product(path):
             "data_type": "REFLECTIVITY",
             "data_unit": "dBZ",
             "data_scale": {
+                "tag": 'LinearInterpolationDataScale',
                 # (dBZ = step * pixval - offset)
                 "offset": product["data_scale"]["linear_transformation_offset"],
                 "step": product["data_scale"]["linear_transformation_gain"],
@@ -86,6 +87,28 @@ def read_product(path):
 
         if 'dbZh' in product_name:
             result['polarization'] = 'HORIZONTAL'
+    elif 'hclass' in product_name:
+        result["radar_product_info"] = {
+            "data_type": "hclass",
+            "data_unit": "hclass",
+            "data_scale": {
+                "tag": 'HclassDataScale',
+                "mapping": {
+                    product["data_scale"]["no_signal"]: "NO_SIGNAL",
+                    product["data_scale"]["non_met"]: "NON_MET",
+                    product["data_scale"]["rain"]: "RAIN",
+                    product["data_scale"]["wet_snow"]: "WET_SNOW",
+                    product["data_scale"]["dry_snow"]: "DRY_SNOW",
+                    product["data_scale"]["graupel"]: "GRAUPEL",
+                    product["data_scale"]["hail"]: "HAIL",
+                    255: "NOT_SCANNED"
+                },
+                "not_scanned": 255,
+                "no_echo": product["data_scale"]["no_signal"]
+            }
+        }
+        result['product_type'] = 'PPI'
+        result['elevation'] = product['elevation']
     else:
         err("Unhandled product name: {}".format(product_name))
         sys.exit(result["data_file"])
