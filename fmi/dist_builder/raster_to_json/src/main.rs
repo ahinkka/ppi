@@ -1,18 +1,18 @@
-use std::process;
+use std::convert::TryInto;
 use std::env;
 use std::io::{self, Read};
+use std::process;
 use std::time::Instant;
-use std::convert::TryInto;
 
 use std::collections::HashMap;
 use std::path::Path;
 
+use gdal::raster::GdalDataType;
 use gdal::raster::RasterBand;
 use gdal::raster::ResampleAlg;
 use gdal::Dataset;
-use gdal::raster::GdalDataType;
 
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 use indicatif::{ProgressBar, ProgressStyle};
 
@@ -53,14 +53,15 @@ fn populate_data(ds: &Dataset) -> Vec<Vec<u8>> {
     );
 
     for x in 0..width {
-	pb.set_position(x.try_into().unwrap());
-        let d: Vec<u8> = band.read_as::<u8>(
-	    (x as isize, 0),
-	    (1, height),
-	    (1, height),
-	    Some(ResampleAlg::Bilinear)
-	)
-	    .unwrap()
+        pb.set_position(x.try_into().unwrap());
+        let d: Vec<u8> = band
+            .read_as::<u8>(
+                (x as isize, 0),
+                (1, height),
+                (1, height),
+                Some(ResampleAlg::Bilinear),
+            )
+            .unwrap()
             .data()
             .to_vec();
         rows.push(d);
