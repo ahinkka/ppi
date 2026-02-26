@@ -32,13 +32,24 @@ export type State = {
     stayOnLastTime: boolean
   }
   loadedProducts: { [key: string]: null | undefined },
-  geoInterests: unknown
+  geoInterests: unknown,
+  browserGeolocation: {
+    enabled: boolean,
+    position: [number, number] | null,
+    accuracy: number | null,
+    error: string | null
+  }
 }
 
 // Lenses into state
 const catalogL = O.optic_<State>().prop('catalog')
 const radarProductsL = catalogL.prop('radarProducts')
 const geoInterestsL = O.optic_<State>().prop('geoInterests')
+const browserGeolocationL = O.optic_<State>().prop('browserGeolocation')
+const browserGeolocationEnabledL = browserGeolocationL.prop('enabled')
+const browserGeolocationPositionL = browserGeolocationL.prop('position')
+const browserGeolocationAccuracyL = browserGeolocationL.prop('accuracy')
+const browserGeolocationErrorL = browserGeolocationL.prop('error')
 
 const selectionL = O.optic_<State>().prop('selection')
 const selectedSiteIdL = selectionL.prop('siteId')
@@ -535,6 +546,12 @@ const initialState: State = {
     currentProductTime: null,
     running: false,
     stayOnLastTime: true
+  },
+  browserGeolocation: {
+    enabled: false,
+    position: null,
+    accuracy: null,
+    error: null
   }
 }
 
@@ -584,5 +601,21 @@ export function reducer(state: State | undefined, action: Action): State {
       return toggleAnimationReducer(state)
     case 'product load update':
       return productLoadUpdateReducer(state, action as Extract<Action, { type: 'product load update' }>)
+    case 'toggle browser geolocation':
+      return O.set(browserGeolocationEnabledL)(!O.get(browserGeolocationEnabledL)(state))(state)
+    case 'browser geolocation position updated':
+      return pipe(
+        state,
+        O.set(browserGeolocationPositionL)(action.payload.position),
+        O.set(browserGeolocationAccuracyL)(action.payload.accuracy),
+        O.set(browserGeolocationErrorL)(null)
+      )
+    case 'browser geolocation error':
+      return pipe(
+        state,
+        O.set(browserGeolocationErrorL)(action.payload),
+        O.set(browserGeolocationPositionL)(null),
+        O.set(browserGeolocationAccuracyL)(null)
+      )
   }
 }

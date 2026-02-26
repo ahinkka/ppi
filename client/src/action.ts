@@ -34,6 +34,9 @@ export type Action =
   | { type: 'pointer moved'; payload: PointerCoordinate }
   | { type: 'tick clicked'; payload: number }
   | { type: 'product load update'; payload: ProductLoadPayload }
+  | { type: 'toggle browser geolocation' }
+  | { type: 'browser geolocation position updated'; payload: { position: [number, number]; accuracy: number | null } }
+  | { type: 'browser geolocation error'; payload: string }
 
 // Helper types for components with runtime-determined action types
 export type StringPayloadAction = Extract<Action, { payload: string }>

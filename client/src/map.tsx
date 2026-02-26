@@ -35,6 +35,8 @@ import { Action } from './action'
 import { canvasPxToProductPx, wgs84ToProductPx, Extent } from './reprojection'
 import { LoadedProduct } from './product_loader'
 import { State } from './state'
+import { BrowserGeolocationMarker } from './browser_geolocation_marker'
+import { BrowserGeolocationControl } from './browser_geolocation_control'
 
 import {
   DataScale,
@@ -700,6 +702,12 @@ export class Map extends React.Component<Props> {
       <React.Fragment>
         <div id="map-element" ref={this.mapElementRef}></div>
         <div id="cursor-tool-overlay" ref={this.cursorToolOverlayRef}></div>
+        {this.map && (
+          <>
+            <BrowserGeolocationMarker map={this.map} />
+            <BrowserGeolocationControl map={this.map} />
+          </>
+        )}
       </React.Fragment>
     )
   }

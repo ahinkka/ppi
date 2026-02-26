@@ -1,5 +1,37 @@
 $spacer: 0.5em
 
+.browser-geolocation-control-container
+  position: absolute
+  bottom: 2em
+  right: 1em
+  z-index: 1000
+
+.browser-geolocation-control
+  background: white
+  border: 1px solid #ccc
+  border-radius: 4px
+  padding: 0.5em 0.75em
+  cursor: pointer
+  box-shadow: 0 1px 5px rgba(0,0,0,0.2)
+  transition: all 0.2s ease
+  font-size: 1.2em
+
+  &:hover
+    background: #f0f0f0
+
+  &--active
+    background: #e6f7ff
+    border-color: #91d5ff
+    color: #1890ff
+
+  &--error
+    background: #fff2f0
+    border-color: #ffccc7
+    color: #ff4d4f
+
+.browser-geolocation-icon
+  display: inline-block
+
 
 body
   overflow: hidden
