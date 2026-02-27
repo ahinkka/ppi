@@ -1,5 +1,5 @@
 import React, { Dispatch } from 'react'
-import { format as formatDate } from 'date-fns'
+import { format as formatDate, formatDistance } from 'date-fns'
 import { connect } from 'react-redux'
 
 import { Action } from './action'
@@ -75,7 +75,7 @@ const handleKeyDown = (dispatch: Dispatch<Action>, event: KeyboardEvent): void =
 
 const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement => {
   const display = formatDate(new Date(props.currentValue), 'yyyy-MM-dd HH:mm:ss xx')
-  const title = 'Current displayed product time is ' + display
+  const title = `Current displayed product time is ${display} (${formatDistance(new Date(), props.currentValue)} ago)`
   return (
     <div title={title} className="h6" id="product-time">{display}</div>
   )
