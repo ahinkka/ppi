@@ -50,7 +50,14 @@ export default tseslint.config(
         ignoreComments: true
       }],
       'react/prop-types': 'off',
-      'react/react-in-jsx-scope': 'off' // Not needed after React 17
+      'react/react-in-jsx-scope': 'off', // Not needed after React 17
+      'no-restricted-imports': ['error', {
+        paths: [{
+          name: 'react-redux',
+          importNames: ['useDispatch'],
+          message: 'Use useAppDispatch from ./redux_hooks instead of useDispatch from react-redux',
+        }],
+      }],
     },
   },
   // TypeScript specific configuration
@@ -78,5 +85,11 @@ export default tseslint.config(
   {
     files: ['**/*.js', '**/*.jsx'],
     extends: [tseslint.configs.disableTypeChecked],
-  }
+  },
+  {
+    files: ['src/redux_hooks.ts'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
 )

@@ -567,6 +567,10 @@ const initialState: State = {
   }
 }
 
+// Redux store types
+export type RootState = State
+export type AppDispatch = (action: Action) => Action
+
 export function reducer(state: State | undefined, action: Action): State {
   if (state === undefined) {
     state = initialState

@@ -1,11 +1,12 @@
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { useAppDispatch } from './redux_hooks'
 import { State } from './state'
 import { useEffect, useRef } from 'react'
 import OlMap from 'ol/Map'
 import Control from 'ol/control/Control'
 
 export const BrowserGeolocationControl: React.FC<{ map: OlMap | null }> = ({ map }) => {
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   const browserGeolocation = useSelector((state: State) => state.browserGeolocation)
   const controlRef = useRef<HTMLDivElement>(null)
   const olControlRef = useRef<Control>(null)

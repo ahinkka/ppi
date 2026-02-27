@@ -1,8 +1,9 @@
-import React, { Dispatch } from 'react'
+import React from 'react'
+import { useAppDispatch } from './redux_hooks'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
-import { StringPayloadAction, Action } from './action'
+import { StringPayloadAction } from './action'
 
 
 type DropdownSelectorOptionProps = {
@@ -20,13 +21,13 @@ type DropdownSelectorProps<T extends StringPayloadAction['type']> = {
   legend: string
   currentValue: string,
   disabled: boolean,
-  action: T,
-  dispatch: Dispatch<Action>
+  action: T
 }
 
 const DropdownSelector = <T extends StringPayloadAction['type']>(
   props: DropdownSelectorProps<T>
 ) => {
+  const dispatch = useAppDispatch()
   const options = props.items.map(
     (item) => (<DropdownSelectorOption key={item.id} id={item.id} display={item.display}/>)
   )
@@ -37,7 +38,7 @@ const DropdownSelector = <T extends StringPayloadAction['type']>(
   )
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
-    props.dispatch({
+    dispatch({
       type: props.action,
       payload: e.target.value
     } as Extract<StringPayloadAction, { type: T }>)

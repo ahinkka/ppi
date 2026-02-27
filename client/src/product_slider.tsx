@@ -1,11 +1,10 @@
-import { Component, WheelEvent, Dispatch } from 'react'
+import { Component, WheelEvent } from 'react'
+import { useAppDispatch } from './redux_hooks'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
 import { format as formatDate, differenceInMinutes } from 'date-fns'
 import { LRUCache } from 'lru-cache'
-
-import { Action } from './action'
 
 
 const minAnimationTime = (times: number[]): Date => {
@@ -105,10 +104,10 @@ type TickItem = {
 
 type ProductSliderProps = {
   ticks: TickItem[]
-  dispatch: Dispatch<Action>
 }
 
 function ProductSlider(props: ProductSliderProps) {
+  const dispatch = useAppDispatch()
   const times = props.ticks.map((item) => item.time)
   const [minTime, maxTime] = [minAnimationTime(times), maxAnimationTime(times)]
   const span = maxTime.valueOf() - minTime.valueOf()
@@ -141,9 +140,9 @@ function ProductSlider(props: ProductSliderProps) {
 
   const onWheel = (event: WheelEvent<HTMLDivElement>) => {
     if (event.deltaY < 0) {
-      props.dispatch({ type: 'tick backward' })
+      dispatch({ type: 'tick backward' })
     } else if (event.deltaY > 0) {
-      props.dispatch({ type: 'tick forward' })
+      dispatch({ type: 'tick forward' })
     }
   }
 

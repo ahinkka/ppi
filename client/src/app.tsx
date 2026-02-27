@@ -170,8 +170,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               tooltip="Press S to cycle sites"
               tooltipId="site-tooltip"
               action={'site selected'}
-              disabled={false}
-              dispatch={props.dispatch} />
+              disabled={false} />
             <DropdownSelector
               currentValue={productId}
               legend="Product"
@@ -179,8 +178,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               tooltip="Press P to cycle products"
               tooltipId="product-tooltip"
               action={'product selected'}
-              disabled={false}
-              dispatch={props.dispatch} />
+              disabled={false} />
             <DropdownSelector
               currentValue={flavorId}
               legend="Flavor"
@@ -188,15 +186,14 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               tooltip="Press F to cycle flavors"
               tooltipId="flavor-tooltip"
               action={'flavor selected'}
-              disabled={false}
-              dispatch={props.dispatch} />
+              disabled={false} />
           </div>
           <div id="play-controls">
-            <ToggleButton toggleStatus={props.animation.running} dispatch={props.dispatch}
+            <ToggleButton toggleStatus={props.animation.running}
               onSymbol="&#9616;&nbsp;&#9612;" offSymbol="&nbsp;&#9658;&nbsp;"
               action={'toggle animation'}
               tooltip="Press SPACE to toggle animation" />
-            <ProductSlider ticks={tickItems} dispatch={props.dispatch} />
+            <ProductSlider ticks={tickItems} />
           </div>
           <TimeDisplay currentValue={currentProductTime} />
         </div>
