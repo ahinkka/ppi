@@ -15,5 +15,9 @@ export function formatTimeDifference(older: Temporal.Instant, newer: Temporal.In
   const minutes = differenceInMinutes(newer, older)
   const displayHours = Math.floor(minutes / 60)
   const displayMinutes = Math.floor(minutes - displayHours * 60)
-  return `${displayHours} hours, ${displayMinutes} minutes ago`
+  if (displayHours > 0) {
+    return `${displayHours} hours, ${displayMinutes} minutes ago`
+  } else {
+    return `${displayMinutes} minutes ago`
+  }
 }
