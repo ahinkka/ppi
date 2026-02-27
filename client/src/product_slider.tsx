@@ -3,7 +3,8 @@ import { useAppDispatch } from './redux_hooks'
 
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 
-import { format as formatDate, differenceInMinutes } from 'date-fns'
+import { formatTimeDifference } from './temporal_utils'
+import { Temporal } from '@js-temporal/polyfill'
 import { LRUCache } from 'lru-cache'
 
 
@@ -71,11 +72,10 @@ class Tick extends Component<TickProps> {
 }
 
 const _renderTooltip = (time: number) => {
-  const utcTime = new Date(time)
-  const minutes = differenceInMinutes(new Date(), utcTime)
-  const displayHours = Math.floor(minutes / 60)
-  const displayMinutes = Math.floor(minutes - displayHours * 60)
-  return formatDate(utcTime, 'yyyy-MM-dd HH:mm:ss') + `UTC (${displayHours} hours, ${displayMinutes} minutes ago)`
+  const instant = Temporal.Instant.fromEpochMilliseconds(time)
+  const formatted = instant.toZonedDateTimeISO('UTC').toLocaleString('en-GB', { calendar: 'iso8601' })
+  const timeDifference = formatTimeDifference(instant, Temporal.Now.instant())
+  return `${formatted} (${timeDifference})`
 }
 
 const _renderTooltipCache = new LRUCache<number, string>({

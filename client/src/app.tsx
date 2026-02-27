@@ -1,5 +1,6 @@
 import React, { Dispatch } from 'react'
-import { format as formatDate, formatDistance } from 'date-fns'
+import { formatTimeDifference } from './temporal_utils'
+import { Temporal } from '@js-temporal/polyfill'
 import { connect } from 'react-redux'
 
 import { Action } from './action'
@@ -74,9 +75,20 @@ const handleKeyDown = (dispatch: Dispatch<Action>, event: KeyboardEvent): void =
 
 
 const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement => {
-  const display = formatDate(new Date(props.currentValue), 'yyyy-MM-dd HH:mm:ss xx')
-  const title = `Current displayed product time is ${display} (${formatDistance(new Date(), props.currentValue)} ago)`
-  const relativeDisplay = `${formatDistance(new Date(), props.currentValue)} ago`
+  if (props.currentValue === null) {
+    return (
+      <div id="product-time">
+        <div id="product-absolute-time">No time available</div>
+        <div id="product-relative-time">-</div>
+      </div>
+    )
+  }
+
+  const displayInstant = Temporal.Instant.fromEpochMilliseconds(props.currentValue)
+  const display = displayInstant.toZonedDateTimeISO('UTC').toLocaleString('en-GB', { calendar: 'iso8601' })
+  const timeDifference = formatTimeDifference(displayInstant, Temporal.Now.instant())
+  const title = `Current displayed product time is ${display} (${timeDifference})`
+  const relativeDisplay = timeDifference
 
   return (
     <div title={title} id="product-time">

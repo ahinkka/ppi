@@ -1,11 +1,11 @@
-import { parseISO, addMinutes } from 'date-fns'
+import { Temporal } from '@js-temporal/polyfill'
 import { orderForLoading, evenIndexed, everyFourthIndexed } from '../src/product_time_loading_order'
 
 describe('Should order more recent products first', () => {
-  const startTime = parseISO('2019-04-19T00:00:00+00:00')
+  const startTime = Temporal.Instant.from('2019-04-19T00:00:00+00:00')
   const times = Array.from({ length: 24 * 4 }, (_, i) =>
-    addMinutes(startTime, i * 15)
-  ).map(d => d.valueOf())
+    startTime.add({ minutes: i * 15 })
+  ).map(d => d.epochMilliseconds)
   const sorted = orderForLoading(times)
 
   const threeHourProductCount = 3 * 4 + 1
