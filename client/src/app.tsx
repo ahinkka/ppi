@@ -76,8 +76,13 @@ const handleKeyDown = (dispatch: Dispatch<Action>, event: KeyboardEvent): void =
 const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement => {
   const display = formatDate(new Date(props.currentValue), 'yyyy-MM-dd HH:mm:ss xx')
   const title = `Current displayed product time is ${display} (${formatDistance(new Date(), props.currentValue)} ago)`
+  const relativeDisplay = `${formatDistance(new Date(), props.currentValue)} ago`
+
   return (
-    <div title={title} className="h6" id="product-time">{display}</div>
+    <div title={title} id="product-time">
+      <div id="product-absolute-time">{display}</div>
+      <div id="product-relative-time">{relativeDisplay}</div>
+    </div>
   )
 }
 
