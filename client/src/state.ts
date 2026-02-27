@@ -517,6 +517,18 @@ function productLoadUpdateReducer(state: State, action: Extract<Action, { type: 
 }
 
 
+function toggleBrowserGeolocationEnabled(state: State, payload?: boolean) {
+  // This needs a payload because React renders components twice in dev mode,
+  // resulting in the state being loaded twice from the hash. This ensures the
+  // state is always loaded correctly even if it's loaded twice.
+  const newValue = payload !== undefined
+    ? payload
+    : !O.get(browserGeolocationEnabledL)(state)
+
+  return O.set(browserGeolocationEnabledL)(newValue)(state)
+}
+
+
 const initialState: State = {
   selection: {
     siteId: null,
@@ -602,7 +614,7 @@ export function reducer(state: State | undefined, action: Action): State {
     case 'product load update':
       return productLoadUpdateReducer(state, action as Extract<Action, { type: 'product load update' }>)
     case 'toggle browser geolocation':
-      return O.set(browserGeolocationEnabledL)(!O.get(browserGeolocationEnabledL)(state))(state)
+      return toggleBrowserGeolocationEnabled(state, action.payload)
     case 'browser geolocation position updated':
       return pipe(
         state,

@@ -34,7 +34,7 @@ export type Action =
   | { type: 'pointer moved'; payload: PointerCoordinate }
   | { type: 'tick clicked'; payload: number }
   | { type: 'product load update'; payload: ProductLoadPayload }
-  | { type: 'toggle browser geolocation' }
+  | { type: 'toggle browser geolocation', payload?: boolean }
   | { type: 'browser geolocation position updated'; payload: { position: [number, number]; accuracy: number | null } }
   | { type: 'browser geolocation error'; payload: string }
 

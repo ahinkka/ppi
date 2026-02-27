@@ -10,7 +10,7 @@ import { Action } from './action'
 
 type Props = UrlState & {
   dispatch: Dispatch<Action>,
-  catalog: Catalog,
+  catalog: Catalog
 }
 
 class UrlStateAdapter extends Component<Props> {
@@ -58,6 +58,11 @@ class UrlStateAdapter extends Component<Props> {
         this.updates.push({ type: 'toggle animation' })
       }
 
+      const browserGeolocationEnabled = parsed.browserGeolocationEnabled === 'true' ? true : false
+      if (this.props.browserGeolocationEnabled !== browserGeolocationEnabled) {
+        this.updates.push({ type: 'toggle browser geolocation', payload: browserGeolocationEnabled })
+      }
+
       const [lon, lat] = [parseFloat(parsed.lon), parseFloat(parsed.lat)]
       if (!isNaN(lon) && !isNaN(lat)) {
         this.updates.push({
@@ -90,7 +95,8 @@ const mapStateToProps = (state: State): Props => {
     flavorId: state.selection.flavorId,
     animationRunning: state.animation.running,
     currentLon: state.map.current.centerLon,
-    currentLat: state.map.current.centerLat
+    currentLat: state.map.current.centerLat,
+    browserGeolocationEnabled: state.browserGeolocation.enabled
   } as Props
 }
 export default connect(mapStateToProps)(UrlStateAdapter)

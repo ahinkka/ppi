@@ -21,7 +21,8 @@ export type UrlState = {
   flavorId: string | null,
   animationRunning: boolean,
   currentLon: number,
-  currentLat: number
+  currentLat: number,
+  browserGeolocationEnabled: boolean
 }
 
 export const makeHashFromState = (urlState: UrlState) => {
@@ -32,8 +33,10 @@ export const makeHashFromState = (urlState: UrlState) => {
       flavor: urlState.flavorId,
       animationRunning: urlState.animationRunning,
       lon: urlState.currentLon,
-      lat: urlState.currentLat
-    })
+      lat: urlState.currentLat,
+      browserGeolocationEnabled: urlState.browserGeolocationEnabled
+    }
+  )
 }
 
 
