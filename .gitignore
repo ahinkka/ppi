@@ -1,6 +1,7 @@
 *.pyc
 client/node_modules
 client/build
+client/tsconfig.tsbuildinfo
 fmi/s3_downloader/env
 fmi/s3_downloader/config.ini
 *.json
