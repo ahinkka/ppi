@@ -1,18 +1,16 @@
 import { useEffect } from 'react'
-import { useSelector } from 'react-redux'
-import { useAppDispatch } from './redux_hooks'
+import { useAppDispatch, useAppSelector } from './redux_hooks'
 import { Feature } from 'ol'
 import { Point } from 'ol/geom'
 import { Style, Circle, Fill, Stroke } from 'ol/style'
 import { fromLonLat } from 'ol/proj'
-import { State } from './state'
 import OlMap from 'ol/Map'
 import VectorSource from 'ol/source/Vector'
 import VectorLayer from 'ol/layer/Vector'
 
 export const BrowserGeolocationMarker: React.FC<{ map: OlMap | null }> = ({ map }) => {
   const dispatch = useAppDispatch()
-  const browserGeolocation = useSelector((state: State) => state.browserGeolocation)
+  const browserGeolocation = useAppSelector((state) => state.browserGeolocation)
   const { enabled, position, accuracy } = browserGeolocation
 
   useEffect(() => {

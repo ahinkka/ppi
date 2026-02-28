@@ -54,8 +54,8 @@ export default tseslint.config(
       'no-restricted-imports': ['error', {
         paths: [{
           name: 'react-redux',
-          importNames: ['useDispatch'],
-          message: 'Use useAppDispatch from ./redux_hooks instead of useDispatch from react-redux',
+          importNames: ['useDispatch', 'useSelector'],
+          message: 'Use useAppDispatch and useAppSelector from ./redux_hooks',
         }],
       }],
     },
