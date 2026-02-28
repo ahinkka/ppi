@@ -9,7 +9,7 @@ help:
 
 .PHONY: clean
 clean: ## Clean build directory
-	rm -rf ./build/{js,css} ./build/*.html tsconfig.tsbuildinfo
+	rm -rf ./build/{js,css} ./build/*.html tsconfig.tsbuildinfo .eslintcache
 
 .PHONY: dirs
 dirs:
@@ -104,7 +104,7 @@ watch: $(html_files) styles ## Build and watch everything continuously
 .PHONY: lint
 lint: ## Run TS typecheck and ESLint
 	npx tsc --jsx react-jsxdev --noEmit --incremental
-	npx eslint src test
+	npx eslint --cache src test
 	npx knip -n
 
 .PHONY: lint-watch

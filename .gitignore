@@ -2,6 +2,7 @@
 client/node_modules
 client/build
 client/tsconfig.tsbuildinfo
+client/.eslintcache
 fmi/s3_downloader/env
 fmi/s3_downloader/config.ini
 *.json
