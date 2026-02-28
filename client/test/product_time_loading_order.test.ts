@@ -20,7 +20,9 @@ describe('Should order more recent products first', () => {
     const twelveToThreeHoursInThePast =
       times.slice(times.length - 12 * 4 - 1, times.length - threeHourProductCount)
     const everyEvenIndexed = evenIndexed([...twelveToThreeHoursInThePast].reverse())
-    expect(sorted.slice(threeHourProductCount, threeHourProductCount + 9 * 2)).toEqual(everyEvenIndexed)
+    expect(
+      sorted.slice(threeHourProductCount, threeHourProductCount + 9 * 2)
+    ).toEqual(everyEvenIndexed)
   })
 
   test('with every fourth product after that', () => {

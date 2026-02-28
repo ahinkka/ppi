@@ -65,7 +65,7 @@ async function parseProduct(input: Uint8Array): Promise<LoadedProduct> {
   }
 }
 
-export type ProductUrlResolver = (flavor: Flavor, time: number) => string
+type ProductUrlResolver = (flavor: Flavor, time: number) => string
 
 const loadOneProduct = (
   onProductLoadUpdate: (payload: { loaded: string[], unloaded: string[] }) => void,

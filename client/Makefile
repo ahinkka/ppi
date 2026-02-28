@@ -104,7 +104,8 @@ watch: $(html_files) styles ## Build and watch everything continuously
 .PHONY: lint
 lint: ## Run TS typecheck and ESLint
 	npx tsc --jsx react-jsxdev --noEmit
-	./node_modules/.bin/eslint src
+	npx eslint src test
+	npx knip -n
 
 .PHONY: lint-watch
 lint-watch: ## Run typechecker and ESLint continuously

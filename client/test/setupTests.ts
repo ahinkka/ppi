@@ -6,7 +6,7 @@ import { Temporal } from '@js-temporal/polyfill'
 (global as any).Temporal = Temporal
 
 // Also make it available for ES modules
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 if (typeof globalThis !== 'undefined') {
-  (globalThis as any).Temporal = Temporal
+  // @ts-expect-error Temporal is expected to exist in tests
+  (globalThis as unknown).Temporal = Temporal
 }

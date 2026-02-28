@@ -13,7 +13,7 @@ export function convertCoordinate(productProjDef: string, mapProjDef: string) {
 }
 
 
-export function transform(affineTransform: AffineTransform, x: number, y: number) {
+function transform(affineTransform: AffineTransform, x: number, y: number) {
   // "affineTransform": [
   // 0   19.8869934197,              // X origin
   // 1   0.009449604183593748,       //  width (typically main) coef for calculating X offset

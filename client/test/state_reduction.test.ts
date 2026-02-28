@@ -79,7 +79,9 @@ describe('On catalog update', () => {
     const reduced = catalogUpdatedReducer(state, { type: 'catalog updated', payload: after.catalog })
 
     expect(reduced.animation.currentProductTime).not.toEqual(state.animation.currentProductTime)
-    expect(reduced.animation.currentProductTime).toBeGreaterThan(state.animation.currentProductTime)
+    expect(
+      reduced.animation.currentProductTime
+    ).toBeGreaterThan(state.animation.currentProductTime)
     expect(reduced.animation.currentProductTime).toEqual(datesAfter[2])
   })
 

@@ -99,7 +99,7 @@ const TimeDisplay = (props: { currentValue: number | null }): React.ReactElement
 }
 
 
-export type ObserverAppProps = State & {
+type ObserverAppProps = State & {
   dispatch: Dispatch<Action>,
   productUrlResolver: (flavor: Flavor, currentProductTime: State['animation']['currentProductTime']) => string | null,
   getProductByUrl: (url: string | null) => unknown

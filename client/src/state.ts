@@ -428,7 +428,7 @@ function cycleFlavorReducer(state: State): State {
 }
 
 
-export const animationTickReducer = (state: State): State =>
+const animationTickReducer = (state: State): State =>
   O.set(currentProductTimeL)(
     selectFlavorTime(state.selection.flavor, state.animation.currentProductTime, true, false)
   )(state)

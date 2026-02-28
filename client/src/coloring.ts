@@ -13,7 +13,7 @@ export type RGBAColor = [number, number, number, number]
 // Global not scanned color; see fillWithNotScanned before changing this
 export const NOT_SCANNED_COLOR: RGBAColor = [211, 211, 211, 76]
 // Global no echo color (transparent black)
-export const NO_ECHO_COLOR: RGBAColor = [0, 0, 0, 0]
+const NO_ECHO_COLOR: RGBAColor = [0, 0, 0, 0]
 
 export const ScaleRangeType = {
   STEP: 'step',
@@ -80,7 +80,7 @@ const _reflectivityValueToNOAAColor =
   }
 
 const _reflectivityValueToNOAAColorCache: Record<number, RGBColor | [null, null, null]> = {}
-export const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
+const reflectivityValueToNOAAColor = (reflectivityValue: number) => {
   if (!(reflectivityValue in _reflectivityValueToNOAAColorCache)) {
     _reflectivityValueToNOAAColorCache[reflectivityValue] =
       _reflectivityValueToNOAAColor(reflectivityValue)
