@@ -59,7 +59,6 @@ bundle-prod: dirs
 		--bundle \
 		--outfile=build/js/ppi.js \
 		--loader:.js=jsx \
-		--define:process.env.NODE_ENV=\"production\" \
 		--minify
 
 .PHONY: build-prod
