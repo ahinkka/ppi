@@ -128,7 +128,7 @@ const renderCursorToolContentAndColors = (
   }
 
   if (
-    nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined && // eslint-disable-line max-len
+    nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined && // eslint-disable-line @stylistic/max-len
     nearestTownName && distanceToNearestTown !== undefined && bearingToNearestTown !== undefined
   ) {
     return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km ${bearingToCompassRoseReading(bearingToNearestCity)}<br>${nearestTownName} ${distanceToNearestTown} km ${bearingToCompassRoseReading(bearingToNearestTown)}</small></div>`, bgColor, textColor]

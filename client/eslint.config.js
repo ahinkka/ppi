@@ -1,6 +1,7 @@
 import tseslint from 'typescript-eslint'
 import reactPlugin from 'eslint-plugin-react'
 import globals from 'globals'
+import stylistic from '@stylistic/eslint-plugin'
 
 export default tseslint.config(
   {
@@ -9,6 +10,7 @@ export default tseslint.config(
   {
     plugins: {
       react: reactPlugin,
+      '@stylistic': stylistic,
     },
     languageOptions: {
       parserOptions: {
@@ -32,13 +34,13 @@ export default tseslint.config(
     rules: {
       ...reactPlugin.configs.recommended.rules,
       'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
-      'indent': ['error', 2, { 'SwitchCase': 1 }],
-      'linebreak-style': ['error', 'unix'],
-      'quotes': ['error', 'single'],
-      'semi': ['warn', 'never'],
-      'object-curly-spacing': ['warn', 'always'],
+      '@stylistic/indent': ['error', 2, { 'SwitchCase': 1 }],
+      '@stylistic/linebreak-style': ['error', 'unix'],
+      '@stylistic/quotes': ['error', 'single'],
+      '@stylistic/semi': ['warn', 'never'],
+      '@stylistic/object-curly-spacing': ['warn', 'always'],
       'no-console': ['error', { allow: ['warn', 'error'] }],
-      'max-len': ['warn', {
+      '@stylistic/max-len': ['warn', {
         code: 98,
         tabWidth: 2,
         ignoreUrls: true,

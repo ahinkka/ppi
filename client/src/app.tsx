@@ -20,8 +20,8 @@ import HclassColorScale from './hclass_color_scale'
 const _NOAAReflectivityColorScale = NOAAScaleToScaleDescription()
 
 
-const siteSelections = (radarProducts: State['catalog']['radarProducts']): Array<{id: string, display: string}> => {
-  const result: Array<{id: string, display: string}> = []
+const siteSelections = (radarProducts: State['catalog']['radarProducts']): Array<{ id: string, display: string }> => {
+  const result: Array<{ id: string, display: string }> = []
   for (const siteId in radarProducts) {
     result.push({ id: siteId, display: radarProducts[siteId].display })
   }
@@ -29,8 +29,8 @@ const siteSelections = (radarProducts: State['catalog']['radarProducts']): Array
   return result
 }
 
-const productSelections = (site: State['selection']['site']): Array<{id: string, display: string}> => {
-  const result: Array<{id: string, display: string}> = []
+const productSelections = (site: State['selection']['site']): Array<{ id: string, display: string }> => {
+  const result: Array<{ id: string, display: string }> = []
   for (const productId in site.products) {
     result.push({ id: productId, display: site.products[productId].display })
   }
@@ -38,8 +38,8 @@ const productSelections = (site: State['selection']['site']): Array<{id: string,
   return result
 }
 
-const flavorSelections = (product: State['selection']['product']): Array<{id: string, display: string}> => {
-  const result: Array<{id: string, display: string}> = []
+const flavorSelections = (product: State['selection']['product']): Array<{ id: string, display: string }> => {
+  const result: Array<{ id: string, display: string }> = []
   for (const flavorId in product.flavors) {
     result.push({ id: flavorId, display: product.flavors[flavorId].display })
   }

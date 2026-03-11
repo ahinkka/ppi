@@ -4,6 +4,7 @@
   "type": "module",
   "devDependencies": {
     "@js-temporal/polyfill": "^0.5.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
     "@types/bootstrap": "^5.2.10",
     "@types/jest": "^30.0.0",
     "@types/json-stable-stringify": "^1.1.0",

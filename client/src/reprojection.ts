@@ -53,9 +53,9 @@ function lerp(a: number, b: number, f: number): number {
 }
 
 function canvasPxToMapCoords(canvasWidth: number, canvasHeight: number,
-			     xMin: number, xMax: number,
-			     yMin: number, yMax:number,
-			     x: number, y: number): [number, number] {
+  xMin: number, xMax: number,
+  yMin: number, yMax:number,
+  x: number, y: number): [number, number] {
   const propX = x / canvasWidth
   const propY = 1 - y / canvasHeight
   const mapX = lerp(xMin, xMax, propX)
