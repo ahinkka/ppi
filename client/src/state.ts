@@ -125,7 +125,7 @@ function selectProduct(previousProductSelection: string, site: State['selection'
 
 
 function selectFlavor(previousFlavor: string, product: CatalogProduct): [string, Flavor] {
-  if (previousFlavor != null) {   
+  if (previousFlavor != null) {
     for (const flavorId in product.flavors) {
       if (flavorId === previousFlavor) {
         return [flavorId, product.flavors[flavorId]]

@@ -255,7 +255,7 @@ const cursorToolStyleFunction = (feature: FeatureLike, cursorToolPoints: State['
     return new Style()
   }
 
-  const coords = geometry.getType() === 'Point' 
+  const coords = geometry.getType() === 'Point'
     ? (geometry as Point).getCoordinates()
     : null
 

@@ -45,7 +45,7 @@ class UrlStateAdapter extends Component<Props> {
   }
 
   loadHash() {
-    this.updates = []    
+    this.updates = []
     if (window.location.hash != '') {
       const parsed = parseHash(window.location.hash)
       this.updates.push({ type: 'site selected', payload: parsed.site })

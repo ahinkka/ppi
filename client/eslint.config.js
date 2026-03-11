@@ -38,6 +38,7 @@ export default tseslint.config(
       '@stylistic/linebreak-style': ['error', 'unix'],
       '@stylistic/quotes': ['error', 'single'],
       '@stylistic/semi': ['warn', 'never'],
+      '@stylistic/no-trailing-spaces': ['warn', { 'ignoreComments': true }],
       '@stylistic/object-curly-spacing': ['warn', 'always'],
       'no-console': ['error', { allow: ['warn', 'error'] }],
       '@stylistic/max-len': ['warn', {
