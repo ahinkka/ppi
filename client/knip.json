@@ -1,0 +1,9 @@
+{
+  "ignoreFiles": ["css/ppi.sass", "src/bench.js"],
+  "ignoreDependencies": [
+    "@types/proj4",
+    "@types/react-redux",
+    "jest",
+    "sass"
+  ]
+}
