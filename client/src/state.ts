@@ -38,6 +38,17 @@ export type State = {
     position: [number, number] | null,
     accuracy: number | null,
     error: string | null
+  },
+  cursorTool: {
+    active: boolean,
+    points: Array<{
+      timestamp: number,
+      coordinates: [number, number]
+    }>,
+    extrapolatedPoints: Array<{
+      timestamp: number,
+      coordinates: [number, number]
+    }>
   }
 }
 
@@ -528,6 +539,56 @@ function toggleBrowserGeolocationEnabled(state: State, payload?: boolean) {
   return O.set(browserGeolocationEnabledL)(newValue)(state)
 }
 
+const toggleCursorToolReducer = (state: State): State =>
+  pipe(
+    state,
+    (s: State) => O.set(cursorToolActiveL)(!O.get(cursorToolActiveL)(s))(s)
+  )
+
+const cursorToolPointAddedReducer = (state: State, action: Extract<Action, { type: 'cursor tool point added' }>): State => {
+  const newPoint = {
+    timestamp: action.payload.timestamp,
+    coordinates: action.payload.coordinates
+  }
+
+  const updatedPoints = [...O.get(cursorToolPointsL)(state), newPoint]
+
+  if (updatedPoints.length >= 2) {
+    const point1 = updatedPoints[updatedPoints.length - 2]
+    const point2 = updatedPoints[updatedPoints.length - 1]
+    const timeDiffMinutes = (point2.timestamp - point1.timestamp) / (1000 * 60)
+
+    const lonPerMinute = (point2.coordinates[0] - point1.coordinates[0]) / timeDiffMinutes
+    const latPerMinute = (point2.coordinates[1] - point1.coordinates[1]) / timeDiffMinutes
+
+    const extrapolatedLon = point2.coordinates[0] + (lonPerMinute * timeDiffMinutes)
+    const extrapolatedLat = point2.coordinates[1] + (latPerMinute * timeDiffMinutes)
+    const extrapolatedTime = point2.timestamp + (timeDiffMinutes * 1000 * 60)
+
+    const newExtrapolatedPoint = {
+      timestamp: extrapolatedTime,
+      coordinates: [extrapolatedLon, extrapolatedLat] as [number, number]
+    }
+
+    return pipe(
+      state,
+      O.set(cursorToolPointsL)(updatedPoints),
+      O.set(cursorToolExtrapolatedPointsL)([newExtrapolatedPoint])
+    )
+  } else {
+    return pipe(
+      state,
+      O.set(cursorToolPointsL)(updatedPoints)
+    )
+  }
+}
+
+const cursorToolResetReducer = (state: State): State =>
+  pipe(
+    state,
+    O.set(cursorToolPointsL)([]),
+    O.set(cursorToolExtrapolatedPointsL)([])
+  )
 
 const initialState: State = {
   selection: {
@@ -564,8 +625,18 @@ const initialState: State = {
     position: null,
     accuracy: null,
     error: null
+  },
+  cursorTool: {
+    active: false,
+    points: [],
+    extrapolatedPoints: []
   }
 }
+
+const cursorToolL = O.optic_<State>().prop('cursorTool')
+const cursorToolActiveL = cursorToolL.prop('active')
+const cursorToolPointsL = cursorToolL.prop('points')
+const cursorToolExtrapolatedPointsL = cursorToolL.prop('extrapolatedPoints')
 
 // Redux store types
 export type RootState = State
@@ -633,5 +704,11 @@ export function reducer(state: State | undefined, action: Action): State {
         O.set(browserGeolocationPositionL)(null),
         O.set(browserGeolocationAccuracyL)(null)
       )
+    case 'toggle cursor tool':
+      return toggleCursorToolReducer(state)
+    case 'cursor tool point added':
+      return cursorToolPointAddedReducer(state, action as Extract<Action, { type: 'cursor tool point added' }>)
+    case 'cursor tool reset':
+      return cursorToolResetReducer(state)
   }
 }

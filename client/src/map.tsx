@@ -21,6 +21,7 @@ import CircleStyle from 'ol/style/Circle'
 import FillStyle from 'ol/style/Fill'
 import StrokeStyle from 'ol/style/Stroke'
 import Style from 'ol/style/Style'
+import Text from 'ol/style/Text'
 import { Coordinate } from 'ol/coordinate'
 import Point from 'ol/geom/Point'
 import { Size } from 'ol/size'
@@ -246,6 +247,88 @@ const resolveCursorToolContentAndColors = (
   )
 }
 
+const cursorToolStyleFunction = (feature: FeatureLike, cursorToolPoints: State['cursorTool']['points']) => {
+  const isExtrapolated = feature.get('isExtrapolated') as boolean || false
+
+  const geometry = feature.getGeometry()
+  if (!geometry) {
+    return new Style()
+  }
+
+  const coords = geometry.getType() === 'Point' 
+    ? (geometry as Point).getCoordinates()
+    : null
+
+  if (!coords) {
+    return new Style()
+  }
+
+  if (isExtrapolated) {
+    const timestamp = feature.get('timestamp') as number || Date.now()
+    const date = new Date(timestamp)
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    const timeString = `${hours}:${minutes}`
+
+    return new Style({
+      image: new CircleStyle({
+        radius: 10,
+        fill: new FillStyle({
+          color: 'rgba(0, 255, 0, 0.7)', // Green for extrapolated
+        }),
+        stroke: new StrokeStyle({ color: 'white', width: 3 }),
+      }),
+      text: new Text({
+        text: `${timeString} (extrapolated)`,
+        font: '12px Arial, sans-serif',
+        fill: new FillStyle({ color: 'white' }),
+        stroke: new StrokeStyle({ color: 'black', width: 3 }),
+        offsetY: -18,
+        textAlign: 'center',
+        textBaseline: 'bottom'
+      })
+    })
+  }
+
+  // Use stored original coordinates if available, otherwise fall back to conversion
+  const originalLonLat = feature.get('originalLonLat') as [number, number] | undefined
+  const lonLat = originalLonLat || toLonLat(coords as [number, number], 'EPSG:3857')
+
+  const point = cursorToolPoints.find(p => {
+    const match = Math.abs(p.coordinates[0] - lonLat[0]) < 0.0001 &&
+                  Math.abs(p.coordinates[1] - lonLat[1]) < 0.0001
+    return match
+  })
+
+  if (!point) {
+    return new Style()
+  }
+
+  const date = new Date(point.timestamp)
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  const timeString = `${hours}:${minutes}`
+
+  return new Style({
+    image: new CircleStyle({
+      radius: 8,
+      fill: new FillStyle({
+        color: 'rgba(255, 0, 0, 0.7)',
+      }),
+      stroke: new StrokeStyle({ color: 'white', width: 2 }),
+    }),
+    text: new Text({
+      text: timeString,
+      font: '12px Arial, sans-serif',
+      fill: new FillStyle({ color: 'white' }),
+      stroke: new StrokeStyle({ color: 'black', width: 3 }),
+      offsetY: -15,
+      textAlign: 'center',
+      textBaseline: 'bottom'
+    })
+  })
+}
+
 
 // https://openlayers.org/en/latest/examples/overlay.html
 const updateCursorTool = (
@@ -312,6 +395,7 @@ type Props = {
   geoInterests: State['geoInterests'],
   productTime: number | null,
   productSelection: [string, string, string],
+  cursorTool: State['cursorTool'],
   dispatch: Dispatch<Action>
 }
 
@@ -324,6 +408,8 @@ const cacheOpts = {
 export class Map extends React.Component<Props> {
   private previousProduct: LoadedProduct | null = null
   private previousIntendedCenter: [number, number] = [0, 0]
+  private previousCursorToolPoints: State['cursorTool']['points'] = []
+  private previousExtrapolatedPoints: State['cursorTool']['extrapolatedPoints'] = []
   private renderedProducts: LRUCache<string, HTMLCanvasElement> = new LRUCache(cacheOpts)
   private colorCaches: Record<string, Record<number, [number, number, number, number]>> = {}
   private mapToProductConversionFn: (x: number, y: number) => [number, number] | null = null
@@ -332,6 +418,8 @@ export class Map extends React.Component<Props> {
   private cursorToolVisible: boolean = false
   private vectorSource: VectorSource | null = null
   private vectorLayer: VectorLayer<VectorSource> | null = null
+  private cursorToolSource: VectorSource | null = null
+  private cursorToolLayer: VectorLayer<VectorSource> | null = null
   private map: OlMap | null = null
   private imageCanvas: ImageCanvas | null = null
   private imageLayer: Image<ImageCanvas> | null = null
@@ -381,6 +469,15 @@ export class Map extends React.Component<Props> {
         }
       },
     })
+
+    // Cursor tool layer setup
+    this.cursorToolSource = new VectorSource({})
+
+    this.cursorToolLayer = new VectorLayer({
+      source: this.cursorToolSource,
+      style: (feature) => cursorToolStyleFunction(feature, this.props.cursorTool.points),
+      zIndex: 1000 // Ensure cursor tool points are drawn on top
+    })
   }
 
   onResize() {
@@ -424,6 +521,61 @@ export class Map extends React.Component<Props> {
     this.previousIntendedCenter = this.props.intendedCenter
   }
 
+  updateCursorToolPoints() {
+    const currentPoints = this.props.cursorTool.points
+
+    const pointsChanged = this.previousCursorToolPoints.length !== currentPoints.length ||
+      currentPoints.some((point, index) =>
+        point.coordinates[0] !== this.previousCursorToolPoints[index]?.coordinates[0] ||
+        point.coordinates[1] !== this.previousCursorToolPoints[index]?.coordinates[1] ||
+        point.timestamp !== this.previousCursorToolPoints[index]?.timestamp
+      )
+
+    const currentExtrapolatedPoints = this.props.cursorTool.extrapolatedPoints
+    const extrapolatedPointsChanged =
+      this.previousExtrapolatedPoints.length !== currentExtrapolatedPoints.length ||
+      currentExtrapolatedPoints.some((point, i) => {
+        const prev = this.previousExtrapolatedPoints[i]
+        return point.coordinates[0] !== prev?.coordinates[0] ||
+               point.coordinates[1] !== prev?.coordinates[1] ||
+               point.timestamp !== prev?.timestamp
+      })
+
+    if (!pointsChanged && !extrapolatedPointsChanged) {
+      return
+    }
+
+    this.cursorToolSource?.clear()
+
+    currentPoints.forEach((point, index) => {
+      const projectedCoords = fromLonLat(point.coordinates, 'EPSG:3857')
+      const feature = new Feature({
+        geometry: new Point(projectedCoords),
+        // Store original coordinates and index for matching and selection
+        originalLonLat: point.coordinates,
+        pointIndex: index,
+        isExtrapolated: false
+      })
+      this.cursorToolSource?.addFeature(feature)
+    })
+
+    this.props.cursorTool.extrapolatedPoints.forEach((point, index) => {
+      const projectedCoords = fromLonLat(point.coordinates, 'EPSG:3857')
+      const feature = new Feature({
+        geometry: new Point(projectedCoords),
+        // Store original coordinates for matching
+        originalLonLat: point.coordinates,
+        pointIndex: index,
+        isExtrapolated: true,
+        timestamp: point.timestamp
+      })
+      this.cursorToolSource?.addFeature(feature)
+    })
+
+    this.previousCursorToolPoints = [...currentPoints]
+    this.previousExtrapolatedPoints = [...currentExtrapolatedPoints]
+  }
+
   componentDidMount() {
     this.map = new OlMap({
       view: new View({
@@ -451,6 +603,7 @@ export class Map extends React.Component<Props> {
         }),
 
         this.vectorLayer,
+        this.cursorToolLayer,
       ],
       target: this.mapElementRef.current,
     })
@@ -505,6 +658,20 @@ export class Map extends React.Component<Props> {
       // const pixel = this.map.getEventPixel(evt.originalEvent)
       // const pointerCoords = this.map.getCoordinateFromPixel(pixel)
     })
+
+    this.map.on('click', (evt: { coordinate: Coordinate }) => {
+      if (this.props.cursorTool.active) {
+        const lonLat = toLonLat(evt.coordinate, 'EPSG:3857') as [number, number]
+        dispatch({
+          type: 'cursor tool point added',
+          payload: {
+            timestamp: this.props.productTime || Date.now(),
+            coordinates: lonLat
+          }
+        })
+      }
+    })
+
     this.mapElementRef.current.addEventListener('mouseleave', this.onMouseLeave)
 
     this.resizeTimeout = window.setTimeout(this.onResize, 200)
@@ -697,6 +864,7 @@ export class Map extends React.Component<Props> {
     }
 
     this.updateMap()
+    this.updateCursorToolPoints()
 
     return (
       <React.Fragment>

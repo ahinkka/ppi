@@ -37,6 +37,9 @@ export type Action =
   | { type: 'toggle browser geolocation', payload?: boolean }
   | { type: 'browser geolocation position updated'; payload: { position: [number, number]; accuracy: number | null } }
   | { type: 'browser geolocation error'; payload: string }
+  | { type: 'toggle cursor tool' }
+  | { type: 'cursor tool point added'; payload: { timestamp: number; coordinates: [number, number] } }
+  | { type: 'cursor tool reset' }
 
 // Helper types for components with runtime-determined action types
 export type StringPayloadAction = Extract<Action, { payload: string }>

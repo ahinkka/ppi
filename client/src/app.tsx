@@ -11,6 +11,7 @@ import { LoadedProduct } from './product_loader'
 import DropdownSelector from './dropdown_selector'
 import { Map } from './map'
 import { ToggleButton } from './toggle_button'
+import { Button } from './button'
 import ProductSlider from './product_slider'
 import ColorScale from './color_scale'
 import { NOAAScaleToScaleDescription } from './coloring'
@@ -57,6 +58,8 @@ const handleKeyPress = (dispatch: Dispatch<Action>, event: KeyboardEvent): void 
     dispatch({ type: 'cycle flavor' })
   } else if (event.keyCode == 32) {
     dispatch({ type: 'toggle animation' })
+  } else if (key == 'c' || key == 'C') {
+    dispatch({ type: 'toggle cursor tool' })
   }
 
   // TODO: bind shift + arrows for navigating the map
@@ -211,12 +214,26 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               action={'toggle animation'}
               tooltip="Press SPACE to toggle animation" />
             <ProductSlider ticks={tickItems} />
+            <ToggleButton toggleStatus={props.cursorTool.active}
+              onSymbol="&#127919;" offSymbol="&#127919;"
+              action={'toggle cursor tool'}
+              tooltip="Press C to toggle cursor tool" />
+            {props.cursorTool.active && (
+              <Button
+                text="Clear Points"
+                tooltip="Clear all cursor tool points"
+                action={{ type: 'cursor tool reset' } as Extract<Action, { type: 'cursor tool reset' }>}
+                disabled={props.cursorTool.points.length === 0}
+                className="ms-2"
+              />
+            )}
           </div>
           <TimeDisplay currentValue={currentProductTime} />
         </div>
         <Map headerElementId="header-row"
           intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
           geoInterests={props.geoInterests}
+          cursorTool={props.cursorTool}
           dispatch={props.dispatch}
           product={loadedProduct}
           productTime={currentProductTime}
