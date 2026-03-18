@@ -79,13 +79,13 @@ export const BrowserGeolocationMarker: React.FC<{ map: OlMap | null }> = ({ map 
 
     // Determine marker color based on accuracy
     const isLowAccuracy = accuracy !== null && accuracy > 1000 // 1km threshold
-    const markerColor = isLowAccuracy ? 'rgba(255, 165, 0, 0.4)' : 'rgba(255, 0, 0, 0.8)'
+    const markerColor = isLowAccuracy ? 'rgba(255, 165, 0, 0.4)' : 'rgba(51, 153, 255, 0.9)'
     const markerStrokeColor = isLowAccuracy ? 'rgba(255, 215, 0, 0.6)' : 'white'
 
     // Style for the position marker
     markerFeature.setStyle(new Style({
       image: new Circle({
-        radius: 8,
+        radius: 7,
         fill: new Fill({ color: markerColor }),
         stroke: new Stroke({ color: markerStrokeColor, width: 2 })
       })

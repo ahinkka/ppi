@@ -64,7 +64,7 @@ export const BrowserGeolocationControl: React.FC<{ map: OlMap | null }> = ({ map
         title={getButtonTitle()}
         aria-label={getButtonTitle()}
       >
-        <span className="browser-geolocation-icon">📍</span>
+        <span className="browser-geolocation-icon">⌖</span>
       </button>
     </div>
   )
