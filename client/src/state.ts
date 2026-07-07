@@ -39,7 +39,7 @@ export type State = {
     accuracy: number | null,
     error: string | null
   },
-  cursorTool: {
+  trackingTool: {
     active: boolean,
     points: Array<{
       timestamp: number,
@@ -539,19 +539,19 @@ function toggleBrowserGeolocationEnabled(state: State, payload?: boolean) {
   return O.set(browserGeolocationEnabledL)(newValue)(state)
 }
 
-const toggleCursorToolReducer = (state: State): State =>
+const toggleTrackingToolReducer = (state: State): State =>
   pipe(
     state,
-    (s: State) => O.set(cursorToolActiveL)(!O.get(cursorToolActiveL)(s))(s)
+    (s: State) => O.set(trackingToolActiveL)(!O.get(trackingToolActiveL)(s))(s)
   )
 
-const cursorToolPointAddedReducer = (state: State, action: Extract<Action, { type: 'cursor tool point added' }>): State => {
+const trackingToolPointAddedReducer = (state: State, action: Extract<Action, { type: 'tracking tool point added' }>): State => {
   const newPoint = {
     timestamp: action.payload.timestamp,
     coordinates: action.payload.coordinates
   }
 
-  const updatedPoints = [...O.get(cursorToolPointsL)(state), newPoint]
+  const updatedPoints = [...O.get(trackingToolPointsL)(state), newPoint]
 
   if (updatedPoints.length >= 2) {
     const point1 = updatedPoints[updatedPoints.length - 2]
@@ -572,22 +572,22 @@ const cursorToolPointAddedReducer = (state: State, action: Extract<Action, { typ
 
     return pipe(
       state,
-      O.set(cursorToolPointsL)(updatedPoints),
-      O.set(cursorToolExtrapolatedPointsL)([newExtrapolatedPoint])
+      O.set(trackingToolPointsL)(updatedPoints),
+      O.set(trackingToolExtrapolatedPointsL)([newExtrapolatedPoint])
     )
   } else {
     return pipe(
       state,
-      O.set(cursorToolPointsL)(updatedPoints)
+      O.set(trackingToolPointsL)(updatedPoints)
     )
   }
 }
 
-const cursorToolResetReducer = (state: State): State =>
+const trackingToolResetReducer = (state: State): State =>
   pipe(
     state,
-    O.set(cursorToolPointsL)([]),
-    O.set(cursorToolExtrapolatedPointsL)([])
+    O.set(trackingToolPointsL)([]),
+    O.set(trackingToolExtrapolatedPointsL)([])
   )
 
 const initialState: State = {
@@ -626,17 +626,17 @@ const initialState: State = {
     accuracy: null,
     error: null
   },
-  cursorTool: {
+  trackingTool: {
     active: false,
     points: [],
     extrapolatedPoints: []
   }
 }
 
-const cursorToolL = O.optic_<State>().prop('cursorTool')
-const cursorToolActiveL = cursorToolL.prop('active')
-const cursorToolPointsL = cursorToolL.prop('points')
-const cursorToolExtrapolatedPointsL = cursorToolL.prop('extrapolatedPoints')
+const trackingToolL = O.optic_<State>().prop('trackingTool')
+const trackingToolActiveL = trackingToolL.prop('active')
+const trackingToolPointsL = trackingToolL.prop('points')
+const trackingToolExtrapolatedPointsL = trackingToolL.prop('extrapolatedPoints')
 
 // Redux store types
 export type RootState = State
@@ -704,11 +704,11 @@ export function reducer(state: State | undefined, action: Action): State {
         O.set(browserGeolocationPositionL)(null),
         O.set(browserGeolocationAccuracyL)(null)
       )
-    case 'toggle cursor tool':
-      return toggleCursorToolReducer(state)
-    case 'cursor tool point added':
-      return cursorToolPointAddedReducer(state, action as Extract<Action, { type: 'cursor tool point added' }>)
-    case 'cursor tool reset':
-      return cursorToolResetReducer(state)
+    case 'toggle tracking tool':
+      return toggleTrackingToolReducer(state)
+    case 'tracking tool point added':
+      return trackingToolPointAddedReducer(state, action as Extract<Action, { type: 'tracking tool point added' }>)
+    case 'tracking tool reset':
+      return trackingToolResetReducer(state)
   }
 }

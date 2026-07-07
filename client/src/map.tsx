@@ -90,7 +90,7 @@ const bearingToCompassRoseReading = (bearing: number) => {
 }
 
 
-const renderCursorToolContentAndColors = (
+const renderTrackingToolContentAndColors = (
   value: number,
   dataScale: DataScale,
   dataUnit: DataValueType,
@@ -131,9 +131,9 @@ const renderCursorToolContentAndColors = (
     nearestCityName && distanceToNearestCity !== undefined && bearingToNearestCity !== undefined && // eslint-disable-line @stylistic/max-len
     nearestTownName && distanceToNearestTown !== undefined && bearingToNearestTown !== undefined
   ) {
-    return [`<div id="cursor-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km ${bearingToCompassRoseReading(bearingToNearestCity)}<br>${nearestTownName} ${distanceToNearestTown} km ${bearingToCompassRoseReading(bearingToNearestTown)}</small></div>`, bgColor, textColor]
+    return [`<div id="tracking-tool-content"><b>${textContent}</b><br><small>${nearestCityName} ${distanceToNearestCity} km ${bearingToCompassRoseReading(bearingToNearestCity)}<br>${nearestTownName} ${distanceToNearestTown} km ${bearingToCompassRoseReading(bearingToNearestTown)}</small></div>`, bgColor, textColor]
   } else {
-    return [`<div id="cursor-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
+    return [`<div id="tracking-tool-content"><b>${textContent}</b></div>`, bgColor, textColor]
   }
 }
 
@@ -194,7 +194,7 @@ function resolveNearestCityAndTown(
   }
 }
 
-const resolveCursorToolContentAndColors = (
+const resolveTrackingToolContentAndColors = (
   product: LoadedProduct,
   vectorSource: VectorSource,
   coords: [number, number],
@@ -233,7 +233,7 @@ const resolveCursorToolContentAndColors = (
     nearestTownName, distanceToNearestTown, bearingToNearestTown
   } = resolveNearestCityAndTown(vectorSource, coords, coordsLonLat)
 
-  return renderCursorToolContentAndColors(
+  return renderTrackingToolContentAndColors(
     effectiveValue,
     metadata.productInfo.dataScale,
     metadata.productInfo.dataUnit,
@@ -247,7 +247,7 @@ const resolveCursorToolContentAndColors = (
   )
 }
 
-const cursorToolStyleFunction = (feature: FeatureLike, cursorToolPoints: State['cursorTool']['points']) => {
+const trackingToolStyleFunction = (feature: FeatureLike, trackingToolPoints: State['trackingTool']['points']) => {
   const isExtrapolated = feature.get('isExtrapolated') as boolean || false
 
   const geometry = feature.getGeometry()
@@ -294,7 +294,7 @@ const cursorToolStyleFunction = (feature: FeatureLike, cursorToolPoints: State['
   const originalLonLat = feature.get('originalLonLat') as [number, number] | undefined
   const lonLat = originalLonLat || toLonLat(coords as [number, number], 'EPSG:3857')
 
-  const point = cursorToolPoints.find(p => {
+  const point = trackingToolPoints.find(p => {
     const match = Math.abs(p.coordinates[0] - lonLat[0]) < 0.0001 &&
                   Math.abs(p.coordinates[1] - lonLat[1]) < 0.0001
     return match
@@ -331,12 +331,12 @@ const cursorToolStyleFunction = (feature: FeatureLike, cursorToolPoints: State['
 
 
 // https://openlayers.org/en/latest/examples/overlay.html
-const updateCursorTool = (
+const updateTrackingTool = (
   overlay: Overlay,
   product: LoadedProduct,
   vectorSource: VectorSource,
   newPosition: Coordinate,
-  resolveTemplateAndColors: typeof resolveCursorToolContentAndColors,
+  resolveTemplateAndColors: typeof resolveTrackingToolContentAndColors,
   conversionFn: (lon: number, lat: number) => [number, number]
 ) => {
   const element = overlay.getElement()
@@ -395,7 +395,7 @@ type Props = {
   geoInterests: State['geoInterests'],
   productTime: number | null,
   productSelection: [string, string, string],
-  cursorTool: State['cursorTool'],
+  trackingTool: State['trackingTool'],
   dispatch: Dispatch<Action>
 }
 
@@ -408,25 +408,25 @@ const cacheOpts = {
 export class Map extends React.Component<Props> {
   private previousProduct: LoadedProduct | null = null
   private previousIntendedCenter: [number, number] = [0, 0]
-  private previousCursorToolPoints: State['cursorTool']['points'] = []
-  private previousExtrapolatedPoints: State['cursorTool']['extrapolatedPoints'] = []
+  private previousTrackingToolPoints: State['trackingTool']['points'] = []
+  private previousExtrapolatedPoints: State['trackingTool']['extrapolatedPoints'] = []
   private renderedProducts: LRUCache<string, HTMLCanvasElement> = new LRUCache(cacheOpts)
   private colorCaches: Record<string, Record<number, [number, number, number, number]>> = {}
   private mapToProductConversionFn: (x: number, y: number) => [number, number] | null = null
   private wgs84ToProductConversionFn: (x: number, y: number) => [number, number] | null = null
   private conversionCacheKey: string = ''
-  private cursorToolVisible: boolean = false
+  private trackingToolVisible: boolean = false
   private vectorSource: VectorSource | null = null
   private vectorLayer: VectorLayer<VectorSource> | null = null
-  private cursorToolSource: VectorSource | null = null
-  private cursorToolLayer: VectorLayer<VectorSource> | null = null
+  private trackingToolSource: VectorSource | null = null
+  private trackingToolLayer: VectorLayer<VectorSource> | null = null
   private map: OlMap | null = null
   private imageCanvas: ImageCanvas | null = null
   private imageLayer: Image<ImageCanvas> | null = null
-  private cursorToolOverlay: Overlay | null = null
+  private trackingToolOverlay: Overlay | null = null
   private canvas: HTMLCanvasElement | null = null
   private mapElementRef = React.createRef<HTMLDivElement>()
-  private cursorToolOverlayRef = React.createRef<HTMLDivElement>()
+  private trackingToolOverlayRef = React.createRef<HTMLDivElement>()
   private resizeTimeout: number | null = null
 
   constructor(props: Readonly<Props> | Props) {
@@ -470,13 +470,13 @@ export class Map extends React.Component<Props> {
       },
     })
 
-    // Cursor tool layer setup
-    this.cursorToolSource = new VectorSource({})
+    // Tracking tool layer setup
+    this.trackingToolSource = new VectorSource({})
 
-    this.cursorToolLayer = new VectorLayer({
-      source: this.cursorToolSource,
-      style: (feature) => cursorToolStyleFunction(feature, this.props.cursorTool.points),
-      zIndex: 1000 // Ensure cursor tool points are drawn on top
+    this.trackingToolLayer = new VectorLayer({
+      source: this.trackingToolSource,
+      style: (feature) => trackingToolStyleFunction(feature, this.props.trackingTool.points),
+      zIndex: 1000 // Ensure tracking tool points are drawn on top
     })
   }
 
@@ -495,7 +495,7 @@ export class Map extends React.Component<Props> {
 
   onMouseLeave() {
     this.props.dispatch({ type: 'pointer left map' })
-    const element = this.cursorToolOverlayRef.current
+    const element = this.trackingToolOverlayRef.current
     if (element && element._popover) {
       try {
         element._popover.hide()
@@ -506,7 +506,7 @@ export class Map extends React.Component<Props> {
         console.warn('Popover disposal error (safe to ignore):', e)
       }
     }
-    this.cursorToolVisible = false
+    this.trackingToolVisible = false
   }
 
   updateMap() {
@@ -521,17 +521,17 @@ export class Map extends React.Component<Props> {
     this.previousIntendedCenter = this.props.intendedCenter
   }
 
-  updateCursorToolPoints() {
-    const currentPoints = this.props.cursorTool.points
+  updateTrackingToolPoints() {
+    const currentPoints = this.props.trackingTool.points
 
-    const pointsChanged = this.previousCursorToolPoints.length !== currentPoints.length ||
+    const pointsChanged = this.previousTrackingToolPoints.length !== currentPoints.length ||
       currentPoints.some((point, index) =>
-        point.coordinates[0] !== this.previousCursorToolPoints[index]?.coordinates[0] ||
-        point.coordinates[1] !== this.previousCursorToolPoints[index]?.coordinates[1] ||
-        point.timestamp !== this.previousCursorToolPoints[index]?.timestamp
+        point.coordinates[0] !== this.previousTrackingToolPoints[index]?.coordinates[0] ||
+        point.coordinates[1] !== this.previousTrackingToolPoints[index]?.coordinates[1] ||
+        point.timestamp !== this.previousTrackingToolPoints[index]?.timestamp
       )
 
-    const currentExtrapolatedPoints = this.props.cursorTool.extrapolatedPoints
+    const currentExtrapolatedPoints = this.props.trackingTool.extrapolatedPoints
     const extrapolatedPointsChanged =
       this.previousExtrapolatedPoints.length !== currentExtrapolatedPoints.length ||
       currentExtrapolatedPoints.some((point, i) => {
@@ -545,7 +545,7 @@ export class Map extends React.Component<Props> {
       return
     }
 
-    this.cursorToolSource?.clear()
+    this.trackingToolSource?.clear()
 
     currentPoints.forEach((point, index) => {
       const projectedCoords = fromLonLat(point.coordinates, 'EPSG:3857')
@@ -556,10 +556,10 @@ export class Map extends React.Component<Props> {
         pointIndex: index,
         isExtrapolated: false
       })
-      this.cursorToolSource?.addFeature(feature)
+      this.trackingToolSource?.addFeature(feature)
     })
 
-    this.props.cursorTool.extrapolatedPoints.forEach((point, index) => {
+    this.props.trackingTool.extrapolatedPoints.forEach((point, index) => {
       const projectedCoords = fromLonLat(point.coordinates, 'EPSG:3857')
       const feature = new Feature({
         geometry: new Point(projectedCoords),
@@ -569,10 +569,10 @@ export class Map extends React.Component<Props> {
         isExtrapolated: true,
         timestamp: point.timestamp
       })
-      this.cursorToolSource?.addFeature(feature)
+      this.trackingToolSource?.addFeature(feature)
     })
 
-    this.previousCursorToolPoints = [...currentPoints]
+    this.previousTrackingToolPoints = [...currentPoints]
     this.previousExtrapolatedPoints = [...currentExtrapolatedPoints]
   }
 
@@ -603,7 +603,7 @@ export class Map extends React.Component<Props> {
         }),
 
         this.vectorLayer,
-        this.cursorToolLayer,
+        this.trackingToolLayer,
       ],
       target: this.mapElementRef.current,
     })
@@ -633,10 +633,10 @@ export class Map extends React.Component<Props> {
     })
 
     // https://openlayers.org/en/latest/examples/overlay.html
-    const cursorToolElement = this.cursorToolOverlayRef.current
-    const cursorToolOverlay = new Overlay({ element: cursorToolElement })
-    this.cursorToolOverlay = cursorToolOverlay
-    this.map.addOverlay(cursorToolOverlay)
+    const trackingToolElement = this.trackingToolOverlayRef.current
+    const trackingToolOverlay = new Overlay({ element: trackingToolElement })
+    this.trackingToolOverlay = trackingToolOverlay
+    this.map.addOverlay(trackingToolOverlay)
 
     // https://openlayers.org/en/latest/apidoc/module-ol_MapBrowserEvent-MapBrowserEvent.html
     this.map.on('pointermove', (evt: { dragging: boolean, coordinate: Coordinate }) => {
@@ -644,15 +644,15 @@ export class Map extends React.Component<Props> {
         return
       }
 
-      updateCursorTool(
-        cursorToolOverlay,
+      updateTrackingTool(
+        trackingToolOverlay,
         this.props.product,
         this.vectorSource,
         evt.coordinate,
-        resolveCursorToolContentAndColors,
+        resolveTrackingToolContentAndColors,
         this.wgs84ToProductConversionFn
       )
-      this.cursorToolVisible = true
+      this.trackingToolVisible = true
 
       dispatch({ type: 'pointer moved', payload: evt.coordinate as [number, number] })
       // const pixel = this.map.getEventPixel(evt.originalEvent)
@@ -660,10 +660,10 @@ export class Map extends React.Component<Props> {
     })
 
     this.map.on('click', (evt: { coordinate: Coordinate }) => {
-      if (this.props.cursorTool.active) {
+      if (this.props.trackingTool.active) {
         const lonLat = toLonLat(evt.coordinate, 'EPSG:3857') as [number, number]
         dispatch({
-          type: 'cursor tool point added',
+          type: 'tracking tool point added',
           payload: {
             timestamp: this.props.productTime || Date.now(),
             coordinates: lonLat
@@ -698,13 +698,13 @@ export class Map extends React.Component<Props> {
     const cached = this.renderedProducts.get(cacheKey)
     if (cached !== undefined) {
       this.canvas = cached
-      if (this.cursorToolVisible)
-        updateCursorTool(
-          this.cursorToolOverlay,
+      if (this.trackingToolVisible)
+        updateTrackingTool(
+          this.trackingToolOverlay,
           this.props.product,
           this.vectorSource,
           undefined,
-          resolveCursorToolContentAndColors,
+          resolveTrackingToolContentAndColors,
           this.wgs84ToProductConversionFn
         )
       return this.canvas
@@ -817,13 +817,13 @@ export class Map extends React.Component<Props> {
     const pixelCount = this.canvas.width * this.canvas.height
     console.info('Rendering took', elapsedMs, 'ms @', Math.floor(pixelCount / (elapsedMs / 1000) / 1000), 'kpx/s') // eslint-disable-line no-console
 
-    if (this.cursorToolVisible)
-      updateCursorTool(
-        this.cursorToolOverlay,
+    if (this.trackingToolVisible)
+      updateTrackingTool(
+        this.trackingToolOverlay,
         this.props.product,
         this.vectorSource,
         undefined,
-        resolveCursorToolContentAndColors,
+        resolveTrackingToolContentAndColors,
         this.wgs84ToProductConversionFn
       )
     return this.canvas
@@ -864,12 +864,12 @@ export class Map extends React.Component<Props> {
     }
 
     this.updateMap()
-    this.updateCursorToolPoints()
+    this.updateTrackingToolPoints()
 
     return (
       <React.Fragment>
         <div id="map-element" ref={this.mapElementRef}></div>
-        <div id="cursor-tool-overlay" ref={this.cursorToolOverlayRef}></div>
+        <div id="tracking-tool-overlay" ref={this.trackingToolOverlayRef}></div>
         {this.map && (
           <>
             <BrowserGeolocationMarker map={this.map} />

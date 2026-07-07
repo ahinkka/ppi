@@ -58,8 +58,8 @@ const handleKeyPress = (dispatch: Dispatch<Action>, event: KeyboardEvent): void 
     dispatch({ type: 'cycle flavor' })
   } else if (event.keyCode == 32) {
     dispatch({ type: 'toggle animation' })
-  } else if (key == 'c' || key == 'C') {
-    dispatch({ type: 'toggle cursor tool' })
+  } else if (key == 't' || key == 'T') {
+    dispatch({ type: 'toggle tracking tool' })
   }
 
   // TODO: bind shift + arrows for navigating the map
@@ -214,16 +214,16 @@ class ObserverApp extends React.Component<ObserverAppProps> {
               action={'toggle animation'}
               tooltip="Press SPACE to toggle animation" />
             <ProductSlider ticks={tickItems} />
-            <ToggleButton toggleStatus={props.cursorTool.active}
+            <ToggleButton toggleStatus={props.trackingTool.active}
               onSymbol="&#127919;" offSymbol="&#127919;"
-              action={'toggle cursor tool'}
-              tooltip="Press C to toggle cursor tool" />
-            {props.cursorTool.active && (
+              action={'toggle tracking tool'}
+              tooltip="Press T to toggle tracking tool" />
+            {props.trackingTool.active && (
               <Button
                 text="Clear Points"
-                tooltip="Clear all cursor tool points"
-                action={{ type: 'cursor tool reset' } as Extract<Action, { type: 'cursor tool reset' }>}
-                disabled={props.cursorTool.points.length === 0}
+                tooltip="Clear all tracking tool points"
+                action={{ type: 'tracking tool reset' } as Extract<Action, { type: 'tracking tool reset' }>}
+                disabled={props.trackingTool.points.length === 0}
                 className="ms-2"
               />
             )}
@@ -233,7 +233,7 @@ class ObserverApp extends React.Component<ObserverAppProps> {
         <Map headerElementId="header-row"
           intendedCenter={[props.map.intended.centerLon, props.map.intended.centerLat]}
           geoInterests={props.geoInterests}
-          cursorTool={props.cursorTool}
+          trackingTool={props.trackingTool}
           dispatch={props.dispatch}
           product={loadedProduct}
           productTime={currentProductTime}
